@@ -11,24 +11,20 @@ namespace FrameWork.Network
 	{
 		public static readonly int HeaderSize = 2;
 
-		// [size(2)][packetId(2)][ ... ][size(2)][packetId(2)][ ... ]
 		public sealed override int OnRecv(ArraySegment<byte> buffer)
 		{
 			int processLen = 0;
 
 			while (true)
 			{
-				// 최소한 헤더는 파싱할 수 있는지 확인
 				if (buffer.Count < HeaderSize)
 					break;
 
-				// 패킷이 완전체로 도착했는지 확인
 				ushort dataSize = BitConverter.ToUInt16(buffer.Array, buffer.Offset);
 
 				if (buffer.Count < dataSize)
 					break;
 
-				// 여기까지 왔으면 패킷 조립 가능
 				OnRecvPacket(new ArraySegment<byte>(buffer.Array, buffer.Offset, dataSize));
 
 				processLen += dataSize;
@@ -114,7 +110,6 @@ namespace FrameWork.Network
 	
 			OnDisconnected(_socket.RemoteEndPoint);
 			
-			// 정상적으로 Disconnect가 되었을 때
 			if (_socket.RemoteEndPoint != null)
 			{
 				_socket.Shutdown(SocketShutdown.Both);
@@ -124,8 +119,6 @@ namespace FrameWork.Network
 			Clear();
 		}
 
-		#region 네트워크 통신
-		// 송신을 비동기로 보내기 위해 등록할 때 사용
 		void RegisterSend()
 		{
 			if (_disconnected == 1)
@@ -140,7 +133,6 @@ namespace FrameWork.Network
 
 			try
 			{
-				// 소켓의 비동기 수신 함수 호출
 				bool pending = _socket.SendAsync(_sendArgs);
 				if (pending == false)
 					OnSendCompleted(null, _sendArgs); 
@@ -151,16 +143,10 @@ namespace FrameWork.Network
 			}
 		}
 
-		/// <summary>
-		/// 소켓 데이터 Send를 완료했을 때 실행
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="args"></param>
 		void OnSendCompleted(object sender, SocketAsyncEventArgs args)
 		{
 			lock (_lock)
 			{
-				// 전송된 바이트 수 && 소켓이 정상적으로 연결이 된 상태라면
 				if (args.BytesTransferred > 0 && args.SocketError == System.Net.Sockets.SocketError.Success)
 				{
 					try
@@ -185,10 +171,6 @@ namespace FrameWork.Network
 			}
 		}
 
-		/// <summary>
-		/// 소켓서버로부터 데이터를 받기 위해서는 등록해야됨
-		/// 리시브 받으면 다시 등록을 반복
-		/// </summary>
 		void RegisterRecv()
 		{
 			if (_disconnected == 1)
@@ -216,14 +198,12 @@ namespace FrameWork.Network
 			{
 				try
 				{
-					// Write 커서 이동
 					if (_recvBuffer.OnWrite(args.BytesTransferred) == false)
 					{
 						Disconnect();
 						return;
 					}
 
-					// 컨텐츠 쪽으로 데이터를 넘겨주고 얼마나 처리했는지 받는다
 					int processLen = OnRecv(_recvBuffer.ReadSegment);
 					if (processLen < 0 || _recvBuffer.DataSize < processLen)
 					{
@@ -231,7 +211,6 @@ namespace FrameWork.Network
 						return;
 					}
 
-					// Read 커서 이동
 					if (_recvBuffer.OnRead(processLen) == false)
 					{
 						Disconnect();
@@ -247,12 +226,8 @@ namespace FrameWork.Network
 			}
 			else
 			{
-				// Debug.Log(args.BytesTransferred);
-				// Debug.Log(args.SocketError);
 				Disconnect();
 			}
 		} 
-
-		#endregion
 	}
 }

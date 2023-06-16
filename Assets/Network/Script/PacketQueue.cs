@@ -7,15 +7,12 @@ using UnityEngine;
 
 public class PacketMessage
 {
-	public PacketSession Session { get; set; }
 	public ushort Id { get; set; }
 	public IMessage Message { get; set; }
 }
 
 public class PacketQueue
 {
-	public static PacketQueue Instance { get; } = new PacketQueue();
-
 	Queue<PacketMessage> _packetQueue = new Queue<PacketMessage>();
 	object _lock = new object();
 

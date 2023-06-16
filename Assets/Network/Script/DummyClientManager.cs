@@ -18,7 +18,7 @@ public class DummyClientManager : MonoBehaviour
     Button btn_CreateDummy;
     Button btn_DestroyDummy;
 
-    [SerializeField] List<Connection> connections = new List<Connection>();
+    //[SerializeField] List<Connection> connections = new List<Connection>();
 
     private void OnDestroy()
 	{
@@ -36,7 +36,7 @@ public class DummyClientManager : MonoBehaviour
         btn_CreateDummy = GameObject.Find(nameof(btn_CreateDummy)).GetComponent<Button>();
         btn_DestroyDummy = GameObject.Find(nameof(btn_DestroyDummy)).GetComponent<Button>();
 
-        btn_Connect.onClick.AddListener(ConnectToServer);
+        btn_Connect.onClick.AddListener(() => ConnectToServer("192.168.0.104", 7777));
         btn_CreateDummy.onClick.AddListener(CreateDummy);
         btn_DestroyDummy.onClick.AddListener(DestroyDummy);
 
@@ -44,24 +44,28 @@ public class DummyClientManager : MonoBehaviour
         inputField_Port.placeholder.GetComponent<TMP_Text>().text = "7777";
     }
 
-	public void ConnectToServer()
+    private int idGenerator = 0;
+    private Dictionary<string, Connection> connections;
+    private Connector connector;
+
+    private void Start()
     {
-        Debug.Log("Connect To Server");
-
-        var ip = inputField_IpAddress.text == string.Empty ? "192.168.0.104" : inputField_IpAddress.text;
-        var port = inputField_Port.text == string.Empty ? 7777 : int.Parse(inputField_Port.text);
-
-        var endPoint = new IPEndPoint(IPAddress.Parse(ip), port);
-
-        var connection = new Connection();
-        connections.Add(connection);
-
-        var connector = new Connector();
-        connector.Connect(endPoint, () => connection.session);
-
-        Debug.Log("ip : " + ip + ", port : " + port);
+        idGenerator = 0;
+        connections =  new Dictionary<string, Connection>();
+        connector = new(() => {
+            var connection = new Connection((idGenerator++).ToString());
+            connections[connection.ConnectionId] = connection;
+            return connection.session;
+        });
     }
 
+	public void ConnectToServer(string ip, int port)
+    {
+        //var ip = inputField_IpAddress.text == string.Empty ? "192.168.0.104" : inputField_IpAddress.text;
+        //var port = inputField_Port.text == string.Empty ? 7777 : int.Parse(inputField_Port.text);
+        var endPoint = new IPEndPoint(IPAddress.Parse(ip), port);
+        connector.Connect(endPoint);
+    }
 
     public void CreateDummy()
 	{

@@ -6,14 +6,18 @@ namespace FrameWork.Network
 {
     public class Connector
     {
-        Func<Session> _sessionFactory;
+        private readonly Func<Session> _sessionFactory;
 
-        public void Connect(IPEndPoint endPoint, Func<Session> sessionFactory, int count = 1)
+        public Connector(Func<Session> sessionFactory)
+        {
+            _sessionFactory = sessionFactory;
+        }
+
+        public void Connect(IPEndPoint endPoint, int count = 1)
         {
             for (int i = 0; i < count; i++)
             {
                 Socket socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                _sessionFactory = sessionFactory;
 
                 SocketAsyncEventArgs args = new SocketAsyncEventArgs();
                 args.Completed += OnConnectCompleted;
@@ -37,7 +41,6 @@ namespace FrameWork.Network
                 OnConnectCompleted(null, args);
         }
 
-        // 서버 연결 등록이 완료되면 실행
         void OnConnectCompleted(object sender, SocketAsyncEventArgs args)
         {
             if (args.SocketError == System.Net.Sockets.SocketError.Success)
@@ -45,10 +48,6 @@ namespace FrameWork.Network
                 Session session = _sessionFactory.Invoke();
                 session.Start(args.ConnectSocket);
                 session.OnConnected(args.RemoteEndPoint);
-            }
-            else
-            {
-
             }
         }
     }
