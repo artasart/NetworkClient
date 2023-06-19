@@ -29,7 +29,7 @@ namespace FrameWork.Network
 			session.callback_received += OnRecv;
 
 			packetHandler.AddHandler(Handle_S_ENTER);
-		}
+        }
 
         private void OnConnected()
         {
@@ -76,5 +76,5 @@ namespace FrameWork.Network
 		{
 			Debug.Log(enter.Result);
 		}
-	}
+    }
 }

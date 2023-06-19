@@ -3,8 +3,6 @@ using Protocol;
 using System;
 using System.Collections.Generic;
 
-using static RealtimePacket;
-
 public class RealtimePacket
 {
     public RealtimePacket()
@@ -17,7 +15,7 @@ public class RealtimePacket
         onRecv.Clear();
     }
 
-    readonly Dictionary<ushort, Action<ArraySegment<byte>, RealtimePacket.MsgId, PacketQueue>> onRecv = new Dictionary<ushort, Action<ArraySegment<byte>, RealtimePacket.MsgId, PacketQueue>>();
+    readonly Dictionary<ushort, Action<ArraySegment<byte>, ushort, PacketQueue>> onRecv = new Dictionary<ushort, Action<ArraySegment<byte>, ushort, PacketQueue>>();
 
     public enum MsgId : ushort
     {
@@ -42,22 +40,14 @@ public class RealtimePacket
 
     public void Register()
     {
-        onRecv.Add((ushort)MsgId.PKT_C_ENTER, MakePacket<C_ENTER>);
         onRecv.Add((ushort)MsgId.PKT_S_ENTER, MakePacket<S_ENTER>);
-        onRecv.Add((ushort)MsgId.PKT_C_REENTER, MakePacket<C_REENTER>);
         onRecv.Add((ushort)MsgId.PKT_S_REENTER, MakePacket<S_REENTER>);
-        onRecv.Add((ushort)MsgId.PKT_C_LEAVE, MakePacket<C_LEAVE>);
-        onRecv.Add((ushort)MsgId.PKT_C_GET_CLIENT, MakePacket<C_GET_CLIENT>);
         onRecv.Add((ushort)MsgId.PKT_S_ADD_CLIENT, MakePacket<S_ADD_CLIENT>);
         onRecv.Add((ushort)MsgId.PKT_S_REMOVE_CLIENT, MakePacket<S_REMOVE_CLIENT>);
         onRecv.Add((ushort)MsgId.PKT_S_DISCONNECT, MakePacket<S_DISCONNECT>);
-        onRecv.Add((ushort)MsgId.PKT_C_HEARTBEAT, MakePacket<C_HEARTBEAT>);
-        onRecv.Add((ushort)MsgId.PKT_C_INSTANTIATE_GAME_OBJECT, MakePacket<C_INSTANTIATE_GAME_OBJECT>);
         onRecv.Add((ushort)MsgId.PKT_S_INSTANTIATE_GAME_OBJECT, MakePacket<S_INSTANTIATE_GAME_OBJECT>);
-        onRecv.Add((ushort)MsgId.PKT_C_GET_GAME_OBJECT, MakePacket<C_GET_GAME_OBJECT>);
         onRecv.Add((ushort)MsgId.PKT_S_ADD_GAME_OBJECT, MakePacket<S_ADD_GAME_OBJECT>);
         onRecv.Add((ushort)MsgId.PKT_S_REMOVE_GAME_OBJECT, MakePacket<S_REMOVE_GAME_OBJECT>);
-        onRecv.Add((ushort)MsgId.PKT_C_SET_TRANSFORM, MakePacket<C_SET_TRANSFORM>);
         onRecv.Add((ushort)MsgId.PKT_S_SET_TRANSFORM, MakePacket<S_SET_TRANSFORM>);
     }
 
@@ -70,12 +60,12 @@ public class RealtimePacket
         ushort id = BitConverter.ToUInt16(buffer.Array, buffer.Offset + count);
         count += 2;
 
-        Action<ArraySegment<byte>, RealtimePacket.MsgId, PacketQueue> action;
+        Action<ArraySegment<byte>, ushort, PacketQueue> action;
         if (onRecv.TryGetValue(id, out action))
-            action.Invoke(buffer, (RealtimePacket.MsgId)id, packetQueue);
+            action.Invoke(buffer, id, packetQueue);
     }
 
-    private void MakePacket<T>( ArraySegment<byte> buffer, RealtimePacket.MsgId id, PacketQueue packetQueue ) where T : IMessage, new()
+    private void MakePacket<T>( ArraySegment<byte> buffer, ushort id, PacketQueue packetQueue ) where T : IMessage, new()
     {
         T pkt = new();
         pkt.MergeFrom(buffer.Array, buffer.Offset + 4, buffer.Count - 4);

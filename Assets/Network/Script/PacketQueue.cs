@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class PacketMessage
 {
-	public RealtimePacket.MsgId Id { get; set; }
+	public ushort Id { get; set; }
 	public IMessage Message { get; set; }
 }
 
@@ -16,7 +16,7 @@ public class PacketQueue
 	Queue<PacketMessage> _packetQueue = new Queue<PacketMessage>();
 	object _lock = new object();
 
-	public void Push( RealtimePacket.MsgId id, IMessage packet)
+	public void Push( ushort id, IMessage packet)
 	{
 		lock (_lock)
 		{
