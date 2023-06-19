@@ -3,6 +3,7 @@ using Google.Protobuf;
 using System;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
+using System.Threading;
 
 namespace FrameWork.Network
 {
@@ -18,7 +19,9 @@ namespace FrameWork.Network
         public Action onConnected;
 		public Action onDisconnected;
 
-		public Connection(string connectionId)
+        CancellationTokenSource cts;
+
+        public Connection(string connectionId)
 		{
 			ConnectionId = connectionId;
 
@@ -34,7 +37,8 @@ namespace FrameWork.Network
         private void OnConnected()
         {
 			UnityEngine.Debug.Log("Connected");
-            AsyncPacketUpdate().Forget();
+            var cts = new CancellationTokenSource();
+            AsyncPacketUpdate(cts.Token).Forget();
 
             C_ENTER packet = new C_ENTER();
 			packet.ClientId = ConnectionId;
@@ -43,21 +47,19 @@ namespace FrameWork.Network
 
         private void OnDisConnected()
         {
+            cts.Cancel();
         }
-
-		//글로벌로 변경할 것
-		RealtimePacket realtimePacket = new RealtimePacket();
 
 		private void OnRecv(ArraySegment<byte> buffer)
 		{
 			realtimePacket.OnRecvPacket(buffer, packetQueue);
         }
 
-		public async UniTaskVoid AsyncPacketUpdate()
+		public async UniTaskVoid AsyncPacketUpdate( CancellationToken token )
 		{
             Action<IMessage> handler;
 
-            while (true)
+            while (!token.IsCancellationRequested)
 			{
                 var packets = packetQueue.PopAll();
 
