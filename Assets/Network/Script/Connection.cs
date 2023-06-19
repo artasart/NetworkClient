@@ -19,11 +19,11 @@ namespace FrameWork.Network
         public Action onConnected;
 		public Action onDisconnected;
 
-        private CancellationTokenSource cts;
-
         private RealtimePacket rtp;
 
         private DateTime lastMessageSent;
+
+        bool isConnected;
 
         public Connection(string connectionId, RealtimePacket _rtp)
 		{
@@ -32,6 +32,8 @@ namespace FrameWork.Network
             rtp = _rtp;
 
             lastMessageSent = new DateTime(1970, 1, 1);
+
+            isConnected = false;
 
             session = new ServerSession();
 
@@ -45,11 +47,11 @@ namespace FrameWork.Network
         private void OnConnected()
         {
 			UnityEngine.Debug.Log("Connected");
-            
-            var cts = new CancellationTokenSource();
-            
-            AsyncPacketUpdate(cts.Token).Forget();
-            HeartBeat(cts.Token).Forget();
+
+            isConnected = true;
+
+            AsyncPacketUpdate().Forget();
+            HeartBeat().Forget();
 
             C_ENTER packet = new C_ENTER();
 			packet.ClientId = ConnectionId;
@@ -58,7 +60,12 @@ namespace FrameWork.Network
 
         private void OnDisConnected()
         {
-            cts.Cancel();
+            isConnected = false;
+        }
+
+        private void HandleDisconnect()
+        {
+            //Do Something
         }
 
 		private void OnRecv(ArraySegment<byte> buffer)
@@ -72,11 +79,11 @@ namespace FrameWork.Network
             session.Send(pkt);
         }
 
-		public async UniTaskVoid AsyncPacketUpdate( CancellationToken token )
+		public async UniTaskVoid AsyncPacketUpdate()
 		{
             Action<IMessage> handler;
 
-            while (!token.IsCancellationRequested)
+            while (isConnected)
 			{
                 var packets = packetQueue.PopAll();
 
@@ -89,13 +96,15 @@ namespace FrameWork.Network
 
                 await UniTask.Delay(TimeSpan.FromSeconds(0.02f));
 			}
+
+            HandleDisconnect();
 		}
 
-        public async UniTaskVoid HeartBeat( CancellationToken token )
+        public async UniTaskVoid HeartBeat()
         {
             Protocol.C_HEARTBEAT heartbeat = new Protocol.C_HEARTBEAT();
 
-            while (!token.IsCancellationRequested)
+            while (isConnected)
             {
                 if ((long)(DateTime.UtcNow - lastMessageSent).TotalSeconds > 5)
                 {
