@@ -36,18 +36,16 @@ public class ClientManager : MonoBehaviour
 
     RealtimePacket realtimePacket;
 
-    public GameObject go_Main;
-    public GameObject go_Dummy;
+    GameObject go_Main;
+    GameObject go_Dummy;
 
     private int idGenerator = 0;
     public Dictionary<string, Connection> connections;
 	private Connector connector;
 
-	Dictionary<string, GameObject> dummys = new Dictionary<string, GameObject>();
+    Dictionary<string, GameObject> gameObjects = new Dictionary<string, GameObject>();
     public GameObject dummyPrefab;
     public int dummyCount = 0;
-
-
 
     private void OnDestroy()
 	{
@@ -89,28 +87,22 @@ public class ClientManager : MonoBehaviour
         idGenerator = 0;
         connections =  new Dictionary<string, Connection>();
 
-        connector = new(() => {       
-            //dummy connection
-            var connection = new Connection(idGenerator++.ToString(), realtimePacket);
-
-            connections[connection.ClientId] = connection;
-                       
-            return connection.session;
-        });
+        connector = new(connections);
     }
 
 	public void ConnectToServer(string ip, int port)
     {
         var endPoint = new IPEndPoint(IPAddress.Parse(ip), port);
 
-        connector.Connect(endPoint);
+        Connection connection = new Connection("test", realtimePacket);
+        connections.Add(connection.ClientId, connection);
+
+        connector.Connect(endPoint, "test");
     }
 
     public void OnClick_CreateDummy()
 	{
         ConnectToServer("192.168.0.104", 7777);
-
-
     }
 
     public void OnClick_DestroyDummy()
@@ -149,16 +141,16 @@ public class ClientManager : MonoBehaviour
 
         dummy.name = "Dummy_" + _connectionId;
 
-        if (!dummys.ContainsKey(_connectionId))
+        if (!gameObjects.ContainsKey(_connectionId))
 		{
-            dummys.Add(_connectionId, dummy);
+            gameObjects.Add(_connectionId, dummy);
         }
     }
 
     public void DestroyDummy(string _connectionId)
 	{
-        Destroy(dummys[_connectionId]);
+        Destroy(gameObjects[_connectionId]);
 
-        dummys.Remove(_connectionId);
+        gameObjects.Remove(_connectionId);
     }
 }

@@ -1,34 +1,41 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 
+using UnityEngine;
+
 namespace FrameWork.Network
 {
+    public class CustomSocketAsyncEventArgs : SocketAsyncEventArgs
+    {
+        public string ConnectionId { get; set; }
+    }
+
     public class Connector
     {
-        private readonly Func<Session> _sessionFactory;
+        Dictionary<string, Connection> connections;
 
-        public Connector(Func<Session> sessionFactory)
+        public Connector( Dictionary<string, Connection> _connections)
         {
-            _sessionFactory = sessionFactory;
+            connections = _connections;
         }
 
-        public void Connect(IPEndPoint endPoint, int count = 1)
+        public void Connect(IPEndPoint endPoint, string connectionId)
         {
-            for (int i = 0; i < count; i++)
-            {
-                Socket socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            Socket socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
-                SocketAsyncEventArgs args = new SocketAsyncEventArgs();
-                args.Completed += OnConnectCompleted;
-                args.RemoteEndPoint = endPoint;
-                args.UserToken = socket;
+            CustomSocketAsyncEventArgs args = new CustomSocketAsyncEventArgs();
+            args.Completed += OnConnectCompleted;
+            args.RemoteEndPoint = endPoint;
+            args.UserToken = socket;
+            args.ConnectionId = connectionId;
 
-                RegisterConnect(args);
-            }
+            RegisterConnect(args);
         }
 
-        void RegisterConnect(SocketAsyncEventArgs args)
+        void RegisterConnect( CustomSocketAsyncEventArgs args )
         {
             Socket socket = args.UserToken as Socket;
             if (socket == null)
@@ -41,11 +48,14 @@ namespace FrameWork.Network
                 OnConnectCompleted(null, args);
         }
 
-        void OnConnectCompleted(object sender, SocketAsyncEventArgs args)
+        void OnConnectCompleted(object sender, SocketAsyncEventArgs _args)
         {
-            if (args.SocketError == System.Net.Sockets.SocketError.Success)
+            CustomSocketAsyncEventArgs args = _args as CustomSocketAsyncEventArgs;
+
+            if (args.SocketError == System.Net.Sockets.SocketError.Success
+                && connections[args.ConnectionId] != null)
             {
-                Session session = _sessionFactory.Invoke();
+                Session session = connections[args.ConnectionId].session;
                 session.Start(args.ConnectSocket);
                 session.OnConnected(args.RemoteEndPoint);
             }

@@ -13,17 +13,16 @@ namespace FrameWork.Network
 
 		public ServerSession session;
 
-		public PacketQueue packetQueue = new PacketQueue();
-        public PacketHandler packetHandler = new PacketHandler();
+		public PacketQueue packetQueue = new();
+        public PacketHandler packetHandler = new();
 
-        public Action onConnected;
-		public Action onDisconnected;
+        public Action disconnectedHandler;
 
         private RealtimePacket rtp;
 
         private DateTime lastMessageSent;
 
-        bool isConnected;
+        private bool isConnected;
 
         public Connection(string connectionId, RealtimePacket _rtp)
 		{
@@ -40,10 +39,6 @@ namespace FrameWork.Network
 			session.callback_connect += OnConnected;
             session.callback_disconnect += OnDisConnected;
 			session.callback_received += OnRecv;
-
-			packetHandler.AddHandler(Handle_S_ENTER);
-			packetHandler.AddHandler(Handle_S_ADDCLIENT);
-			packetHandler.AddHandler(Handle_S_INSTANTIATE);
         }
 
         private void OnConnected()
@@ -100,7 +95,7 @@ namespace FrameWork.Network
                 await UniTask.Delay(TimeSpan.FromSeconds(0.02f));
 			}
 
-            HandleDisconnect();
+            disconnectedHandler?.Invoke();
 		}
 
         public async UniTaskVoid HeartBeat()
@@ -117,10 +112,6 @@ namespace FrameWork.Network
                 await UniTask.Delay(TimeSpan.FromSeconds(5));
             }
         }
-
-
-
-
 
         void Handle_S_ENTER(Protocol.S_ENTER enter)
 		{
