@@ -19,11 +19,19 @@ namespace FrameWork.Network
         public Action onConnected;
 		public Action onDisconnected;
 
-        CancellationTokenSource cts;
+        private CancellationTokenSource cts;
 
-        public Connection(string connectionId)
+        private RealtimePacket rtp;
+
+        private DateTime lastMessageSent;
+
+        public Connection(string connectionId, RealtimePacket _rtp)
 		{
 			ConnectionId = connectionId;
+
+            rtp = _rtp;
+
+            lastMessageSent = new DateTime(1970, 1, 1);
 
             session = new ServerSession();
 
@@ -37,8 +45,11 @@ namespace FrameWork.Network
         private void OnConnected()
         {
 			UnityEngine.Debug.Log("Connected");
+            
             var cts = new CancellationTokenSource();
+            
             AsyncPacketUpdate(cts.Token).Forget();
+            HeartBeat(cts.Token).Forget();
 
             C_ENTER packet = new C_ENTER();
 			packet.ClientId = ConnectionId;
@@ -52,7 +63,13 @@ namespace FrameWork.Network
 
 		private void OnRecv(ArraySegment<byte> buffer)
 		{
-			realtimePacket.OnRecvPacket(buffer, packetQueue);
+            rtp.OnRecvPacket(buffer, packetQueue);
+        }
+
+        public void Send(IMessage pkt)
+        {
+            lastMessageSent = DateTime.UtcNow;
+            session.Send(pkt);
         }
 
 		public async UniTaskVoid AsyncPacketUpdate( CancellationToken token )
@@ -74,7 +91,22 @@ namespace FrameWork.Network
 			}
 		}
 
-		void Handle_S_ENTER(Protocol.S_ENTER enter)
+        public async UniTaskVoid HeartBeat( CancellationToken token )
+        {
+            Protocol.C_HEARTBEAT heartbeat = new Protocol.C_HEARTBEAT();
+
+            while (!token.IsCancellationRequested)
+            {
+                if ((long)(DateTime.UtcNow - lastMessageSent).TotalSeconds > 5)
+                {
+                    Send(heartbeat);
+                }
+
+                await UniTask.Delay(TimeSpan.FromSeconds(5));
+            }
+        }
+
+        void Handle_S_ENTER(Protocol.S_ENTER enter)
 		{
 			Debug.Log(enter.Result);
 		}

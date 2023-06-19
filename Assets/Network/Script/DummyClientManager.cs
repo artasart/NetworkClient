@@ -18,6 +18,8 @@ public class DummyClientManager : MonoBehaviour
     Button btn_CreateDummy;
     Button btn_DestroyDummy;
 
+    RealtimePacket realtimePacket;
+
     //[SerializeField] List<Connection> connections = new List<Connection>();
 
     private void OnDestroy()
@@ -29,6 +31,8 @@ public class DummyClientManager : MonoBehaviour
 
 	private void Awake()
 	{
+        realtimePacket = new RealtimePacket();
+
         inputField_IpAddress = GameObject.Find(nameof(inputField_IpAddress)).GetComponent<TMP_InputField>();
         inputField_Port = GameObject.Find(nameof(inputField_Port)).GetComponent<TMP_InputField>();
 
@@ -53,7 +57,7 @@ public class DummyClientManager : MonoBehaviour
         idGenerator = 0;
         connections =  new Dictionary<string, Connection>();
         connector = new(() => {       
-            var connection = new Connection(idGenerator++.ToString());
+            var connection = new Connection(idGenerator++.ToString(), realtimePacket);
             connections[connection.ConnectionId] = connection;
             return connection.session;
         });
