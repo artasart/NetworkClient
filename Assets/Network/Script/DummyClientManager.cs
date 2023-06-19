@@ -53,7 +53,7 @@ public class DummyClientManager : MonoBehaviour
         idGenerator = 0;
         connections =  new Dictionary<string, Connection>();
         connector = new(() => {
-            var connection = new Connection((idGenerator++).ToString());
+            var connection = new Connection("test");
             connections[connection.ConnectionId] = connection;
             return connection.session;
         });

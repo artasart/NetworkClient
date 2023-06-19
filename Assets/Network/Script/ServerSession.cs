@@ -46,8 +46,6 @@ namespace FrameWork.Network
             ushort id = BitConverter.ToUInt16(buffer.Array, buffer.Offset + count);
             count += 2;
 
-
-
             callback_received?.Invoke(buffer);
 		}
 

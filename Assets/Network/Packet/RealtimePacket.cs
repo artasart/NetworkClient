@@ -17,7 +17,7 @@ public class RealtimePacket
         onRecv.Clear();
     }
 
-    readonly Dictionary<ushort, Action<ArraySegment<byte>, ushort, PacketQueue>> onRecv = new Dictionary<ushort, Action<ArraySegment<byte>, ushort, PacketQueue>>();
+    readonly Dictionary<ushort, Action<ArraySegment<byte>, RealtimePacket.MsgId, PacketQueue>> onRecv = new Dictionary<ushort, Action<ArraySegment<byte>, RealtimePacket.MsgId, PacketQueue>>();
 
     public enum MsgId : ushort
     {
@@ -70,12 +70,12 @@ public class RealtimePacket
         ushort id = BitConverter.ToUInt16(buffer.Array, buffer.Offset + count);
         count += 2;
 
-        Action<ArraySegment<byte>, ushort, PacketQueue> action;
+        Action<ArraySegment<byte>, RealtimePacket.MsgId, PacketQueue> action;
         if (onRecv.TryGetValue(id, out action))
-            action.Invoke(buffer, id, packetQueue);
+            action.Invoke(buffer, (RealtimePacket.MsgId)id, packetQueue);
     }
 
-    private void MakePacket<T>( ArraySegment<byte> buffer, ushort id, PacketQueue packetQueue ) where T : IMessage, new()
+    private void MakePacket<T>( ArraySegment<byte> buffer, RealtimePacket.MsgId id, PacketQueue packetQueue ) where T : IMessage, new()
     {
         T pkt = new();
         pkt.MergeFrom(buffer.Array, buffer.Offset + 4, buffer.Count - 4);

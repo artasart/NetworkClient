@@ -5,20 +5,27 @@ using UnityEngine;
 
 public class PacketHandler
 {
-    Action<Protocol.S_ENTER> Handle_S_ENTER;
+    public Dictionary<RealtimePacket.MsgId, Action<IMessage>> Handlers;
+    
+    Action<Protocol.S_ENTER> S_ENTER_Handler;
 
-    void AddHandler(Action<Protocol.S_ENTER> handler)
+    public PacketHandler()
     {
-        Handle_S_ENTER += handler;
+        Handlers.Add(RealtimePacket.MsgId.PKT_S_ENTER, Handle_S_ENTER);
     }
 
-    void RemoveHandler( Action<Protocol.S_ENTER> handler )
+    public void AddHandler( Action<Protocol.S_ENTER> handler )
     {
-        Handle_S_ENTER += handler;
+        S_ENTER_Handler += handler;
     }
 
-    void HandleMessage( Protocol.S_ENTER message)
+    public void RemoveHandler( Action<Protocol.S_ENTER> handler )
     {
-        Handle_S_ENTER?.Invoke(message);
+        S_ENTER_Handler -= handler;
+    }
+
+    public void Handle_S_ENTER( IMessage message )
+    {
+        S_ENTER_Handler.Invoke((Protocol.S_ENTER)message);
     }
 }

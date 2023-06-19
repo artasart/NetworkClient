@@ -1,10 +1,8 @@
 ﻿using Protocol;
 using Google.Protobuf;
 using System;
-using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
-using System.Diagnostics;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 namespace FrameWork.Network
 {
@@ -29,12 +27,18 @@ namespace FrameWork.Network
 			session.callback_connect += OnConnected;
             session.callback_disconnect += OnDisConnected;
 			session.callback_received += OnRecv;
+
+			packetHandler.AddHandler(Handle_S_ENTER);
 		}
 
         private void OnConnected()
         {
 			UnityEngine.Debug.Log("Connected");
             AsyncPacketUpdate().Forget();
+
+            C_ENTER packet = new C_ENTER();
+			packet.ClientId = ConnectionId;
+			session.Send(packet);
         }
 
         private void OnDisConnected()
@@ -51,56 +55,26 @@ namespace FrameWork.Network
 
 		public async UniTaskVoid AsyncPacketUpdate()
 		{
-			while (true)
+            Action<IMessage> handler;
+
+            while (true)
 			{
                 var packets = packetQueue.PopAll();
 
                 for (var i = 0; i < packets.Count; i++)
                 {
-                    packetHandler.
+					var packet = packets[i];
+					packetHandler.Handlers.TryGetValue(packet.Id, out handler);
+                    handler?.Invoke(packet.Message);
                 }
 
                 await UniTask.Delay(TimeSpan.FromSeconds(0.02f));
 			}
 		}
 
-		public void Enter() => C_ENTER();
-
-		protected virtual void C_ENTER()
+		void Handle_S_ENTER(Protocol.S_ENTER enter)
 		{
-			C_ENTER packet = new C_ENTER();
-
-		}
-
-		protected virtual void S_ENTER(S_ENTER _packet)
-		{
-			S_ENTER packet = _packet as S_ENTER;
-		}
-
-
-		public void ReEnter() => C_REENTER();
-
-		protected virtual void C_REENTER()
-		{
-			C_REENTER packet = new C_REENTER();
-		}
-
-		protected void S_DISCONNECT(IMessage _packet)
-		{
-			S_DISCONNECT packet = _packet as S_DISCONNECT;
-		}
-
-		public void Clear()
-		{
-			session.Disconnect();
-			//packetManager.Clear();
-
-			RemoveHandler();
-		}
-
-		public void Leave()
-		{
-			C_LEAVE packet = new C_LEAVE();
+			Debug.Log(enter.Result);
 		}
 	}
 }
