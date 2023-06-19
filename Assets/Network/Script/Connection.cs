@@ -9,7 +9,7 @@ namespace FrameWork.Network
 {
 	public class Connection
 	{
-		public string ConnectionId { get; set; }
+		public string ClientId { get; set; }
 
 		public ServerSession session;
 
@@ -27,7 +27,7 @@ namespace FrameWork.Network
 
         public Connection(string connectionId, RealtimePacket _rtp)
 		{
-			ConnectionId = connectionId;
+			ClientId = connectionId;
 
             rtp = _rtp;
 
@@ -42,6 +42,8 @@ namespace FrameWork.Network
 			session.callback_received += OnRecv;
 
 			packetHandler.AddHandler(Handle_S_ENTER);
+			packetHandler.AddHandler(Handle_S_ADDCLIENT);
+			packetHandler.AddHandler(Handle_S_INSTANTIATE);
         }
 
         private void OnConnected()
@@ -54,7 +56,8 @@ namespace FrameWork.Network
             HeartBeat().Forget();
 
             C_ENTER packet = new C_ENTER();
-			packet.ClientId = ConnectionId;
+			packet.ClientId = ClientId;
+
 			session.Send(packet);
         }
 
@@ -65,7 +68,7 @@ namespace FrameWork.Network
 
         private void HandleDisconnect()
         {
-            //Do Something
+            ClientManager.Instance.DestroyDummy(ClientId);
         }
 
 		private void OnRecv(ArraySegment<byte> buffer)
@@ -115,9 +118,42 @@ namespace FrameWork.Network
             }
         }
 
+
+
+
+
         void Handle_S_ENTER(Protocol.S_ENTER enter)
 		{
-			Debug.Log(enter.Result);
-		}
+			Debug.Log("ENTER : " + enter.Result);
+
+            var packet = new C_INSTANTIATE_GAME_OBJECT();
+
+            var position = new Protocol.Vector3();
+            position.X = 0f;
+            position.Y = 0f;
+            position.Z = 0f;
+
+            var rotation = new Protocol.Vector3();
+            rotation.X = 0f;
+            rotation.Y = 0f;
+            rotation.Z = 0f;
+
+            packet.Position = position;
+            packet.Rotation = rotation;
+
+            Send(packet);
+        }
+
+        void Handle_S_ADDCLIENT(Protocol.S_ADD_CLIENT packet)
+        {
+            Debug.Log("ADD CLIENT.");
+        }
+
+        void Handle_S_INSTANTIATE(Protocol.S_INSTANTIATE_GAME_OBJECT packet)
+        {
+            Debug.Log("INSTANTIATE OBJECT.");
+
+            ClientManager.Instance.CreateDummy(ClientId);
+        }
     }
 }
