@@ -16,8 +16,6 @@ public class DummyConnection : Connection
 
     public DummyConnection()
     {
-        clientId = "Dummy_" + idGenerator++.ToString();
-
         AddHandler(Handle_S_ENTER);
         
         connectedHandler += () =>
