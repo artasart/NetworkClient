@@ -18,6 +18,7 @@ namespace Framework.Network
         public static Connection GetConnection<T>() where T : Connection, new()
         {
             Connection connection = new T();
+
             connection.ConnectionId = idGenerator++.ToString();
             connections.Add(connection.ConnectionId, connection);
             return connection;

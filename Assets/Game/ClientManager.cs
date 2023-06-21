@@ -11,6 +11,7 @@ public class ClientManager : MonoBehaviour
 {
     TMP_InputField inputField_IpAddress;
     TMP_InputField inputField_Port;
+    [SerializeField] TMP_InputField inputField_ConnectionId;
 
     Button btn_Connect;
 
@@ -38,6 +39,7 @@ public class ClientManager : MonoBehaviour
 	{
         inputField_IpAddress = GameObject.Find(nameof(inputField_IpAddress)).GetComponent<TMP_InputField>();
         inputField_Port = GameObject.Find(nameof(inputField_Port)).GetComponent<TMP_InputField>();
+        inputField_ConnectionId = GameObject.Find(nameof(inputField_ConnectionId)).GetComponent<TMP_InputField>();
 
         btn_Connect = GameObject.Find(nameof(btn_Connect)).GetComponent<Button>();
 
@@ -87,6 +89,8 @@ public class ClientManager : MonoBehaviour
 
         var endPoint = new IPEndPoint(IPAddress.Parse("192.168.0.104"), 7777);
         var connection = ConnectionManager.GetConnection<MainConnection>();
+
+        connection.clientId = inputField_ConnectionId.text;
 
         mainConnection = connection;
 
