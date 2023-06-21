@@ -90,7 +90,8 @@ public class ClientManager : MonoBehaviour
 
         mainConnection = connection;
 
-        mainConnection.AddHandler(CreateDummy);
+        mainConnection.AddHandler(AddGameObject);
+        mainConnection.AddHandler(RemoveGameObject);
 
         ConnectionManager.Connect(endPoint, connection.ConnectionId);
     }
@@ -100,7 +101,7 @@ public class ClientManager : MonoBehaviour
         Debug.Log("OnClick_DestroyMain");
     }
 
-    public void CreateDummy(Protocol.S_ADD_GAME_OBJECT pkt)
+    public void AddGameObject(Protocol.S_ADD_GAME_OBJECT pkt)
 	{
         foreach(var gameObject in pkt.GameObjects)
         {
@@ -119,10 +120,12 @@ public class ClientManager : MonoBehaviour
         }
     }
 
-    public void DestroyDummy(string _connectionId)
-	{
-        Destroy(gameObjects[_connectionId]);
-
-        gameObjects.Remove(_connectionId);
+    public void RemoveGameObject( Protocol.S_REMOVE_GAME_OBJECT pkt )
+    {
+        foreach (var gameObjectId in pkt.GameObjects)
+        {
+            Destroy(gameObjects[gameObjectId.ToString()]);
+            gameObjects.Remove(gameObjectId.ToString());
+        }
     }
 }
