@@ -6,6 +6,8 @@ public class MainConnection : Connection
 {
     private static int idGenerator = 0;
 
+    public string clientId;
+
     public MainConnection()
     {
         AddHandler(Handle_S_ENTER);
@@ -22,8 +24,6 @@ public class MainConnection : Connection
 
     private void Handle_S_ENTER( Protocol.S_ENTER enter )
     {
-        Debug.Log("ENTER : " + enter.Result);
-
         {
             C_GET_GAME_OBJECT packet = new();
             Send(PacketManager.MakeSendBuffer(packet));

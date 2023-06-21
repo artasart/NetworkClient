@@ -16,8 +16,6 @@ namespace Framework.Network
         private PacketQueue packetQueue;
         private DateTime lastMessageSent;
 
-        public string clientId;
-
         public Connection()
 		{
             isConnected = false;

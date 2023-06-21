@@ -68,7 +68,7 @@ public class ClientManager : MonoBehaviour
 	{
         var endPoint = new IPEndPoint(IPAddress.Parse("192.168.0.104"), 7777);
 
-        var connection = ConnectionManager.GetConnection<DummyConnection>();
+        var connection = (DummyConnection)ConnectionManager.GetConnection<DummyConnection>();
         connection.clientId = inputField_ConnectionId.text + "_Dummy_" + connection.ConnectionId;
 
         dummyConnections.Add(connection.ConnectionId, connection);
@@ -91,7 +91,7 @@ public class ClientManager : MonoBehaviour
             return;
 
         var endPoint = new IPEndPoint(IPAddress.Parse("192.168.0.104"), 7777);
-        var connection = ConnectionManager.GetConnection<MainConnection>();
+        var connection = (MainConnection)ConnectionManager.GetConnection<MainConnection>();
 
         connection.clientId = inputField_ConnectionId.text;
 
