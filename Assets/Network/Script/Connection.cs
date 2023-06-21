@@ -9,7 +9,7 @@ namespace Framework.Network
 		public string ConnectionId { get; set; }
 
         public ServerSession Session { get; set; }
-        private bool isConnected;
+        protected bool isConnected;
         public Action connectedHandler;
         public Action disconnectedHandler;
 
