@@ -1,80 +1,62 @@
-﻿using Protocol;
-using Google.Protobuf;
+﻿using Google.Protobuf;
 using System;
-using UnityEngine;
 using Cysharp.Threading.Tasks;
-using System.Threading;
 
-namespace FrameWork.Network
+namespace Framework.Network
 {
-	public class Connection
+	public class Connection : PacketHandler
 	{
-		public string ClientId { get; set; }
+		public string ConnectionId { get; set; }
 
-		public ServerSession session;
-
-		public PacketQueue packetQueue = new();
-        public PacketHandler packetHandler = new();
-
+        public ServerSession Session { get; set; }
+        private bool isConnected;
+        public Action connectedHandler;
         public Action disconnectedHandler;
 
-        private RealtimePacket rtp;
-
+        private PacketQueue packetQueue;
         private DateTime lastMessageSent;
 
-        private bool isConnected;
 
-        public Connection(string connectionId, RealtimePacket _rtp)
+        public Connection()
 		{
-			ClientId = connectionId;
-
-            rtp = _rtp;
-
-            lastMessageSent = new DateTime(1970, 1, 1);
-
             isConnected = false;
+            
+            Session = new();
 
-            session = new ServerSession();
+            Session.connectedHandler += OnConnected;
+            Session.disconnectedHandler += OnDisConnected;
+            Session.receivedHandler += OnRecv;
 
-			session.callback_connect += OnConnected;
-            session.callback_disconnect += OnDisConnected;
-			session.callback_received += OnRecv;
+            packetQueue = new();
+            lastMessageSent = new(1970, 1, 1);
         }
 
         private void OnConnected()
         {
-			UnityEngine.Debug.Log("Connected");
-
             isConnected = true;
 
             AsyncPacketUpdate().Forget();
             HeartBeat().Forget();
 
-            C_ENTER packet = new C_ENTER();
-			packet.ClientId = ClientId;
-
-			session.Send(packet);
+            connectedHandler?.Invoke();
         }
 
         private void OnDisConnected()
         {
             isConnected = false;
-        }
 
-        private void HandleDisconnect()
-        {
-            ClientManager.Instance.DestroyDummy(ClientId);
+            disconnectedHandler?.Invoke();
         }
 
 		private void OnRecv(ArraySegment<byte> buffer)
 		{
-            rtp.OnRecvPacket(buffer, packetQueue);
+            PacketManager.OnRecv(buffer, packetQueue);
         }
 
-        public void Send(IMessage pkt)
+        public void Send(ArraySegment<byte> pkt)
         {
             lastMessageSent = DateTime.UtcNow;
-            session.Send(pkt);
+            Session.Send(pkt);
         }
 
 		public async UniTaskVoid AsyncPacketUpdate()
@@ -88,7 +70,7 @@ namespace FrameWork.Network
                 for (var i = 0; i < packets.Count; i++)
                 {
 					var packet = packets[i];
-					packetHandler.Handlers.TryGetValue(packet.Id, out handler);
+					Handlers.TryGetValue(packet.Id, out handler);
                     handler?.Invoke(packet.Message);
                 }
 
@@ -100,51 +82,18 @@ namespace FrameWork.Network
 
         public async UniTaskVoid HeartBeat()
         {
-            Protocol.C_HEARTBEAT heartbeat = new Protocol.C_HEARTBEAT();
+            Protocol.C_HEARTBEAT heartbeat = new();
+            var heartbeatPkt = PacketManager.MakeSendBuffer(heartbeat);
 
             while (isConnected)
             {
                 if ((long)(DateTime.UtcNow - lastMessageSent).TotalSeconds > 5)
                 {
-                    Send(heartbeat);
+                    Send(heartbeatPkt);
                 }
 
                 await UniTask.Delay(TimeSpan.FromSeconds(5));
             }
-        }
-
-        void Handle_S_ENTER(Protocol.S_ENTER enter)
-		{
-			Debug.Log("ENTER : " + enter.Result);
-
-            var packet = new C_INSTANTIATE_GAME_OBJECT();
-
-            var position = new Protocol.Vector3();
-            position.X = 0f;
-            position.Y = 0f;
-            position.Z = 0f;
-
-            var rotation = new Protocol.Vector3();
-            rotation.X = 0f;
-            rotation.Y = 0f;
-            rotation.Z = 0f;
-
-            packet.Position = position;
-            packet.Rotation = rotation;
-
-            Send(packet);
-        }
-
-        void Handle_S_ADDCLIENT(Protocol.S_ADD_CLIENT packet)
-        {
-            Debug.Log("ADD CLIENT.");
-        }
-
-        void Handle_S_INSTANTIATE(Protocol.S_INSTANTIATE_GAME_OBJECT packet)
-        {
-            Debug.Log("INSTANTIATE OBJECT.");
-
-            ClientManager.Instance.CreateDummy(ClientId);
         }
     }
 }

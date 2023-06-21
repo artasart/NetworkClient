@@ -1,28 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using FrameWork.Network;
+using Framework.Network;
 using System.Net;
 using System.Collections.Generic;
 using Protocol;
+using UnityEditor.Experimental.GraphView;
 
 public class ClientManager : MonoBehaviour
 {
-    #region Singleton
-
-    public static ClientManager Instance
-    {
-        get
-        {
-            if (instance != null) return instance;
-            instance = FindObjectOfType<ClientManager>();
-            return instance;
-        }
-    }
-    private static ClientManager instance;
-
-    #endregion
-
     TMP_InputField inputField_IpAddress;
     TMP_InputField inputField_Port;
 
@@ -34,14 +20,8 @@ public class ClientManager : MonoBehaviour
     Button btn_CreateDummy;
     Button btn_DestroyDummy;
 
-    RealtimePacket realtimePacket;
-
     GameObject go_Main;
     GameObject go_Dummy;
-
-    private int idGenerator = 0;
-    public Dictionary<string, Connection> connections;
-	private Connector connector;
 
     Dictionary<string, GameObject> gameObjects = new Dictionary<string, GameObject>();
     public GameObject dummyPrefab;
@@ -56,8 +36,6 @@ public class ClientManager : MonoBehaviour
 
 	private void Awake()
 	{
-        realtimePacket = new RealtimePacket();
-
         inputField_IpAddress = GameObject.Find(nameof(inputField_IpAddress)).GetComponent<TMP_InputField>();
         inputField_Port = GameObject.Find(nameof(inputField_Port)).GetComponent<TMP_InputField>();
 
@@ -68,7 +46,7 @@ public class ClientManager : MonoBehaviour
         btn_CreateMain = GameObject.Find(nameof(btn_CreateMain)).GetComponent<Button>();
         btn_DestroyMain = GameObject.Find(nameof(btn_DestroyMain)).GetComponent<Button>();
 
-        btn_Connect.onClick.AddListener(() => ConnectToServer("192.168.0.104", 7777));
+        //btn_Connect.onClick.AddListener(() => ConnectToServer("192.168.0.104", 7777));
 
         btn_CreateDummy.onClick.AddListener(OnClick_CreateDummy);
         btn_DestroyDummy.onClick.AddListener(OnClick_DestroyDummy);
@@ -82,40 +60,39 @@ public class ClientManager : MonoBehaviour
         go_Dummy = GameObject.Find("Dummy");
     }
 
-    private void Start()
-    {
-        idGenerator = 0;
-        connections =  new Dictionary<string, Connection>();
-
-        connector = new(connections);
-    }
-
-	public void ConnectToServer(string ip, int port)
-    {
-        var endPoint = new IPEndPoint(IPAddress.Parse(ip), port);
-
-        Connection connection = new Connection("test", realtimePacket);
-        connections.Add(connection.ClientId, connection);
-
-        connector.Connect(endPoint, "test");
-    }
+    Dictionary<string, Connection> dummyConnections = new();
 
     public void OnClick_CreateDummy()
 	{
-        ConnectToServer("192.168.0.104", 7777);
+        var endPoint = new IPEndPoint(IPAddress.Parse("192.168.0.104"), 7777);
+        var connection = ConnectionManager.GetConnection<DummyConnection>();
+        dummyConnections.Add(connection.ConnectionId, connection);
+        ConnectionManager.Connect(endPoint, connection.ConnectionId);
     }
 
     public void OnClick_DestroyDummy()
 	{
-        foreach(var item in connections)
-		{
-            item.Value.Send(new C_LEAVE());
-        }
+  //      foreach(var item in connections)
+		//{
+  //          item.Value.Send(new C_LEAVE());
+  //      }
     }
+
+    Connection mainConnection = null;
 
     public void OnClick_CreateMain()
     {
-        Debug.Log("OnClick_CreateMain");
+        if (mainConnection != null)
+            return;
+
+        var endPoint = new IPEndPoint(IPAddress.Parse("192.168.0.104"), 7777);
+        var connection = ConnectionManager.GetConnection<MainConnection>();
+
+        mainConnection = connection;
+
+        mainConnection.AddHandler(CreateDummy);
+
+        ConnectionManager.Connect(endPoint, connection.ConnectionId);
     }
 
     public void OnClick_DestroyMain()
@@ -123,27 +100,22 @@ public class ClientManager : MonoBehaviour
         Debug.Log("OnClick_DestroyMain");
     }
 
-    public void CreateDummy(string _connectionId)
+    public void CreateDummy(Protocol.S_ADD_GAME_OBJECT pkt)
 	{
-        var dummy = Instantiate(dummyPrefab, UnityEngine.Vector3.zero, Quaternion.identity, go_Dummy.transform);
+        foreach(var gameObject in pkt.GameObjects)
+        {
+            var position = new UnityEngine.Vector3(gameObject.Position.X, gameObject.Position.Y, gameObject.Position.Z);
+            var rotation = Quaternion.Euler(gameObject.Rotation.X, gameObject.Rotation.Y, gameObject.Rotation.Z);
 
-        dummy.transform.localPosition = new UnityEngine.Vector3(
-            UnityEngine.Random.Range(-3f, 3f),
-            UnityEngine.Random.Range(-3f, 3f),
-            UnityEngine.Random.Range(-3f, 3f)
-        );
+            var dummy = Instantiate(dummyPrefab, UnityEngine.Vector3.zero, Quaternion.identity, go_Dummy.transform);
+            dummy.transform.localPosition = position;
+            dummy.transform.localRotation = rotation;
+            dummy.name = gameObject.Id.ToString();
 
-        dummy.transform.localEulerAngles = new UnityEngine.Vector3(
-            UnityEngine.Random.Range(-45f, 45f),
-            UnityEngine.Random.Range(-45f, 45f),
-            UnityEngine.Random.Range(-45f, 45f)
-        );
-
-        dummy.name = "Dummy_" + _connectionId;
-
-        if (!gameObjects.ContainsKey(_connectionId))
-		{
-            gameObjects.Add(_connectionId, dummy);
+            if (!gameObjects.ContainsKey(dummy.name))
+            {
+                gameObjects.Add(dummy.name, dummy);
+            }
         }
     }
 

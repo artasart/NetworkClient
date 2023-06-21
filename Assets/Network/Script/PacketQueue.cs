@@ -1,50 +1,48 @@
 ﻿using Google.Protobuf;
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using FrameWork.Network;
-using UnityEngine;
 
-public class PacketMessage
+namespace Framework.Network
 {
-	public ushort Id { get; set; }
-	public IMessage Message { get; set; }
-}
+    public class PacketMessage
+    {
+        public ushort Id { get; set; }
+        public IMessage Message { get; set; }
+    }
 
-public class PacketQueue
-{
-	Queue<PacketMessage> _packetQueue = new Queue<PacketMessage>();
-	object _lock = new object();
+    public class PacketQueue
+    {
+        private readonly Queue<PacketMessage> _packetQueue = new();
+        private readonly object _lock = new();
 
-	public void Push( ushort id, IMessage packet)
-	{
-		lock (_lock)
-		{
-			_packetQueue.Enqueue(new PacketMessage() { Id = id, Message = packet });
-		}
-	}
+        public void Push( ushort id, IMessage packet )
+        {
+            lock (_lock)
+            {
+                _packetQueue.Enqueue(new PacketMessage() { Id = id, Message = packet });
+            }
+        }
 
-	public PacketMessage Pop()
-	{
-		lock (_lock)
-		{
-			if (_packetQueue.Count == 0)
-				return null;
+        public PacketMessage Pop()
+        {
+            lock (_lock)
+            {
+                return _packetQueue.Count == 0 ? null : _packetQueue.Dequeue();
+            }
+        }
 
-			return _packetQueue.Dequeue();
-		}
-	}
+        public List<PacketMessage> PopAll()
+        {
+            List<PacketMessage> list = new();
 
-	public List<PacketMessage> PopAll()
-	{
-		List<PacketMessage> list = new List<PacketMessage>();
+            lock (_lock)
+            {
+                while (_packetQueue.Count > 0)
+                {
+                    list.Add(_packetQueue.Dequeue());
+                }
+            }
 
-		lock (_lock)
-		{
-			while (_packetQueue.Count > 0)
-				list.Add(_packetQueue.Dequeue());
-		}
-
-		return list;
-	}
+            return list;
+        }
+    }
 }

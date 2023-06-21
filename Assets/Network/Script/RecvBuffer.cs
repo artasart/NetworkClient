@@ -1,17 +1,6 @@
-﻿/****************************************************************
+﻿using System;
 
-생성 : 2021-11-30
-마지막 수정 : 2022-05-17
-
-클라이언트 서버 연결 내부코드
-필수 Script
-
-*****************************************************************/
-
-
-using System;
-
-namespace FrameWork.Network
+namespace Framework.Network
 {
 	public class RecvBuffer
 	{

@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
 
-namespace FrameWork.Network
+namespace Framework.Network
 {
 	public abstract class PacketSession : Session
 	{
