@@ -6,12 +6,8 @@ public class MainConnection : Connection
 {
     private static int idGenerator = 0;
 
-    private readonly string clientId;
-
     public MainConnection()
     {
-        clientId = "Main";
-
         AddHandler(Handle_S_ENTER);
 
         connectedHandler += () =>
