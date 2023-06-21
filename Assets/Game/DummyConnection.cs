@@ -6,12 +6,8 @@ public class DummyConnection : Connection
 {
     private static int idGenerator = 0;
 
-    private readonly string clientId;
-
     public DummyConnection()
     {
-        clientId = "Dummy_" + idGenerator++.ToString();
-
         AddHandler(Handle_S_ENTER);
 
         connectedHandler += () =>
