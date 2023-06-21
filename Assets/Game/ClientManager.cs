@@ -96,6 +96,7 @@ public class ClientManager : MonoBehaviour
 
         mainConnection.AddHandler(AddGameObject);
         mainConnection.AddHandler(RemoveGameObject);
+        mainConnection.AddHandler(SetTransform);
 
         ConnectionManager.Connect(endPoint, connection.ConnectionId);
     }
@@ -131,5 +132,16 @@ public class ClientManager : MonoBehaviour
             Destroy(gameObjects[gameObjectId.ToString()]);
             gameObjects.Remove(gameObjectId.ToString());
         }
+    }
+
+    public void SetTransform( Protocol.S_SET_TRANSFORM pkt )
+    {
+        var go = gameObjects[pkt.GameObjectId.ToString()];
+
+        var position = new UnityEngine.Vector3(pkt.Position.X, pkt.Position.Y, pkt.Position.Z);
+        var rotation = Quaternion.Euler(pkt.Rotation.X, pkt.Rotation.Y, pkt.Rotation.Z);
+
+        go.transform.localPosition = position;
+        go.transform.localRotation = rotation;
     }
 }
