@@ -11,7 +11,7 @@ public class ClientManager : MonoBehaviour
 {
     TMP_InputField inputField_IpAddress;
     TMP_InputField inputField_Port;
-    TMP_InputField inputField_ConnectionId;
+    [SerializeField] TMP_InputField inputField_ConnectionId;
 
     Button btn_Connect;
 
@@ -89,7 +89,8 @@ public class ClientManager : MonoBehaviour
 
         var endPoint = new IPEndPoint(IPAddress.Parse("192.168.0.104"), 7777);
         var connection = ConnectionManager.GetConnection<MainConnection>();
-        connection.clientId = GetComponent<TMP_Text>().text;
+
+        connection.clientId = inputField_ConnectionId.text;
 
         mainConnection = connection;
 

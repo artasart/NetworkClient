@@ -177,7 +177,7 @@ GameObject:
   - component: {fileID: 72128028}
   - component: {fileID: 72128027}
   m_Layer: 5
-  m_Name: inputField_Port (1)
+  m_Name: inputField_ConnectionId
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
