@@ -1,28 +1,11 @@
 ﻿using Framework.Network;
 using Protocol;
-using UnityEngine;
 
 public class MainConnection : Connection
 {
-    private static int idGenerator = 0;
-
     public string clientId;
 
-    public MainConnection()
-    {
-        AddHandler(Handle_S_ENTER);
-
-        connectedHandler += () =>
-        {
-            Protocol.C_ENTER enter = new()
-            {
-                ClientId = clientId
-            };
-            Send(PacketManager.MakeSendBuffer(enter));
-        };
-    }
-
-    private void Handle_S_ENTER( Protocol.S_ENTER enter )
+    public void Handle_S_ENTER( Protocol.S_ENTER enter )
     {
         {
             C_GET_GAME_OBJECT packet = new();

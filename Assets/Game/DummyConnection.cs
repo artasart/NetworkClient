@@ -2,34 +2,16 @@
 using Framework.Network;
 using Protocol;
 using System;
-using UnityEngine;
 
 public class DummyConnection : Connection
 {
-    private static int idGenerator = 0;
-
-    int gameObjectId;
-    float p_x, p_y, p_z;
-    int r_x, r_y, r_z;
+    private int gameObjectId;
+    private float p_x, p_y, p_z;
+    private int r_x, r_y, r_z;
 
     public string clientId;
 
-    public DummyConnection()
-    {
-        AddHandler(Handle_S_ENTER);
-        AddHandler(Handle_S_INSTANTIATE_GAME_OBJECT);
-
-        connectedHandler += () =>
-        {
-            Protocol.C_ENTER enter = new()
-            {
-                ClientId = clientId
-            };
-            Send(PacketManager.MakeSendBuffer(enter));
-        };
-    }
-
-    private void Handle_S_ENTER( Protocol.S_ENTER enter )
+    public void Handle_S_ENTER( Protocol.S_ENTER enter )
     {
         C_INSTANTIATE_GAME_OBJECT packet = new();
 
@@ -61,7 +43,7 @@ public class DummyConnection : Connection
         Send(PacketManager.MakeSendBuffer(packet));
     }
 
-    private void Handle_S_INSTANTIATE_GAME_OBJECT( Protocol.S_INSTANTIATE_GAME_OBJECT enter )
+    public void Handle_S_INSTANTIATE_GAME_OBJECT( Protocol.S_INSTANTIATE_GAME_OBJECT enter )
     {
         gameObjectId = enter.GameObjectId;
         Rotate().Forget();
@@ -69,16 +51,17 @@ public class DummyConnection : Connection
 
     private async UniTask Rotate()
     {
-        Protocol.C_SET_TRANSFORM st = new();
-        
-        st.GameObjectId = gameObjectId;
+        Protocol.C_SET_TRANSFORM st = new()
+        {
+            GameObjectId = gameObjectId
+        };
 
         Protocol.Vector3 position = new();
         st.Position = position;
-        position.X = p_x; 
-        position.Y = p_y; 
+        position.X = p_x;
+        position.Y = p_y;
         position.Z = p_z;
-        
+
         Protocol.Vector3 rotation = new();
         st.Rotation = rotation;
 
