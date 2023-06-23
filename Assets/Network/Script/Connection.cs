@@ -7,7 +7,7 @@ namespace Framework.Network
     public class Connection : PacketHandler
     {
         public string ConnectionId { get; set; }
-        
+
         private ServerSession session;
         public ServerSession Session 
         {
@@ -48,9 +48,11 @@ namespace Framework.Network
 
         private void OnDisConnected()
         {
+            UnityEngine.Debug.Log("Session Disconnected");
+
             isConnected = false;
 
-            Session = null;
+            session = null;
 
             disconnectedHandler?.Invoke();
         }
@@ -96,8 +98,7 @@ namespace Framework.Network
 
         public async UniTaskVoid AsyncPacketUpdate()
         {
-
-            while (isConnected)
+            while (isConnected || !packetQueue.Empty())
             {
                 System.Collections.Generic.List<PacketMessage> packets = packetQueue.PopAll();
 

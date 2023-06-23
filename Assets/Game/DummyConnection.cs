@@ -9,8 +9,6 @@ public class DummyConnection : Connection
     private float p_x, p_y, p_z;
     private int r_x, r_y, r_z;
 
-    public string clientId;
-
     public void Handle_S_ENTER( Protocol.S_ENTER enter )
     {
         C_INSTANTIATE_GAME_OBJECT packet = new();
@@ -79,5 +77,10 @@ public class DummyConnection : Connection
 
             await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
         }
+    }
+
+    public void Handle_S_DISCONNECTED( Protocol.S_DISCONNECT pkt )
+    {
+        UnityEngine.Debug.Log("Connection Disconnected : " + ConnectionId + ", " + pkt.Code);
     }
 }

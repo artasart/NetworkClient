@@ -35,4 +35,8 @@ public class MainConnection : Connection
             Send(PacketManager.MakeSendBuffer(packet));
         }
     }
+    public void Handle_S_DISCONNECTED( Protocol.S_DISCONNECT pkt )
+    {
+        UnityEngine.Debug.Log("Connection Disconnected : " + ConnectionId + ", " + pkt.Code);
+    }
 }

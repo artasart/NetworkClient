@@ -44,5 +44,13 @@ namespace Framework.Network
 
             return list;
         }
+
+        public bool Empty()
+        {
+            lock (_lock)
+            {
+                return _packetQueue.Count == 0;
+            }
+        }
     }
 }

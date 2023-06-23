@@ -65,9 +65,9 @@ public class ClientManager : MonoBehaviour
 
         DummyConnection connection = (DummyConnection)ConnectionManager.GetConnection<DummyConnection>();
         
-        connection.clientId = inputField_ConnectionId.text + "_Dummy_" + connection.ConnectionId;
         connection.AddHandler(connection.Handle_S_ENTER);
         connection.AddHandler(connection.Handle_S_INSTANTIATE_GAME_OBJECT);
+        connection.AddHandler(connection.Handle_S_DISCONNECTED);
 
         dummyConnections.Add(connection.ConnectionId, connection);
         bool success = await ConnectionManager.Connect(endPoint, connection);
@@ -85,6 +85,7 @@ public class ClientManager : MonoBehaviour
         {
             dummyConnection.Value.Send(PacketManager.MakeSendBuffer(new Protocol.C_LEAVE()));
         }
+        dummyConnections.Clear();
     }
 
     private Connection mainConnection = null;
@@ -104,6 +105,7 @@ public class ClientManager : MonoBehaviour
         mainConnection = connection;
 
         mainConnection.AddHandler(connection.Handle_S_ENTER);
+        mainConnection.AddHandler(connection.Handle_S_DISCONNECTED);
         mainConnection.AddHandler(AddGameObject);
         mainConnection.AddHandler(RemoveGameObject);
         mainConnection.AddHandler(SetTransform);
@@ -119,7 +121,8 @@ public class ClientManager : MonoBehaviour
 
     public void OnClick_DestroyMain()
     {
-        Debug.Log("OnClick_DestroyMain");
+        mainConnection.Send(PacketManager.MakeSendBuffer(new Protocol.C_LEAVE()));
+        mainConnection = null;
     }
 
     public void AddGameObject( Protocol.S_ADD_GAME_OBJECT pkt )
@@ -153,6 +156,11 @@ public class ClientManager : MonoBehaviour
     public void SetTransform( Protocol.S_SET_TRANSFORM pkt )
     {
         GameObject go = gameObjects[pkt.GameObjectId.ToString()];
+
+        if(go == null)
+        {
+            return;
+        }
 
         UnityEngine.Vector3 position = new(pkt.Position.X, pkt.Position.Y, pkt.Position.Z);
         Quaternion rotation = Quaternion.Euler(pkt.Rotation.X, pkt.Rotation.Y, pkt.Rotation.Z);

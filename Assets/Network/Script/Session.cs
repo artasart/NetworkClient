@@ -217,7 +217,8 @@ namespace Framework.Network
 
         private void OnRecvCompleted( object sender, SocketAsyncEventArgs args )
         {
-            if (args.SocketError == System.Net.Sockets.SocketError.Success && args.BytesTransferred > 0)
+            //if (args.SocketError == System.Net.Sockets.SocketError.Success && args.BytesTransferred > 0)
+            if (args.BytesTransferred > 0)
             {
                 try
                 {
