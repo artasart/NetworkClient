@@ -4,56 +4,62 @@ using System;
 
 namespace Framework.Network
 {
+    public enum ConnectionState
+    {
+        NORMAL,
+        CLOSED
+    }
+
     public class Connection : PacketHandler
     {
         public string ConnectionId { get; set; }
 
         private ServerSession session;
-        public ServerSession Session 
+        public ServerSession Session
         {
-            get { return session; }
-            set 
-            { 
+            get => session;
+            set
+            {
                 session = value;
                 session.connectedHandler += OnConnected;
                 session.disconnectedHandler += OnDisConnected;
                 session.receivedHandler += OnRecv;
             }
         }
-        
-        protected bool isConnected;
+
+        protected ConnectionState state;
+
         protected Action connectedHandler;
         protected Action disconnectedHandler;
 
         private readonly PacketQueue packetQueue;
         private DateTime lastMessageSent;
 
+        ~Connection()
+        {
+            UnityEngine.Debug.Log("Connection Destructor");
+        }
+
         public Connection()
         {
-            isConnected = false;
+            state = ConnectionState.NORMAL;
+
+            AddHandler(Handle_S_DISCONNECTED);
 
             packetQueue = new();
             lastMessageSent = new(1970, 1, 1);
+
+            AsyncPacketUpdate().Forget();
+            HeartBeat().Forget();
         }
 
         private void OnConnected()
         {
-            isConnected = true;
-
-            AsyncPacketUpdate().Forget();
-            HeartBeat().Forget();
-
             connectedHandler?.Invoke();
         }
 
         private void OnDisConnected()
         {
-            UnityEngine.Debug.Log("Session Disconnected");
-
-            isConnected = false;
-
-            session = null;
-
             disconnectedHandler?.Invoke();
         }
 
@@ -64,17 +70,21 @@ namespace Framework.Network
 
         public void Send( ArraySegment<byte> pkt )
         {
-            if (!isConnected)
+            if (session == null)
+            {
                 return;
-            
+            }
+
             lastMessageSent = DateTime.UtcNow;
             Session.Send(pkt);
         }
 
         public void Enter()
         {
-            Protocol.C_ENTER enter = new();
-            enter.ClientId = "Test";
+            Protocol.C_ENTER enter = new()
+            {
+                ClientId = "Test"
+            };
             Send(PacketManager.MakeSendBuffer(enter));
         }
 
@@ -86,19 +96,43 @@ namespace Framework.Network
 
         public void ReEnter()
         {
-            Protocol.C_REENTER reEnter = new();
-            reEnter.ClientId = "Test";
+            Protocol.C_REENTER reEnter = new()
+            {
+                ClientId = "Test"
+            };
             Send(PacketManager.MakeSendBuffer(reEnter));
         }
 
+        //테스트용. 일반적인 상황에서는 사용할 일 없음
         public void Disconnect()
         {
-            Session.Disconnect();
+            session.Disconnect();
+        }
+
+        private void Handle_S_DISCONNECTED( Protocol.S_DISCONNECT pkt )
+        {
+            UnityEngine.Debug.Log("Connection Disconnected : " + ConnectionId + ", " + pkt.Code);
+            Close();
+        }
+
+        public void Close()
+        {
+            if (state == ConnectionState.CLOSED)
+            {
+                return;
+            }
+
+            state = ConnectionState.CLOSED;
+
+            if(session != null)
+            {
+                session.Disconnect();
+            }
         }
 
         public async UniTaskVoid AsyncPacketUpdate()
         {
-            while (isConnected || !packetQueue.Empty())
+            while (state == ConnectionState.NORMAL || !packetQueue.Empty())
             {
                 System.Collections.Generic.List<PacketMessage> packets = packetQueue.PopAll();
 
@@ -111,8 +145,6 @@ namespace Framework.Network
 
                 await UniTask.Delay(TimeSpan.FromSeconds(0.02f));
             }
-
-            disconnectedHandler?.Invoke();
         }
 
         public async UniTaskVoid HeartBeat()
@@ -120,7 +152,7 @@ namespace Framework.Network
             Protocol.C_HEARTBEAT heartbeat = new();
             ArraySegment<byte> heartbeatPkt = PacketManager.MakeSendBuffer(heartbeat);
 
-            while (isConnected)
+            while (state == ConnectionState.NORMAL)
             {
                 if ((long)(DateTime.UtcNow - lastMessageSent).TotalSeconds > 5)
                 {

@@ -2,6 +2,7 @@ using Framework.Network;
 using Protocol;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -63,27 +64,35 @@ public class ClientManager : MonoBehaviour
     {
         IPEndPoint endPoint = new(IPAddress.Parse("192.168.0.104"), 7777);
 
-        DummyConnection connection = (DummyConnection)ConnectionManager.GetConnection<DummyConnection>();
-        
-        connection.AddHandler(connection.Handle_S_ENTER);
-        connection.AddHandler(connection.Handle_S_INSTANTIATE_GAME_OBJECT);
-        connection.AddHandler(connection.Handle_S_DISCONNECTED);
-
-        dummyConnections.Add(connection.ConnectionId, connection);
-        bool success = await ConnectionManager.Connect(endPoint, connection);
-        if(success)
+        for(int i = 0; i<200; i++)
         {
-            Protocol.C_ENTER enter = new();
-            enter.ClientId = "Dummy_" + idGenerator++.ToString();
-            connection.Send(PacketManager.MakeSendBuffer(enter));
+            DummyConnection connection = (DummyConnection)ConnectionManager.GetConnection<DummyConnection>();
+
+            connection.AddHandler(connection.Handle_S_ENTER);
+            connection.AddHandler(connection.Handle_S_INSTANTIATE_GAME_OBJECT);
+
+            dummyConnections.Add(connection.ConnectionId, connection);
+            bool success = await ConnectionManager.Connect(endPoint, connection);
+            if (success)
+            {
+                Protocol.C_ENTER enter = new();
+                enter.ClientId = "Dummy_" + idGenerator++.ToString();
+                connection.Send(PacketManager.MakeSendBuffer(enter));
+            }
+            else
+            {
+                UnityEngine.Debug.Log("Enter Fail!");
+            }
         }
     }
 
-    public void OnClick_DestroyDummy()
+    public async void OnClick_DestroyDummy()
     {
         foreach (KeyValuePair<string, Connection> dummyConnection in dummyConnections)
         {
             dummyConnection.Value.Send(PacketManager.MakeSendBuffer(new Protocol.C_LEAVE()));
+
+            await Task.Delay(10);
         }
         dummyConnections.Clear();
     }
@@ -100,12 +109,9 @@ public class ClientManager : MonoBehaviour
         IPEndPoint endPoint = new(IPAddress.Parse("192.168.0.104"), 7777);
         MainConnection connection = (MainConnection)ConnectionManager.GetConnection<MainConnection>();
 
-        connection.clientId = inputField_ConnectionId.text;
-
         mainConnection = connection;
 
         mainConnection.AddHandler(connection.Handle_S_ENTER);
-        mainConnection.AddHandler(connection.Handle_S_DISCONNECTED);
         mainConnection.AddHandler(AddGameObject);
         mainConnection.AddHandler(RemoveGameObject);
         mainConnection.AddHandler(SetTransform);

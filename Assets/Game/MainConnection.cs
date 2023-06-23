@@ -3,8 +3,6 @@ using Protocol;
 
 public class MainConnection : Connection
 {
-    public string clientId;
-
     public void Handle_S_ENTER( Protocol.S_ENTER enter )
     {
         {
@@ -34,9 +32,5 @@ public class MainConnection : Connection
 
             Send(PacketManager.MakeSendBuffer(packet));
         }
-    }
-    public void Handle_S_DISCONNECTED( Protocol.S_DISCONNECT pkt )
-    {
-        UnityEngine.Debug.Log("Connection Disconnected : " + ConnectionId + ", " + pkt.Code);
     }
 }

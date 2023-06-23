@@ -63,7 +63,7 @@ public class DummyConnection : Connection
         Protocol.Vector3 rotation = new();
         st.Rotation = rotation;
 
-        while (isConnected)
+        while (state == ConnectionState.NORMAL)
         {
             r_x = (r_x + UnityEngine.Random.Range(1, 5)) % 360;
             r_y = (r_y + UnityEngine.Random.Range(1, 5)) % 360;
@@ -77,10 +77,5 @@ public class DummyConnection : Connection
 
             await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
         }
-    }
-
-    public void Handle_S_DISCONNECTED( Protocol.S_DISCONNECT pkt )
-    {
-        UnityEngine.Debug.Log("Connection Disconnected : " + ConnectionId + ", " + pkt.Code);
     }
 }
