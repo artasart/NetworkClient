@@ -2,6 +2,7 @@ using Google.Protobuf;
 using Protocol;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Framework.Network
 {
@@ -17,6 +18,8 @@ namespace Framework.Network
         PKT_S_REMOVE_CLIENT = 7,
         PKT_S_DISCONNECT = 8,
         PKT_C_HEARTBEAT = 9,
+        PKT_C_TEST = 10,
+        PKT_S_TEST = 11,
         PKT_C_INSTANTIATE_GAME_OBJECT = 100,
         PKT_S_INSTANTIATE_GAME_OBJECT = 101,
         PKT_C_GET_GAME_OBJECT = 102,
@@ -37,6 +40,7 @@ namespace Framework.Network
             onRecv.Add((ushort)MsgId.PKT_S_ADD_CLIENT, MakePacket<S_ADD_CLIENT>);
             onRecv.Add((ushort)MsgId.PKT_S_REMOVE_CLIENT, MakePacket<S_REMOVE_CLIENT>);
             onRecv.Add((ushort)MsgId.PKT_S_DISCONNECT, MakePacket<S_DISCONNECT>);
+            onRecv.Add((ushort)MsgId.PKT_S_TEST, MakePacket<S_TEST>);
             onRecv.Add((ushort)MsgId.PKT_S_INSTANTIATE_GAME_OBJECT, MakePacket<S_INSTANTIATE_GAME_OBJECT>);
             onRecv.Add((ushort)MsgId.PKT_S_ADD_GAME_OBJECT, MakePacket<S_ADD_GAME_OBJECT>);
             onRecv.Add((ushort)MsgId.PKT_S_REMOVE_GAME_OBJECT, MakePacket<S_REMOVE_GAME_OBJECT>);
@@ -63,6 +67,8 @@ namespace Framework.Network
             T pkt = new();
             pkt.MergeFrom(buffer.Array, buffer.Offset + 4, buffer.Count - 4);
 
+            UnityEngine.Debug.Log("Packet Pushed : " + id.ToString());
+
             packetQueue.Push(id, pkt);
         }
         
@@ -71,6 +77,7 @@ namespace Framework.Network
         public static ArraySegment<byte> MakeSendBuffer( Protocol.C_LEAVE pkt ) { return MakeSendBuffer(pkt, 4); }
         public static ArraySegment<byte> MakeSendBuffer( Protocol.C_GET_CLIENT pkt ) { return MakeSendBuffer(pkt, 5); }
         public static ArraySegment<byte> MakeSendBuffer( Protocol.C_HEARTBEAT pkt ) { return MakeSendBuffer(pkt, 9); }
+        public static ArraySegment<byte> MakeSendBuffer( Protocol.C_TEST pkt ) { return MakeSendBuffer(pkt, 10); }
         public static ArraySegment<byte> MakeSendBuffer( Protocol.C_INSTANTIATE_GAME_OBJECT pkt ) { return MakeSendBuffer(pkt, 100); }
         public static ArraySegment<byte> MakeSendBuffer( Protocol.C_GET_GAME_OBJECT pkt ) { return MakeSendBuffer(pkt, 102); }
         public static ArraySegment<byte> MakeSendBuffer( Protocol.C_SET_TRANSFORM pkt ) { return MakeSendBuffer(pkt, 105); }

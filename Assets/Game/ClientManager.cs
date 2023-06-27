@@ -174,4 +174,9 @@ public class ClientManager : MonoBehaviour
         go.transform.localPosition = position;
         go.transform.localRotation = rotation;
     }
+
+    public void Test(Protocol.S_TEST pkt)
+    {
+        Debug.Log("Test : " + pkt.Message);
+    }
 }
