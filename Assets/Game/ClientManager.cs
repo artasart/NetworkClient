@@ -120,7 +120,7 @@ public class ClientManager : MonoBehaviour
         if (success)
         {
             Protocol.C_ENTER enter = new();
-            enter.ClientId = "Main";
+            enter.ClientId = "Main" + inputField_ConnectionId.text;
             connection.Send(PacketManager.MakeSendBuffer(enter));
         }
     }
@@ -161,7 +161,11 @@ public class ClientManager : MonoBehaviour
 
     public void SetTransform( Protocol.S_SET_TRANSFORM pkt )
     {
-        GameObject go = gameObjects[pkt.GameObjectId.ToString()];
+        GameObject go;
+        if(!gameObjects.TryGetValue(pkt.GameObjectId.ToString(), out go))
+        {
+            return;
+        }
 
         if(go == null)
         {
