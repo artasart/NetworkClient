@@ -64,7 +64,7 @@ public class ClientManager : MonoBehaviour
     {
         IPEndPoint endPoint = new(IPAddress.Parse("192.168.0.104"), 7777);
 
-        for(int i = 0; i<200; i++)
+        for(int i = 0; i<100; i++)
         {
             DummyConnection connection = (DummyConnection)ConnectionManager.GetConnection<DummyConnection>();
 
@@ -92,7 +92,7 @@ public class ClientManager : MonoBehaviour
         {
             dummyConnection.Value.Send(PacketManager.MakeSendBuffer(new Protocol.C_LEAVE()));
 
-            await Task.Delay(10);
+            //await Task.Delay(10);
         }
         dummyConnections.Clear();
     }
@@ -112,6 +112,7 @@ public class ClientManager : MonoBehaviour
         mainConnection = connection;
 
         mainConnection.AddHandler(connection.Handle_S_ENTER);
+        mainConnection.AddHandler(Test);
         mainConnection.AddHandler(AddGameObject);
         mainConnection.AddHandler(RemoveGameObject);
         mainConnection.AddHandler(SetTransform);
@@ -152,6 +153,8 @@ public class ClientManager : MonoBehaviour
 
     public void RemoveGameObject( Protocol.S_REMOVE_GAME_OBJECT pkt )
     {
+        Debug.Log("Remove game object");
+
         foreach (int gameObjectId in pkt.GameObjects)
         {
             Destroy(gameObjects[gameObjectId.ToString()]);

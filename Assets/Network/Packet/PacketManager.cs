@@ -67,6 +67,9 @@ namespace Framework.Network
             T pkt = new();
             pkt.MergeFrom(buffer.Array, buffer.Offset + 4, buffer.Count - 4);
 
+            if(id != 106)
+                UnityEngine.Debug.Log("Packet Pushed : " + id.ToString());
+
             packetQueue.Push(id, pkt);
         }
         
