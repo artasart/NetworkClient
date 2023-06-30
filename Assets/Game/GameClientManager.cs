@@ -185,6 +185,6 @@ public class GameClientManager : MonoBehaviour
 
     public void Test(Protocol.S_TEST pkt)
     {
-        Debug.Log("Test : " + pkt.Message);
+        Debug.Log("Test");
     }
 }

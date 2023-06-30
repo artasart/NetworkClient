@@ -32,5 +32,10 @@ public class MainConnection : Connection
 
             Send(PacketManager.MakeSendBuffer(packet));
         }
+
+        {
+            Protocol.C_TEST packet = new();
+            Send(PacketManager.MakeSendBuffer(packet));
+        }
     }
 }
