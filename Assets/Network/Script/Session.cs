@@ -116,7 +116,8 @@ namespace Framework.Network
                 return;
             }
 
-            OnDisconnected(_socket.RemoteEndPoint);
+            var endpoint = _socket.Connected ? _socket.RemoteEndPoint : null;
+            OnDisconnected(endpoint);
             _socket.Shutdown(SocketShutdown.Both);
             _socket.Close();
             Clear();
@@ -239,6 +240,7 @@ namespace Framework.Network
             }
             else
             {
+                Debug.Log($"OnRecvCompleted Failed {args.SocketError} {args.BytesTransferred}");
                 Disconnect();
             }
         }
