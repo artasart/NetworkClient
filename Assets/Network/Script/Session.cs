@@ -111,24 +111,14 @@ namespace Framework.Network
 
         public void Disconnect()
         {
-            if (_socket == null)
-            {
-                return;
-            }
-
             if (Interlocked.Exchange(ref _disconnected, 1) == 1)
             {
                 return;
             }
 
             OnDisconnected(_socket.RemoteEndPoint);
-
-            if (_socket.RemoteEndPoint != null)
-            {
-                _socket.Shutdown(SocketShutdown.Both);
-                _socket.Close();
-            }
-
+            _socket.Shutdown(SocketShutdown.Both);
+            _socket.Close();
             Clear();
         }
 
@@ -217,8 +207,7 @@ namespace Framework.Network
 
         private void OnRecvCompleted( object sender, SocketAsyncEventArgs args )
         {
-            //if (args.SocketError == System.Net.Sockets.SocketError.Success && args.BytesTransferred > 0)
-            if (args.BytesTransferred > 0)
+            if (args.SocketError == System.Net.Sockets.SocketError.Success && args.BytesTransferred > 0)
             {
                 try
                 {

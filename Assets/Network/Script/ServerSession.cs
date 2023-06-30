@@ -19,10 +19,6 @@ namespace Framework.Network
         public override void OnDisconnected( EndPoint _endPoint )
         {
             disconnectedHandler?.Invoke();
-
-            connectedHandler = null;
-            disconnectedHandler = null;
-            receivedHandler = null;
         }
 
         public override void OnRecvPacket( ArraySegment<byte> buffer )
