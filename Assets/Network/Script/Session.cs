@@ -116,8 +116,6 @@ namespace Framework.Network
                 return;
             }
 
-            Debug.Log("Disconnected Called");
-
             try
             {
                 OnDisconnected(_socket.RemoteEndPoint);

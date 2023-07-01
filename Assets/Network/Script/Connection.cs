@@ -111,7 +111,7 @@ namespace Framework.Network
 
         private void Handle_S_DISCONNECTED( Protocol.S_DISCONNECT pkt )
         {
-            UnityEngine.Debug.Log("Connection Disconnected");
+            UnityEngine.Debug.Log("Handle S Disconnect");
             Close();
         }
 
