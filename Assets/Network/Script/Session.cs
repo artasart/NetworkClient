@@ -185,6 +185,7 @@ namespace Framework.Network
                 }
                 else
                 {
+                    Debug.Log($"OnSendCompleted Fail, Disconnect {args.SocketError}");
                     Disconnect();
                 }
             }
@@ -223,6 +224,7 @@ namespace Framework.Network
                 {
                     if (_recvBuffer.OnWrite(args.BytesTransferred) == false)
                     {
+                        Debug.Log($"OnWrite Fail, Disconnect");
                         Disconnect();
                         return;
                     }
@@ -230,12 +232,14 @@ namespace Framework.Network
                     int processLen = OnRecv(_recvBuffer.ReadSegment);
                     if (processLen < 0 || _recvBuffer.DataSize < processLen)
                     {
+                        Debug.Log($"OnRecv Fail, Disconnect");
                         Disconnect();
                         return;
                     }
 
                     if (_recvBuffer.OnRead(processLen) == false)
                     {
+                        Debug.Log($"OnRead Fail, Disconnect");
                         Disconnect();
                         return;
                     }
@@ -249,7 +253,7 @@ namespace Framework.Network
             }
             else
             {
-                Debug.Log($"OnRecvCompleted Failed {args.SocketError} {args.BytesTransferred}");
+                Debug.Log($"OnRecvCompleted Fail, Disconnect {args.SocketError} {args.BytesTransferred}");
                 Disconnect();
             }
         }
