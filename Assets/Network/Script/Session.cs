@@ -116,9 +116,16 @@ namespace Framework.Network
                 return;
             }
 
-            var endpoint = _socket.Connected ? _socket.RemoteEndPoint : null;
-            OnDisconnected(endpoint);
-            _socket.Shutdown(SocketShutdown.Both);
+            try
+            {
+                OnDisconnected(_socket.RemoteEndPoint);
+                _socket.Shutdown(SocketShutdown.Both);
+            }
+            catch (Exception e)
+            {
+                Debug.Log($"Shutdown Failed {e}");
+            }
+            
             _socket.Close();
             Clear();
         }
