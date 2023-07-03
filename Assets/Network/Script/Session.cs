@@ -43,38 +43,33 @@ namespace Framework.Network
 
     public abstract class Session
     {
-        private Socket _socket;
-        private int _disconnected = 0;
-        private readonly RecvBuffer _recvBuffer = new(65535);
-        private readonly object _lock = new();
-        private readonly Queue<ArraySegment<byte>> _sendQueue = new();
-        private readonly List<ArraySegment<byte>> _pendingList = new();
-        private readonly SocketAsyncEventArgs _sendArgs = new();
-        private readonly SocketAsyncEventArgs _recvArgs = new();
-
-        bool isSendRegistered = false;
-        bool isDisconnectRegistered = false;
+        private Socket socket;
+        private readonly RecvBuffer recvBuffer = new(65535);
+        private readonly object @lock = new();
+        private readonly Queue<ArraySegment<byte>> sendQueue = new();
+        private readonly List<ArraySegment<byte>> pendingList = new();
+        private readonly SocketAsyncEventArgs sendArgs = new();
+        private readonly SocketAsyncEventArgs recvArgs = new();
+        private bool isConnected = false;
+        private bool isSendRegistered = false;
+        private bool isDisconnectRegistered = false;
 
         public abstract void OnConnected( EndPoint endPoint );
         public abstract int OnRecv( ArraySegment<byte> buffer );
         public abstract void OnSend( int numOfBytes );
         public abstract void OnDisconnected( EndPoint endPoint );
 
-        private void Clear()
-        {
-            lock (_lock)
-            {
-                _sendQueue.Clear();
-                _pendingList.Clear();
-            }
-        }
-
         public void Start( Socket socket )
         {
-            _socket = socket;
+            lock(@lock)
+            {
+                isConnected = true;
+            }
 
-            _recvArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnRecvCompleted);
-            _sendArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnSendCompleted);
+            this.socket = socket;
+
+            recvArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnRecvCompleted);
+            sendArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnSendCompleted);
 
             RegisterRecv();
         }
@@ -86,19 +81,19 @@ namespace Framework.Network
                 return;
             }
 
-            lock (_lock)
+            lock (@lock)
             {
-                if(isDisconnectRegistered)
+                if (isDisconnectRegistered)
                 {
                     return;
                 }
 
                 foreach (ArraySegment<byte> sendBuff in sendBuffList)
                 {
-                    _sendQueue.Enqueue(sendBuff);
+                    sendQueue.Enqueue(sendBuff);
                 }
 
-                if (_pendingList.Count == 0)
+                if (pendingList.Count == 0)
                 {
                     isSendRegistered = true;
                     RegisterSend();
@@ -108,15 +103,15 @@ namespace Framework.Network
 
         public void Send( ArraySegment<byte> sendBuff )
         {
-            lock (_lock)
+            lock (@lock)
             {
                 if (isDisconnectRegistered)
                 {
                     return;
                 }
 
-                _sendQueue.Enqueue(sendBuff);
-                if (_pendingList.Count == 0)
+                sendQueue.Enqueue(sendBuff);
+                if (pendingList.Count == 0)
                 {
                     isSendRegistered = true;
                     RegisterSend();
@@ -126,11 +121,11 @@ namespace Framework.Network
 
         public void RegisterDisconnect()
         {
-            lock(_lock)
+            lock (@lock)
             {
                 isDisconnectRegistered = true;
 
-                if(isSendRegistered == false)
+                if (isSendRegistered == false)
                 {
                     Disconnect();
                 }
@@ -139,45 +134,42 @@ namespace Framework.Network
 
         public void Disconnect()
         {
-            if (Interlocked.Exchange(ref _disconnected, 1) == 1)
+            lock(@lock)
             {
-                return;
-            }
+                isConnected = false;
 
-            try
-            {
-                OnDisconnected(_socket.RemoteEndPoint);
-                _socket.Shutdown(SocketShutdown.Send);
+                try
+                {
+                    OnDisconnected(socket.RemoteEndPoint);
+                    socket.Shutdown(SocketShutdown.Send);
+                }
+                catch (Exception e)
+                {
+                    Debug.Log($"Shutdown Failed {e}");
+                }
+
+                socket.Close();
+
+                sendQueue.Clear();
+                pendingList.Clear();
             }
-            catch (Exception e)
-            {
-                Debug.Log($"Shutdown Failed {e}");
-            }
-            
-            _socket.Close();
-            Clear();
         }
 
         private void RegisterSend()
         {
-            if (_disconnected == 1)
+            while (sendQueue.Count > 0)
             {
-                return;
+                ArraySegment<byte> buff = sendQueue.Dequeue();
+                pendingList.Add(buff);
             }
-
-            while (_sendQueue.Count > 0)
-            {
-                ArraySegment<byte> buff = _sendQueue.Dequeue();
-                _pendingList.Add(buff);
-            }
-            _sendArgs.BufferList = _pendingList;
+            sendArgs.BufferList = pendingList;
 
             try
             {
-                bool pending = _socket.SendAsync(_sendArgs);
+                bool pending = socket.SendAsync(sendArgs);
                 if (pending == false)
                 {
-                    OnSendCompleted(null, _sendArgs);
+                    OnSendCompleted(null, sendArgs);
                 }
             }
             catch (Exception e)
@@ -188,58 +180,53 @@ namespace Framework.Network
 
         private void OnSendCompleted( object sender, SocketAsyncEventArgs args )
         {
-            lock (_lock)
+            if (args.BytesTransferred > 0 && args.SocketError == System.Net.Sockets.SocketError.Success)
             {
-                if (args.BytesTransferred > 0 && args.SocketError == System.Net.Sockets.SocketError.Success)
+                try
                 {
-                    try
+                    lock(@lock)
                     {
-                        _sendArgs.BufferList = null;
-                        _pendingList.Clear();
+                        sendArgs.BufferList = null;
+                        pendingList.Clear();
 
-                        OnSend(_sendArgs.BytesTransferred);
+                        OnSend(sendArgs.BytesTransferred);
 
-                        if(isDisconnectRegistered)
+                        if (isDisconnectRegistered)
                         {
                             Disconnect();
                             return;
                         }
 
-                        if (_sendQueue.Count > 0)
+                        if (sendQueue.Count > 0)
                         {
                             RegisterSend();
                         }
                     }
-                    catch (Exception e)
-                    {
-                        Debug.Log($"OnSendCompleted Failed {e}");
-                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    Debug.Log($"OnSendCompleted Fail, Disconnect {args.SocketError}");
-                    Disconnect();
+                    Debug.Log($"OnSendCompleted Failed {e}");
                 }
+            }
+            else
+            {
+                Debug.Log($"OnSendCompleted Fail, Disconnect {args.SocketError}");
+                Disconnect();
             }
         }
 
         private void RegisterRecv()
         {
-            if (_disconnected == 1)
-            {
-                return;
-            }
-
-            _recvBuffer.Clean();
-            ArraySegment<byte> segment = _recvBuffer.WriteSegment;
-            _recvArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
+            recvBuffer.Clean();
+            ArraySegment<byte> segment = recvBuffer.WriteSegment;
+            recvArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
 
             try
             {
-                bool pending = _socket.ReceiveAsync(_recvArgs);
+                bool pending = socket.ReceiveAsync(recvArgs);
                 if (pending == false)
                 {
-                    OnRecvCompleted(null, _recvArgs);
+                    OnRecvCompleted(null, recvArgs);
                 }
             }
             catch (Exception e)
@@ -254,25 +241,25 @@ namespace Framework.Network
             {
                 try
                 {
-                    if (_recvBuffer.OnWrite(args.BytesTransferred) == false)
+                    if (recvBuffer.OnWrite(args.BytesTransferred) == false)
                     {
                         Debug.Log($"OnWrite Fail, Disconnect");
-                        Disconnect();
+                        RegisterDisconnect();
                         return;
                     }
 
-                    int processLen = OnRecv(_recvBuffer.ReadSegment);
-                    if (processLen < 0 || _recvBuffer.DataSize < processLen)
+                    int processLen = OnRecv(recvBuffer.ReadSegment);
+                    if (processLen < 0 || recvBuffer.DataSize < processLen)
                     {
                         Debug.Log($"OnRecv Fail, Disconnect");
-                        Disconnect();
+                        RegisterDisconnect();
                         return;
                     }
 
-                    if (_recvBuffer.OnRead(processLen) == false)
+                    if (recvBuffer.OnRead(processLen) == false)
                     {
                         Debug.Log($"OnRead Fail, Disconnect");
-                        Disconnect();
+                        RegisterDisconnect();
                         return;
                     }
 
@@ -286,7 +273,7 @@ namespace Framework.Network
             else
             {
                 Debug.Log($"OnRecvCompleted Fail, Disconnect {args.SocketError} {args.BytesTransferred}");
-                Disconnect();
+                RegisterDisconnect();
             }
         }
     }
