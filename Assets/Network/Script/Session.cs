@@ -85,7 +85,7 @@ namespace Framework.Network
 
                 isDisconnectRegistered = true;
 
-                if (isSendRegistered == false)
+                if (!isSendRegistered)
                 {
                     Disconnect();
                 }

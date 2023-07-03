@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Net;
-using UnityEngine;
 
 namespace Framework.Network
 {
@@ -11,12 +9,12 @@ namespace Framework.Network
         public Action disconnectedHandler;
         public Action<ArraySegment<byte>> receivedHandler;
 
-        public override void OnConnected( EndPoint _endPoint )
+        public override void OnConnected( EndPoint endPoint )
         {
             connectedHandler?.Invoke();
         }
 
-        public override void OnDisconnected( EndPoint _endPoint )
+        public override void OnDisconnected( EndPoint endPoint )
         {
             disconnectedHandler?.Invoke();
         }
@@ -26,6 +24,6 @@ namespace Framework.Network
             receivedHandler?.Invoke(buffer);
         }
 
-        public override void OnSend( int _numOfBytes ) { }
+        public override void OnSend( int numOfBytes ) { }
     }
 }

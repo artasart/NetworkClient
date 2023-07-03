@@ -24,8 +24,6 @@ public class GameClientManager : MonoBehaviour
 
 	#endregion
 
-
-
 	#region Members
 
 	public string ip = "192.168.0.104";
@@ -45,16 +43,11 @@ public class GameClientManager : MonoBehaviour
 
 	#endregion
 
-
-
 	private void Awake()
 	{
         go_Main = this.transform.Search(nameof(go_Main));
         go_Dummy = this.transform.Search(nameof(go_Dummy));
 	}
-
-
-
 
     public async void CreateDummy()
 	{
@@ -94,9 +87,6 @@ public class GameClientManager : MonoBehaviour
         dummyConnections.Clear();
     }
 
-
-
-
     public async void CreateMain(string _connectionId)
 	{
         if (mainConnection != null)
@@ -130,8 +120,13 @@ public class GameClientManager : MonoBehaviour
         mainConnection = null;
     }
 
-
-
+    public void RemoveClient(Protocol.S_REMOVE_CLIENT pkt)
+    {
+        foreach (string clientId in pkt.ClientIds)
+        {
+            dummyConnections.Remove(clientId);
+        }
+    }
 
 	public void AddGameObject( Protocol.S_ADD_GAME_OBJECT pkt )
     {
