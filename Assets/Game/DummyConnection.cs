@@ -43,11 +43,11 @@ public class DummyConnection : Connection
 
     public void Handle_S_INSTANTIATE_GAME_OBJECT( Protocol.S_INSTANTIATE_GAME_OBJECT enter )
     {
-        Protocol.C_LEAVE leave = new();
-        Send(PacketManager.MakeSendBuffer(leave));
+        //Protocol.C_LEAVE leave = new();
+        //Send(PacketManager.MakeSendBuffer(leave));
 
-        //gameObjectId = enter.GameObjectId;
-        //Rotate().Forget();
+        gameObjectId = enter.GameObjectId;
+        Rotate().Forget();
     }
 
     private async UniTask Rotate()
