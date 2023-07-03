@@ -52,6 +52,9 @@ namespace Framework.Network
         private readonly SocketAsyncEventArgs _sendArgs = new();
         private readonly SocketAsyncEventArgs _recvArgs = new();
 
+        bool isSendRegistered = false;
+        bool isDisconnectRegistered = false;
+
         public abstract void OnConnected( EndPoint endPoint );
         public abstract int OnRecv( ArraySegment<byte> buffer );
         public abstract void OnSend( int numOfBytes );
@@ -85,6 +88,11 @@ namespace Framework.Network
 
             lock (_lock)
             {
+                if(isDisconnectRegistered)
+                {
+                    return;
+                }
+
                 foreach (ArraySegment<byte> sendBuff in sendBuffList)
                 {
                     _sendQueue.Enqueue(sendBuff);
@@ -92,6 +100,7 @@ namespace Framework.Network
 
                 if (_pendingList.Count == 0)
                 {
+                    isSendRegistered = true;
                     RegisterSend();
                 }
             }
@@ -101,10 +110,29 @@ namespace Framework.Network
         {
             lock (_lock)
             {
+                if (isDisconnectRegistered)
+                {
+                    return;
+                }
+
                 _sendQueue.Enqueue(sendBuff);
                 if (_pendingList.Count == 0)
                 {
+                    isSendRegistered = true;
                     RegisterSend();
+                }
+            }
+        }
+
+        public void RegisterDisconnect()
+        {
+            lock(_lock)
+            {
+                isDisconnectRegistered = true;
+
+                if(isSendRegistered == false)
+                {
+                    Disconnect();
                 }
             }
         }
@@ -119,7 +147,7 @@ namespace Framework.Network
             try
             {
                 OnDisconnected(_socket.RemoteEndPoint);
-                _socket.Shutdown(SocketShutdown.Both);
+                _socket.Shutdown(SocketShutdown.Send);
             }
             catch (Exception e)
             {
@@ -170,6 +198,12 @@ namespace Framework.Network
                         _pendingList.Clear();
 
                         OnSend(_sendArgs.BytesTransferred);
+
+                        if(isDisconnectRegistered)
+                        {
+                            Disconnect();
+                            return;
+                        }
 
                         if (_sendQueue.Count > 0)
                         {
