@@ -59,6 +59,12 @@ namespace Framework.Network
         public abstract int OnRecv( ArraySegment<byte> buffer );
         public abstract void OnSend( int numOfBytes );
 
+        ~Session()
+        {
+            if (socket != null)
+                socket.Close();
+        }
+
         public void Start( Socket socket )
         {
             lock (@lock)
@@ -107,14 +113,20 @@ namespace Framework.Network
             try
             {
                 OnDisconnected(socket.RemoteEndPoint);
+            }
+            catch (Exception e)
+            {
+                Debug.Log($"Get RemoteEndPoint Failed {e}");
+            }
+
+            try
+            {
                 socket.Shutdown(SocketShutdown.Send);
             }
             catch (Exception e)
             {
                 Debug.Log($"Shutdown Failed {e}");
             }
-
-            socket.Close();
 
             sendQueue.Clear();
             pendingList.Clear();
