@@ -44,8 +44,8 @@ namespace Framework.Network
     public abstract class Session
     {
         private Socket socket;
-        private readonly RecvBuffer recvBuffer = new(65535);
         private readonly object @lock = new();
+        private readonly RecvBuffer recvBuffer = new(65535);
         private readonly Queue<ArraySegment<byte>> sendQueue = new();
         private readonly List<ArraySegment<byte>> pendingList = new();
         private readonly SocketAsyncEventArgs sendArgs = new();
@@ -55,13 +55,13 @@ namespace Framework.Network
         private bool isDisconnectRegistered = false;
 
         public abstract void OnConnected( EndPoint endPoint );
+        public abstract void OnDisconnected( EndPoint endPoint );
         public abstract int OnRecv( ArraySegment<byte> buffer );
         public abstract void OnSend( int numOfBytes );
-        public abstract void OnDisconnected( EndPoint endPoint );
 
         public void Start( Socket socket )
         {
-            lock(@lock)
+            lock (@lock)
             {
                 isConnected = true;
             }
@@ -74,55 +74,15 @@ namespace Framework.Network
             RegisterRecv();
         }
 
-        public void Send( List<ArraySegment<byte>> sendBuffList )
-        {
-            if (sendBuffList.Count == 0)
-            {
-                return;
-            }
-
-            lock (@lock)
-            {
-                if (isDisconnectRegistered)
-                {
-                    return;
-                }
-
-                foreach (ArraySegment<byte> sendBuff in sendBuffList)
-                {
-                    sendQueue.Enqueue(sendBuff);
-                }
-
-                if (pendingList.Count == 0)
-                {
-                    isSendRegistered = true;
-                    RegisterSend();
-                }
-            }
-        }
-
-        public void Send( ArraySegment<byte> sendBuff )
-        {
-            lock (@lock)
-            {
-                if (isDisconnectRegistered)
-                {
-                    return;
-                }
-
-                sendQueue.Enqueue(sendBuff);
-                if (pendingList.Count == 0)
-                {
-                    isSendRegistered = true;
-                    RegisterSend();
-                }
-            }
-        }
-
         public void RegisterDisconnect()
         {
             lock (@lock)
             {
+                if(isDisconnectRegistered)
+                {
+                    return;
+                }
+
                 isDisconnectRegistered = true;
 
                 if (isSendRegistered == false)
@@ -134,34 +94,69 @@ namespace Framework.Network
 
         public void Disconnect()
         {
-            lock(@lock)
+            lock (@lock)
             {
+                if(!isConnected)
+                {
+                    return;
+                }
+
                 isConnected = false;
+            }
 
-                try
+            try
+            {
+                OnDisconnected(socket.RemoteEndPoint);
+                socket.Shutdown(SocketShutdown.Send);
+            }
+            catch (Exception e)
+            {
+                Debug.Log($"Shutdown Failed {e}");
+            }
+
+            socket.Close();
+
+            sendQueue.Clear();
+            pendingList.Clear();
+        }
+
+        public void Send( ArraySegment<byte> sendBuff )
+        {
+            bool registerSend = false;
+
+            lock (@lock)
+            {
+                if (isDisconnectRegistered)
                 {
-                    OnDisconnected(socket.RemoteEndPoint);
-                    socket.Shutdown(SocketShutdown.Send);
+                    return;
                 }
-                catch (Exception e)
+
+                sendQueue.Enqueue(sendBuff);
+
+                if (!isSendRegistered)
                 {
-                    Debug.Log($"Shutdown Failed {e}");
+                    isSendRegistered = true;
+                    registerSend = true;
                 }
+            }
 
-                socket.Close();
-
-                sendQueue.Clear();
-                pendingList.Clear();
+            if(registerSend)
+            {
+                RegisterSend();
             }
         }
 
         private void RegisterSend()
         {
-            while (sendQueue.Count > 0)
+            lock (@lock)
             {
-                ArraySegment<byte> buff = sendQueue.Dequeue();
-                pendingList.Add(buff);
+                while (sendQueue.Count > 0)
+                {
+                    ArraySegment<byte> buff = sendQueue.Dequeue();
+                    pendingList.Add(buff);
+                }
             }
+
             sendArgs.BufferList = pendingList;
 
             try
@@ -184,7 +179,7 @@ namespace Framework.Network
             {
                 try
                 {
-                    lock(@lock)
+                    lock (@lock)
                     {
                         sendArgs.BufferList = null;
                         pendingList.Clear();
@@ -193,6 +188,7 @@ namespace Framework.Network
 
                         if (isDisconnectRegistered)
                         {
+                            //isSendRegistered = false;
                             Disconnect();
                             return;
                         }
@@ -200,6 +196,10 @@ namespace Framework.Network
                         if (sendQueue.Count > 0)
                         {
                             RegisterSend();
+                        }
+                        else
+                        {
+                            isSendRegistered = false;
                         }
                     }
                 }
