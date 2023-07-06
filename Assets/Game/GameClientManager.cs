@@ -24,13 +24,14 @@ public class GameClientManager : MonoBehaviour
 
 	#endregion
 
+
+
 	#region Members
 
 	public string ip = "192.168.0.104";
     public int port = 7777;
 
     private readonly Dictionary<string, GameObject> gameObjects = new();
-    public GameObject dummyPrefab;
     public int dummyCount = 0;
 
     private readonly Dictionary<string, Connection> dummyConnections = new();
@@ -43,17 +44,24 @@ public class GameClientManager : MonoBehaviour
 
 	#endregion
 
+
+
 	private void Awake()
 	{
         go_Main = this.transform.Search(nameof(go_Main));
         go_Dummy = this.transform.Search(nameof(go_Dummy));
 	}
 
+    private void Start()
+	{
+        GameManager.UI.StackPanel<Panel_Network>();
+	}
+
     public async void CreateDummy()
 	{
         IPEndPoint endPoint = new(IPAddress.Parse("192.168.0.104"), 7777);
 
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 20; i++)
         {
             DummyConnection connection = (DummyConnection)ConnectionManager.GetConnection<DummyConnection>();
 
@@ -135,9 +143,13 @@ public class GameClientManager : MonoBehaviour
             UnityEngine.Vector3 position = new(gameObject.Position.X, gameObject.Position.Y, gameObject.Position.Z);
             Quaternion rotation = Quaternion.Euler(gameObject.Rotation.X, gameObject.Rotation.Y, gameObject.Rotation.Z);
 
-            GameObject dummy = Instantiate(dummyPrefab, UnityEngine.Vector3.zero, Quaternion.identity, go_Dummy.transform);
-            dummy.transform.localPosition = position;
-            dummy.transform.localRotation = rotation;
+            Rouge rouge = new Rouge(MonsterType.MonsterA, "Rouge", 100, 100, 10, 30, 1000, 10, 1, EffectType.Effect_Thunder, EffectType.Effect_Explosion);
+
+            FindObjectOfType<MonsterPool>().Spawn(rouge, position, rotation);
+            FindObjectOfType<EffectPool>().Spawn(rouge.spawn, position, Quaternion.identity);
+
+            var dummy = FindObjectOfType<MonsterPool>().GetGenerateMonster();
+
             dummy.name = gameObject.Id.ToString();
 
             if (!gameObjects.ContainsKey(dummy.name))
@@ -149,16 +161,15 @@ public class GameClientManager : MonoBehaviour
 
     public void RemoveGameObject( Protocol.S_REMOVE_GAME_OBJECT pkt )
     {
-        Debug.Log("Remove game object");
+		foreach (int gameObjectId in pkt.GameObjects)
+		{
+			gameObjects[gameObjectId.ToString()].GetComponent<MonsterActor>().Die();
 
-        foreach (int gameObjectId in pkt.GameObjects)
-        {
-            Destroy(gameObjects[gameObjectId.ToString()]);
-            _ = gameObjects.Remove(gameObjectId.ToString());
-        }
-    }
+			_ = gameObjects.Remove(gameObjectId.ToString());
+		}
+	}
 
-    public void SetTransform( Protocol.S_SET_TRANSFORM pkt )
+	public void SetTransform( Protocol.S_SET_TRANSFORM pkt )
     {
         GameObject go;
         if(!gameObjects.TryGetValue(pkt.GameObjectId.ToString(), out go))

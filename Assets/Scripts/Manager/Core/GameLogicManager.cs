@@ -23,28 +23,39 @@ public class GameLogicManager : MonoBehaviour
 
 
 
+
 	#region Members
 
 	[SerializeField] float[] weights;
 
-	Sprite[] sprites;
+	public Sprite[] sprites;
 	
 	private int[,] array;
+	private int[,] origin;
 
-	public int credit = 100000;
 	int jackpotMultiplier = 16;
 	public int playCount = 0;
 	public int jackpotCount = 0;
-
-	bool isJackpot = false;
 
 	int[] current;
 	int[] prev;
 	int[] next;
 
+	int winIndex = 0;
+	int prevIndex = 0;
+	int nextIndex = 0;
+
+	Dictionary<int, int> wildCards = new Dictionary<int, int>();
+	List<int> columnIndexes = new List<int>();
+
+	public int gold { set; get; }
+	public int credit { set; get; }
+
 	CoroutineHandle handle_spin;
+	CoroutineHandle handle_display;
 
 	#endregion
+
 
 
 
@@ -57,8 +68,7 @@ public class GameLogicManager : MonoBehaviour
 		prev = new int[Define.ROW];
 		next = new int[Define.ROW];
 
-
-		sprites = new Sprite[Define.PICTURECOUNT];
+		sprites = new Sprite[Define.PICTURECOUNT + Define.BONUSCOUNT];
 
 		for (int i = 0; i < sprites.Length; i++)
 		{
@@ -68,9 +78,7 @@ public class GameLogicManager : MonoBehaviour
 
 	private void Start()
 	{
-		//GameManager.UI.StackPanel<Panel_HUD>();
-
-		weights = GenerateWeights(Define.PICTURECOUNT);
+		weights = GenerateWeights(Define.PICTURECOUNT + Define.BONUSCOUNT);
 
 		for (int j = 0; j < Define.ROW; j++)
 		{
@@ -80,22 +88,15 @@ public class GameLogicManager : MonoBehaviour
 
 			for (int i = 0; i < 3; i++)
 			{
-				panel.slots[j, i] = group_Slots.GetChild(i).GetComponent<Image>();
+				panel.reels[j, i] = group_Slots.GetChild(i).GetComponent<Image>();
 			}
 		}
 
-		RefreshSlots();
-	}
-
-	private void Update()
-	{
-		if (Input.GetKeyDown(KeyCode.Space))
-		{
-			PlayUntilJackpot();
-		}
+		RefreshReels();
 	}
 
 	#endregion
+
 
 
 
@@ -103,10 +104,32 @@ public class GameLogicManager : MonoBehaviour
 
 	public void Play()
 	{
-		InitGame();
+		if (credit <= 0)
+		{
+			DebugManager.ClearLog("You need more 'CREDIT'. Go for exchange.");
 
-		SetCredit(credit - Define.PAYMENT);
+			return;
+		}
 
+		SetCredit(credit - 1);
+
+		InitReels();
+
+		RunReels();
+
+		GameManager.UI.GetPanel<Panel_Casino>().SpinUI(false);
+	}
+
+	private void InitReels()
+	{
+		Timing.KillCoroutines(handle_display);
+		Timing.KillCoroutines(Define.FLICK);
+
+		GameManager.UI.GetPanel<Panel_Casino>().InitReels();
+	}
+
+	private void RunReels()
+	{
 		for (int i = 0; i < Define.ROW; i++)
 		{
 			for (int j = 0; j < Define.PICTURECOUNT; j++)
@@ -115,28 +138,28 @@ public class GameLogicManager : MonoBehaviour
 			}
 		}
 
-		handle_spin = Timing.RunCoroutine(Co_Play());	
+		handle_spin = Timing.RunCoroutine(Co_RunReels());
 	}
 
-	IEnumerator<float> Co_Play()
+	private IEnumerator<float> Co_RunReels()
 	{
 		float elapsedTime = 0;
-		
-		while(elapsedTime <= .05f)
+
+		while (elapsedTime <= .05f)
 		{
 			elapsedTime += Time.deltaTime;
 
-			RefreshSlots();
+			RefreshReels();
 
 			yield return Timing.WaitForSeconds(.01f);
 		}
 
 		Calculate();
 
-		ShowResult();
+		Display();
 	}
 
-	public void RefreshSlots()
+	private void RefreshReels()
 	{
 		for (int i = 0; i < Define.ROW; i++)
 		{
@@ -144,111 +167,254 @@ public class GameLogicManager : MonoBehaviour
 			{
 				array[i, j] = GenerateRandomNumberWithWeights(weights);
 
-				GameManager.UI.GetPanel<Panel_Casino>().slots[i, j].sprite = sprites[array[i, j] - 1];
+				GameManager.UI.GetPanel<Panel_Casino>().reels[i, j].sprite = sprites[array[i, j] - 1];
 			}
 		}
 	}
 
 	private void Calculate()
 	{
-		var winIndex = Random.Range(0, Define.PICTURECOUNT);
+		GetWinIndex();
 
-		CheckRowReward(winIndex);
+		CheckScatter();
 
-		CheckColumnReward(winIndex);
+		CheckRowReward();
 
-		CheckJackPot(winIndex);
+		CheckColumnReward();
+
+		CheckJackPot();
 	}
 
-	private void ShowResult()
+	private void Display()
 	{
+		GameManager.UI.GetPanel<Panel_Casino>().KillWin();
+
 		var panel = GameManager.UI.GetPanel<Panel_Casino>();
 
 		for (int i = 0; i < Define.ROW; i++)
 		{
-			panel.slots[i, 0].sprite = sprites[prev[i] - 1];
-			panel.slots[i, 1].sprite = sprites[current[i] - 1];
-			panel.slots[i, 2].sprite = sprites[next[i] - 1];
+			panel.reels[i, 0].sprite = sprites[origin[i, prevIndex] - 1];
+			panel.reels[i, 1].sprite = sprites[origin[i, winIndex] - 1];
+			panel.reels[i, 2].sprite = sprites[origin[i, nextIndex] - 1];
 		}
+				
+		handle_display = Timing.RunCoroutine(Co_Display(), "Display");
+	}
+
+	private IEnumerator<float> Co_Display()
+	{
+		yield return Timing.WaitForSeconds(.75f);
+
+		GameManager.UI.GetPanel<Panel_Casino>().SpinUI(true);
+
+		var panel = GameManager.UI.GetPanel<Panel_Casino>();
+
+		if (wildCards.Count <= 0)
+		{
+			panel.FlickSlots(columnIndexes);
+			panel.CheckWin(columnIndexes);
+
+			yield break;
+		}
+
+		foreach (var item in wildCards)
+		{
+			var index = item.Key;
+			var spriteIndex = item.Value - 1;
+
+			for (int i = 0; i < Define.COLUMN; i++)
+			{
+				panel.reels[index, i].sprite = sprites[spriteIndex];
+			}
+
+			panel.FlickSlots(index);
+		}
+
+		panel.FlickSlots(columnIndexes);
+		panel.CheckWin(columnIndexes);
 	}
 
 	#endregion
 
 
 
+
 	#region Basic Methods
 
-	private void CheckRowReward(int _winIndex)
+	private void CheckScatter()
 	{
-		int prevIndex = (_winIndex - 1 + Define.PICTURECOUNT) % Define.PICTURECOUNT;
-		int nextIndex = (_winIndex + 1) % Define.PICTURECOUNT;
+		int symbolCount = 0;
 
 		for (int i = 0; i < Define.ROW; i++)
 		{
-			current[i] = array[i, _winIndex];
+			if (array[i, winIndex] == Define.SCATTER || array[i, prevIndex] == Define.SCATTER || array[i, nextIndex] == Define.SCATTER)
+			{
+				symbolCount++;
+			}
+		}
+
+		if (symbolCount == 2)
+		{
+			SetGold(gold + Define.PAYMENT);
+		}
+
+		else if (symbolCount >= 3)
+		{
+			credit += 1;
+		}
+	}
+
+	private void CheckRowReward()
+	{
+		wildCards.Clear();
+		columnIndexes.Clear();
+
+		origin = array;
+
+		for (int i = 0; i < Define.ROW; i++)
+		{
+			current[i] = array[i, winIndex];
 			prev[i] = array[i, prevIndex];
 			next[i] = array[i, nextIndex];
 
 			if (current[i] == prev[i] && current[i] == next[i])
 			{
-				Debug.Log($"{i + 1}열에 조건을 만족하고 있습니다. 당첨 숫자 {current[i]}");
+				SetGold(gold + (current[i] * 3 * Define.UNIT));
+			}
 
-				Debug.Log($"리워드 추가 : {current[i] * 3 * Define.UNIT}");
+			else
+			{
+				List<int> numbers = new List<int>();
 
-				SetCredit(credit + (current[i] * 3 * Define.UNIT));
+				numbers.Add(current[i]);
+				numbers.Add(prev[i]);
+				numbers.Add(next[i]);
 
-				GameManager.UI.GetPanel<Panel_Casino>().FlickSlots(i);
+				var value = GetNumber(numbers);
+
+				if (value != 0)
+				{
+					current[i] = prev[i] = next[i] = value;
+
+					wildCards.Add(i, value);
+
+					SetGold(gold + (value * 3 * Define.UNIT));
+				}
+
+				numbers.Clear();
 			}
 		}
 	}
 
-	private void CheckColumnReward(int _winIndex)
+	private void CheckColumnReward()
 	{
 		var numbers = new int[Define.ROW];
 
 		for (int i = 0; i < Define.ROW; i++)
 		{
-			numbers[i] = array[i, _winIndex];
+			numbers[i] = array[i, winIndex];
 		}
 
-		SetCredit(credit + Reward(numbers) * Define.UNIT);
+		SetGold(gold + GetReward(numbers) * Define.UNIT);
 	}
 
-	public static int Reward(int[] _numbers)
+	private void CheckJackPot()
+	{
+		if (IsJackPot(winIndex))
+		{
+			SetGold(gold + (array[0, winIndex] * Define.UNIT * jackpotMultiplier));
+
+			DebugManager.ClearLog($"JackPot..! You just won {(array[0, winIndex] * Define.UNIT * jackpotMultiplier)} Golds.");
+		}
+	}
+
+
+
+	public void SetGold(int _gold)
+	{
+		GameManager.UI.GetPanel<Panel_Casino>().SetGoldUI(gold, _gold);
+
+		gold = _gold;
+	}
+
+	public void SetCredit(int _credit)
+	{
+		GameManager.UI.GetPanel<Panel_Casino>().SetCreditUI(credit, _credit);
+
+		credit = _credit;
+	}
+
+
+
+	private void GetWinIndex()
+	{
+		winIndex = Random.Range(0, Define.PICTURECOUNT);
+		prevIndex = (winIndex - 1 + Define.PICTURECOUNT) % Define.PICTURECOUNT;
+		nextIndex = (winIndex + 1) % Define.PICTURECOUNT;
+	}
+
+	public int GetNumber(List<int> _numbers)
+	{
+		int wildCount = 0;
+		int first = -1;
+
+		for (int i = 0; i < _numbers.Count; i++)
+		{
+			int number = _numbers[i];
+
+			if (number == Define.SCATTER) return 0;
+
+			if (number >= 1 && number <= Define.PICTURECOUNT)
+			{
+				if (first == -1)
+				{
+					first = number;
+				}
+
+				else if (first != number)
+				{	
+					return 0;
+				}
+			}
+
+			else if (number == Define.WILD)
+			{
+				wildCount++;
+			}
+		}
+
+		if (wildCount == 2 || (wildCount == 1 && first != -1))
+		{
+			return first;
+		}
+
+		else if (wildCount == 3)
+		{
+			return Random.Range(1, 11);
+		}
+
+		return 0;
+	}
+
+	public int GetReward(int[] _numbers)
 	{
 		var numberCount = _numbers.Select((x, index) => new { Number = x, Index = index })
+			.Where(item => item.Number >= 1 && item.Number <= Define.PICTURECOUNT)
 			.GroupBy(item => item.Number)
 			.ToDictionary(g => g.Key, g => g.Select(item => item.Index).ToList()
 		);
 
-		int result = numberCount.Where(kvp => kvp.Value.Count > 1).Sum(kvp =>
+		int result = numberCount.Where(item => item.Value.Count > 1).Sum(item =>
 		{
-			GameManager.UI.GetPanel<Panel_Casino>().FlickSlots(kvp.Value);
-			return kvp.Key * kvp.Value.Count;
+			columnIndexes = item.Value;
+						
+			return item.Key * item.Value.Count;
 		});
 
 		return result;
 	}
 
-	private void CheckJackPot(int _winIndex)
-	{
-		if (IsJackPot(_winIndex))
-		{
-			SetCredit(credit + (array[0, _winIndex] * Define.UNIT * jackpotMultiplier));
 
-			isJackpot = true;
-
-			DebugManager.ClearLog($"JackPot..! You just won {(array[0, _winIndex] * Define.UNIT * jackpotMultiplier)} credits.");
-		}
-	}
-
-
-	public void InitGame()
-	{
-		Timing.KillCoroutines(Define.FLICK);
-
-		GameManager.UI.GetPanel<Panel_Casino>().InitSlots();
-	}
 
 	public bool IsJackPot(int index)
 	{
@@ -263,13 +429,6 @@ public class GameLogicManager : MonoBehaviour
 		}
 
 		return true;
-	}
-
-	public void SetCredit(int _credit)
-	{
-		GameManager.UI.GetPanel<Panel_Casino>().SetCreditUI(credit, _credit);
-
-		credit = _credit;
 	}
 
 	private float[] GenerateWeights(int length)
@@ -292,7 +451,7 @@ public class GameLogicManager : MonoBehaviour
 		float randomNumber = Random.Range(0f, totalWeight);
 		float cumulativeWeight = 0f;
 
-		for (int i = 0; i < Define.PICTURECOUNT; i++)
+		for (int i = 0; i < Define.PICTURECOUNT + Define.BONUSCOUNT; i++)
 		{
 			cumulativeWeight += weights[i];
 			if (randomNumber <= cumulativeWeight)
@@ -304,29 +463,67 @@ public class GameLogicManager : MonoBehaviour
 		return 1;
 	}
 
+
+
+	public void Exchange(int _gold)
+	{
+		int amount = _gold / Define.PAYMENT;
+
+		if (amount == 0)
+		{
+			Debug.Log("Not enough gold.");
+
+			return;
+		}
+
+		SetGold(gold - _gold);
+		SetCredit(credit + amount);
+
+		Debug.Log($"Purchased, Total : {credit}");
+	}
+
+	public void ExchangeAll()
+	{
+		int amount = gold / Define.PAYMENT;
+
+		if (amount == 0)
+		{
+			Debug.Log("Not enough gold.");
+
+			return;
+		}
+
+		SetGold(gold - (amount * Define.PAYMENT));
+		SetCredit(credit + amount);
+
+		Debug.Log($"Purchased, Total : {credit}");
+	}
+
 	#endregion
+
 
 
 
 	#region Test Methods
 
-	private void PlayUntilJackpot() => Timing.RunCoroutine(Co_PlayUntilJackpot());
+	CoroutineHandle handl_JackPot;
+
+	public void KillJackPot()
+	{
+		Timing.KillCoroutines(handl_JackPot);
+	}
+
+	public void PlayUntilJackpot() => handl_JackPot = Timing.RunCoroutine(Co_PlayUntilJackpot());
 
 	IEnumerator<float> Co_PlayUntilJackpot()
 	{
 		DebugManager.ClearLog();
 
-		if (credit <= 0) SetCredit(1000000);
-
-		isJackpot = false;
-
-		while (!isJackpot)
+		while (true)
 		{
-			if (credit - 1000 < 0)
+			if (credit <= 0)
 			{
-				Debug.Log("Wasted.");
-
-				InitGame();
+				DebugManager.ClearLog("Wasted.");
 
 				yield break;
 			}
@@ -335,7 +532,7 @@ public class GameLogicManager : MonoBehaviour
 
 			playCount++;
 
-			yield return Timing.WaitUntilDone(handle_spin);
+			yield return Timing.WaitUntilDone(handle_display);
 		}
 	}
 

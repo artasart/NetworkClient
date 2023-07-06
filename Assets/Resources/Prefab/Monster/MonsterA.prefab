@@ -754,8 +754,8 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -2005726437634315250, guid: 7de562d87415cbc429872ad13ee3f9f5, type: 3}
-  - {fileID: 4646176674502666069, guid: 7de562d87415cbc429872ad13ee3f9f5, type: 3}
+  - {fileID: 2100000, guid: b5eab802edb38714da3cb5aa59845f48, type: 2}
+  - {fileID: 2100000, guid: 720e5db29d57a654d97ec58eaa60933d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1205,12 +1205,8 @@ MonoBehaviour:
     Experience: 0
     Gold: 0
     level: 0
-  moveSpeed: 5
-  walkSpeed: 1.5
-  runSpeed: 3
-  maxBlendValue: 1
-  animationSpeed: 0
-  completionThreshold: 0.1
+    spawn: 0
+    destroy: 0
 --- !u!136 &5169474721351263302
 CapsuleCollider:
   m_ObjectHideFlags: 0

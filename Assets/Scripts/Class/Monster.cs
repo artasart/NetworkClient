@@ -14,6 +14,9 @@ public class Monster
 	public int Gold;
 	public int level;
 
+	public EffectType spawn;
+	public EffectType destroy;
+
 	public Monster(MonsterType _monsterType, string _name, int _health, int _maxHealth, int _damage, int _defense, int _experience, int _gold, int _level)
 	{
 		monsterType = _monsterType;
@@ -44,10 +47,11 @@ public class Monster
 
 public class Savior : Monster
 {
-	public Savior(MonsterType _monsterType, string _name, int _health, int _maxHealth, int _damage, int _defense, int _experience, int _gold, int _level) :
+	public Savior(MonsterType _monsterType, string _name, int _health, int _maxHealth, int _damage, int _defense, int _experience, int _gold, int _level, EffectType _spawn, EffectType _destroy) :
 	base(_monsterType,_name, _health, _maxHealth, _damage, _defense, _experience, _gold, _level)
 	{
-
+		spawn = _spawn;
+		destroy = _destroy;
 	}
 
 	public override void Attack()
@@ -63,10 +67,11 @@ public class Savior : Monster
 
 public class BladeMaster : Monster
 {
-	public BladeMaster(MonsterType _monsterType, string _name, int _health, int _maxHealth, int _damage, int _defense, int _experience, int _gold, int _level) :
+	public BladeMaster(MonsterType _monsterType, string _name, int _health, int _maxHealth, int _damage, int _defense, int _experience, int _gold, int _level, EffectType _spawn, EffectType _destroy) :
 	base(_monsterType, _name, _health, _maxHealth, _damage, _defense, _experience, _gold, _level)
 	{
-
+		spawn = _spawn;
+		destroy = _destroy;
 	}
 
 	public override void Attack()
@@ -82,10 +87,11 @@ public class BladeMaster : Monster
 
 public class Rouge : Monster
 {
-	public Rouge(MonsterType _monsterType, string _name, int _health, int _maxHealth, int _damage, int _defense, int _experience, int _gold, int _level) :
+	public Rouge(MonsterType _monsterType, string _name, int _health, int _maxHealth, int _damage, int _defense, int _experience, int _gold, int _level, EffectType _spawn, EffectType _destroy) :
 	base(_monsterType, _name, _health, _maxHealth, _damage, _defense, _experience, _gold, _level)
 	{
-
+		spawn = _spawn;
+		destroy = _destroy;
 	}
 
 	public override void Attack()
@@ -101,10 +107,11 @@ public class Rouge : Monster
 
 public class Raven : Monster
 {
-	public Raven(MonsterType _monsterType, string _name, int _health, int _maxHealth, int _damage, int _defense, int _experience, int _gold, int _level) :
+	public Raven(MonsterType _monsterType, string _name, int _health, int _maxHealth, int _damage, int _defense, int _experience, int _gold, int _level, EffectType _spawn, EffectType _destroy) :
 	base(_monsterType, _name, _health, _maxHealth, _damage, _defense, _experience, _gold, _level)
 	{
-
+		spawn = _spawn;
+		destroy = _destroy;
 	}
 
 	public override void Attack()
@@ -120,10 +127,11 @@ public class Raven : Monster
 
 public class Barvarian : Monster
 {
-	public Barvarian(MonsterType _monsterType, string _name, int _health, int _maxHealth, int _damage, int _defense, int _experience, int _gold, int _level) :
+	public Barvarian(MonsterType _monsterType, string _name, int _health, int _maxHealth, int _damage, int _defense, int _experience, int _gold, int _level, EffectType _spawn, EffectType _destroy) :
 	base(_monsterType, _name, _health, _maxHealth, _damage, _defense, _experience, _gold, _level)
 	{
-
+		spawn = _spawn;
+		destroy = _destroy;
 	}
 
 	public override void Attack()

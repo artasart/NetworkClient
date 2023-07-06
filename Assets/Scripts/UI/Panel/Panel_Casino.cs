@@ -1,46 +1,73 @@
 using MEC;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class Panel_Casino : Panel_Base
 {
+	Transform group_Win;
+
 	Button btn_Close;
 	Button btn_Spin;
+	Button btn_Exchange;
 
+	TMP_Text txtmp_Gold;
 	TMP_Text txtmp_Credit;
 
-	public Image[,] slots;
+	public Image[,] reels;
 
 	List<int> prize = new List<int>();
 
 	private void OnEnable()
 	{
+		txtmp_Gold.text = GameLogicManager.Instance.gold.ToString();
 		txtmp_Credit.text = GameLogicManager.Instance.credit.ToString();
+
+		SpinUI(GameLogicManager.Instance.credit > 0);
 	}
 
 	protected override void Awake()
 	{
 		base.Awake();
 
-		btn_Close = GetUI_Button(nameof(btn_Close), () => GameManager.UI.PopPanel());
-		btn_Spin = GetUI_Button(nameof(btn_Spin), () => GameLogicManager.Instance.Play());
+		btn_Close = GetUI_Button(nameof(btn_Close),
+			() => GameManager.UI.PopPanel(),
+			() => GameManager.Sound.PlaySound("Click_1")
+		);
 
+		btn_Spin = GetUI_Button(nameof(btn_Spin),
+			() => GameLogicManager.Instance.Play(),
+			() => GameManager.Sound.PlaySound("Reel")
+		);
+
+		btn_Exchange = GetUI_Button(nameof(btn_Exchange), () => GameLogicManager.Instance.ExchangeAll());
+
+		txtmp_Gold = GetUI_TMPText(nameof(txtmp_Gold), string.Empty);
 		txtmp_Credit = GetUI_TMPText(nameof(txtmp_Credit), string.Empty);
 
-		slots = new Image[Define.ROW, Define.COLUMN];
+		reels = new Image[Define.ROW, Define.COLUMN];
+
+		group_Win = this.transform.Search(nameof(group_Win));
+
+		for (int i = 0; i < group_Win.childCount; i++)
+		{
+			group_Win.GetChild(i).gameObject.SetActive(false);
+		}
+
+		group_Win.gameObject.SetActive(false);
 	}
 
-	public void InitSlots()
+	public void InitReels()
 	{
 		for (int i = 0; i < Define.ROW; i++)
 		{
 			for (int j = 0; j < Define.COLUMN; j++)
 			{
-				Timing.KillCoroutines(slots[i, j].GetHashCode());
+				Timing.KillCoroutines(reels[i, j].GetHashCode());
 
-				slots[i, j].GetComponent<Image>().color = Color.white;
+				reels[i, j].GetComponent<Image>().color = new Color(0.07f, 0.07f, 0.07f);
 			}
 		}
 
@@ -51,11 +78,11 @@ public class Panel_Casino : Panel_Base
 	{
 		foreach(var item in _row)
 		{
-			if (prize.Contains(slots[item, 1].GetHashCode())) continue;
+			if (prize.Contains(reels[item, 1].GetHashCode())) continue;
 
-			prize.Add(slots[item, 1].GetHashCode());
+			prize.Add(reels[item, 1].GetHashCode());
 
-			Timing.RunCoroutine(Util.Co_Flik(slots[item, 1], 3, 2f), slots[item, 1].GetHashCode());
+			Timing.RunCoroutine(Util.Co_Flik(reels[item, 1], 3, 2f), reels[item, 1].GetHashCode());
 		}
 	}
 
@@ -63,13 +90,43 @@ public class Panel_Casino : Panel_Base
 	{
 		for (int i = 0; i < Define.COLUMN; i++)
 		{
-			Timing.RunCoroutine(Util.Co_Flik(slots[_index, i], 3, 2f), slots[_index, i].GetHashCode());
+			Timing.RunCoroutine(Util.Co_Flik(reels[_index, i], 3, 2f), reels[_index, i].GetHashCode());
 		}
 	}
 
-	public void SetCreditUI(int _start, int _end, float _duration = .25f) => Timing.RunCoroutine(Co_SetCreditUI(_start, _end, _duration));
+	public void CheckWin(List<int> _numbers)
+	{
+		var numbers = _numbers.GroupBy(x => x).ToDictionary(g => g.Key, g => g.Count());
 
-	private IEnumerator<float> Co_SetCreditUI(int _start, int _end, float _duration = .25f)
+		if (numbers.Count <= 0) return;
+
+		int maxCount = numbers.Values.Max();
+
+		switch (numbers.Count)
+		{
+			case 3:
+				Win(WinPrice.Big);
+				break;
+			case 4:
+				Win(WinPrice.Mega);
+				break;
+			case 5:
+				Win(WinPrice.JackPot);
+				break;
+		}
+	}
+
+
+	public void SetGoldUI(int _start, int _end, float _duration = .25f) => Timing.RunCoroutine(Co_AnimateText(txtmp_Gold, _start, _end, _duration));
+
+	public void SetCreditUI(int _start, int _end, float _duration = .25f)
+	{
+		SpinUI(_end > 0);
+
+		Timing.RunCoroutine(Co_AnimateText(txtmp_Credit, _start, _end, _duration));
+	}
+
+	private IEnumerator<float> Co_AnimateText(TMP_Text _txtmp, int _start, int _end, float _duration = .25f)
 	{
 		yield return Timing.WaitForOneFrame;
 
@@ -80,13 +137,75 @@ public class Panel_Casino : Panel_Base
 			float time = Mathf.SmoothStep(0f, 1f, elapsedTime / _duration);
 			int value = Mathf.RoundToInt(Mathf.Lerp(_start, _end, time));
 
-			txtmp_Credit.text = value.ToString();
+			_txtmp.text = value.ToString();
 
 			elapsedTime += Time.deltaTime;
 
 			yield return Timing.WaitForOneFrame;
 		}
 
-		txtmp_Credit.text = _end.ToString();
+		_txtmp.text = _end.ToString();
 	}
+
+
+
+	public void Win(WinPrice _winPrice)
+	{
+		group_Win.gameObject.SetActive(true);
+
+		Timing.RunCoroutine(Co_Win(_winPrice), "WinPrice");
+	}
+
+	private IEnumerator<float> Co_Win(WinPrice _winPrice)
+	{
+		Transform winPrice = null;
+
+		switch (_winPrice)
+		{
+			case WinPrice.Big:
+				winPrice = group_Win.Search("group_BigWin");
+				break;
+			case WinPrice.Mega:
+				winPrice = group_Win.Search("group_MegaWin");
+				break;
+			case WinPrice.JackPot:
+				winPrice = group_Win.Search("group_JackPot");
+				break;
+		}
+
+		GameManager.UI.Show(winPrice.gameObject, true);
+
+		yield return Timing.WaitForSeconds(1f);
+
+		GameManager.UI.Show(winPrice.gameObject, false);
+
+		yield return Timing.WaitUntilTrue(() => winPrice.GetComponent<CanvasGroup>().alpha <= 0f);
+
+		group_Win.gameObject.SetActive(false);
+	}
+
+	public void KillWin()
+	{
+		Timing.KillCoroutines("WinPrice");
+
+		for (int i = 0; i < group_Win.childCount; i++)
+		{
+			GameManager.UI.Show(group_Win.GetChild(i).gameObject, false);
+		}
+
+		group_Win.gameObject.SetActive(false);
+	}
+
+
+	public void SpinUI(bool _interactable)
+	{
+		GameManager.UI.ShowButton(btn_Spin.gameObject, _interactable ? 1f : .5f, 5f);
+	}
+}
+
+public enum WinPrice
+{
+	Big,
+	Mega,
+	JackPot,
 }

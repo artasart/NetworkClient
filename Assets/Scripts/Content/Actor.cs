@@ -15,7 +15,7 @@ public class Actor : MonoBehaviour
 
 	bool isLookTarget = false;
 
-	Animator animator;
+	protected Animator animator;
 	GameObject model;
 
 	CoroutineHandle handle_move;
@@ -98,7 +98,7 @@ public class Actor : MonoBehaviour
 	{
 		animator.CrossFade(_parameter, _blend);
 
-		yield return Timing.WaitForSeconds(animator.GetCurrentAnimatorStateInfo(1).length);
+		yield return Timing.WaitForSeconds(animator.GetCurrentAnimatorStateInfo(0).length);
 
 		_action?.Invoke();
 

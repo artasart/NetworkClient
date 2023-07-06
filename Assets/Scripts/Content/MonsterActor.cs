@@ -25,6 +25,13 @@ public class MonsterActor : Actor
 
 	public void Die()
 	{
-		FindObjectOfType<MonsterPool>().RePool(this.gameObject, UnityEngine.Random.Range(0f, 1f));
+		Timing.RunCoroutine(Co_Die());
+	}
+
+	IEnumerator<float> Co_Die()
+	{
+		yield return Timing.WaitForOneFrame;
+
+		FindObjectOfType<MonsterPool>().RePool(this.gameObject);
 	}
 }

@@ -7,12 +7,21 @@ public class GameSoundManager : SingletonManager<GameSoundManager>
 {
 	GameSound gameSound;
 
-	AudioSource bgm;
-	AudioSource soundEffect;
+	public AudioSource bgm;
+	public AudioSource soundEffect;
 
 	float pausedTime = 0;
 
 	CoroutineHandle handle_bgm;
+
+	public float bgmVolume = 1f;
+	public float effectVolume = 1f;
+
+	private void OnApplicationQuit()
+	{
+		PlayerPrefs.SetFloat(Define.KEY_BGM, bgmVolume);
+		PlayerPrefs.SetFloat(Define.KEY_SOUNDEFFECT, effectVolume);
+	}
 
 	private void Awake()
 	{
@@ -21,16 +30,28 @@ public class GameSoundManager : SingletonManager<GameSoundManager>
 		bgm = gameObject.AddComponent<AudioSource>();
 		soundEffect = gameObject.AddComponent<AudioSource>();
 
-		bgm.volume = 0;
+		if(!Convert.ToBoolean(PlayerPrefs.GetInt(Define.KEY_FIRST)))
+		{
+			bgmVolume = 1f;
+			effectVolume = 1f;
+
+			PlayerPrefs.SetInt(Define.KEY_FIRST, Convert.ToInt32(true));
+		}
+
+		bgmVolume = PlayerPrefs.GetFloat(Define.KEY_BGM);
+		effectVolume = PlayerPrefs.GetFloat(Define.KEY_SOUNDEFFECT);
+
+		bgm.volume = bgmVolume;
+		soundEffect.volume = effectVolume;
 	}
 
-	public void PlaySoundEffect(string _filename, float _volume = 1f)
+	public void PlaySound(string _filename, float _volume = 1f)
 	{
 		AudioClip clip = GetSoundEffect(_filename);
 
 		if (clip != null)
 		{
-			soundEffect.PlayOneShot(clip, _volume);
+			soundEffect.PlayOneShot(clip, _volume * effectVolume);
 		}
 
 		else { DebugManager.Log("There is no audio clip."); }
@@ -53,7 +74,7 @@ public class GameSoundManager : SingletonManager<GameSoundManager>
 
 			Timing.KillCoroutines(handle_bgm);
 
-			handle_bgm = Timing.RunCoroutine(Co_SetVolume(bgm, _volume), Define.BGM);
+			handle_bgm = Timing.RunCoroutine(Co_SetVolume(bgm, _volume * bgmVolume), Define.BGM);
 		}
 
 		else { DebugManager.Log("There is no audio clip."); }
@@ -76,7 +97,7 @@ public class GameSoundManager : SingletonManager<GameSoundManager>
 		{
 			Timing.KillCoroutines(handle_bgm);
 
-			handle_bgm = Timing.RunCoroutine(Co_SetVolume(bgm, 0f, () => PlayBGM(_filename, _volume)), Define.BGM);
+			handle_bgm = Timing.RunCoroutine(Co_SetVolume(bgm, 0f, () => PlayBGM(_filename, _volume * bgmVolume)), Define.BGM);
 		}
 
 		else { DebugManager.Log("There is no audio clip."); }
@@ -97,7 +118,7 @@ public class GameSoundManager : SingletonManager<GameSoundManager>
 
 			Timing.KillCoroutines(handle_bgm);
 
-			handle_bgm = Timing.RunCoroutine(Co_CrossDissolveBGM(bgm, target, _volume), Define.BGM);
+			handle_bgm = Timing.RunCoroutine(Co_CrossDissolveBGM(bgm, target, _volume * bgmVolume), Define.BGM);
 		}
 		else
 		{

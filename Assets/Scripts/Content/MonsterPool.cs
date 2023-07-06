@@ -11,23 +11,14 @@ public enum MonsterType
 	MonsterE
 }
 
-[System.Serializable]
-public class MonsterPoolData
-{
-	public MonsterType monsterType;
-	public int poolSize;
-	public bool isRepool;
-	public float repoolDelay;
-}
-
-public class MonsterPool : MonoBehaviour
+public class MonsterPool : ObjectPool
 {
 	SerializableDictionary<MonsterType, List<GameObject>> masterPool = new SerializableDictionary<MonsterType, List<GameObject>>();
 	
 	[SerializeField] List<MonsterPoolData> monsterPools = new List<MonsterPoolData>();
 
-	private Transform spawnParent;
-	private Transform poolParent;
+	Transform spawnParent;
+	Transform poolParent;
 
 	private void Awake()
 	{
@@ -42,19 +33,19 @@ public class MonsterPool : MonoBehaviour
 
 	private void CreatePool()
 	{
-		foreach (MonsterPoolData poolData in monsterPools)
+		foreach (var item in monsterPools)
 		{
 			List<GameObject> monsterPool = new List<GameObject>();
 
-			for (int i = 0; i < poolData.poolSize; i++)
+			for (int i = 0; i < item.poolSize; i++)
 			{
-				GameObject monster = CreateMonster(poolData.monsterType);
-				monster.name = poolData.monsterType.ToString() + "_" + (i + 1);
+				GameObject monster = CreateMonster(item.monsterType);
+				monster.name = item.monsterType.ToString() + "_" + (i + 1);
 
 				monsterPool.Add(monster);
 			}
 
-			masterPool.Add(poolData.monsterType, monsterPool);
+			masterPool.Add(item.monsterType, monsterPool);
 		}
 	}
 
@@ -76,11 +67,14 @@ public class MonsterPool : MonoBehaviour
 		return Resources.Load<GameObject>(Define.PATH_MONSTER + _monsterType.ToString());
 	}
 
+
+
+
 	#region Core Methods
 
-	public GameObject GetPool(MonsterType _monsterType)
+	public GameObject GetPool(object _monsterType)
 	{
-		if (masterPool.TryGetValue(_monsterType, out List<GameObject> monsterPool))
+		if (masterPool.TryGetValue((MonsterType)_monsterType, out List<GameObject> monsterPool))
 		{
 			foreach (var item in monsterPool)
 			{
@@ -91,7 +85,7 @@ public class MonsterPool : MonoBehaviour
 			}
 		}
 
-		GameObject monster = CreateMonster(_monsterType);
+		GameObject monster = CreateMonster((MonsterType)_monsterType);
 		monster.name = _monsterType.ToString() + "_" + (monsterPool.Count + 1);
 
 		monsterPool.Add(monster);
@@ -100,29 +94,44 @@ public class MonsterPool : MonoBehaviour
 	}
 
 
-	public void RePool(GameObject _monster, float _delay) => Timing.RunCoroutine(Co_RePool(_monster, _delay));
+	public void RePool(GameObject _monster, float _delay = 0f) => Timing.RunCoroutine(Co_RePool(_monster, _delay));
 
 	private IEnumerator<float> Co_RePool(GameObject _monster, float _delay = 0f)
 	{
 		yield return Timing.WaitForSeconds(_delay);
 
-		_monster.SetActive(false);
+		var effect = _monster.GetComponent<MonsterActor>().monster.destroy;
+
+		FindObjectOfType<EffectPool>().Spawn(effect, _monster.transform.position, Quaternion.identity);
 
 		_monster.transform.SetParent(poolParent);
 		_monster.transform.localPosition = Vector3.zero;
 		_monster.transform.localRotation = Quaternion.identity;
 		_monster.transform.localScale = Vector3.one;
+
+		_monster.SetActive(false);
 	}
 
-	public void SpawnMonster(MonsterType _monsterType, Vector3 position, Quaternion _rotation)
+
+	public void Spawn(Monster _monster, Vector3 position, Quaternion _rotation)
 	{
-		var monster = GetPool(_monsterType);
+		var monster = GetPool(_monster.monsterType);
+
+		monster.GetComponent<MonsterActor>().monster = _monster;
 
 		monster.transform.SetParent(spawnParent);
 		monster.transform.position = position;
 		monster.transform.rotation = _rotation;
 
 		monster.SetActive(true);
+
+		generateMonster = monster;
+	}
+
+	GameObject generateMonster;
+	public GameObject GetGenerateMonster()
+	{
+		return generateMonster;
 	}
 
 	#endregion

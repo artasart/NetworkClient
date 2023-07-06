@@ -75,24 +75,30 @@ public class DebugManager
             if (clearConsole == null)
             {
                 Assembly assembly = Assembly.GetAssembly(typeof(SceneView));
-                Type logEntries = assembly.GetType("UnityEditor.LogEntries");
+                System.Type logEntries = assembly.GetType("UnityEditor.LogEntries");
                 clearConsole = logEntries.GetMethod("Clear");
             }
             return clearConsole;
         }
-
-        set { clearConsole = value; }
     }
 #endif
 
-    public static void ClearLog(string _message = "")
+    public static void ClearLog()
     {
 #if UNITY_EDITOR
         ClearConsole.Invoke(new object(), null);
 #endif
-        if (!string.IsNullOrEmpty(_message))
+    }
+
+    public static void ClearLog<T>(T _message)
+    {
+#if UNITY_EDITOR
+        ClearConsole.Invoke(new object(), null);
+#endif
+        string message = _message?.ToString();
+        if (!string.IsNullOrEmpty(message))
         {
-            Debug.Log(_message);
+            Debug.Log(message);
         }
     }
 }

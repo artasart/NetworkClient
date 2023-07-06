@@ -2,6 +2,8 @@
 using Framework.Network;
 using Protocol;
 using System;
+using MEC;
+using System.Collections.Generic;
 
 public class DummyConnection : Connection
 {
@@ -13,9 +15,9 @@ public class DummyConnection : Connection
     {
         C_INSTANTIATE_GAME_OBJECT packet = new();
 
-        p_x = UnityEngine.Random.Range(-3f, 3f);
-        p_y = UnityEngine.Random.Range(-3f, 3f);
-        p_z = UnityEngine.Random.Range(-3f, 3f);
+        p_x = UnityEngine.Random.Range(-10f, 10f);
+        p_y = 0f;
+        p_z = UnityEngine.Random.Range(-10f, 10f);
 
         Protocol.Vector3 position = new()
         {
@@ -24,9 +26,9 @@ public class DummyConnection : Connection
             Z = p_z
         };
 
-        r_x = UnityEngine.Random.Range(-45, 45);
-        r_y = UnityEngine.Random.Range(-45, 45);
-        r_z = UnityEngine.Random.Range(-45, 45);
+        r_x = 0;
+        r_y = UnityEngine.Random.Range(-180, 180);
+        r_z = 0;
 
         Protocol.Vector3 rotation = new()
         {
@@ -47,11 +49,12 @@ public class DummyConnection : Connection
         //Send(PacketManager.MakeSendBuffer(leave));
 
         gameObjectId = enter.GameObjectId;
-        Rotate().Forget();
+
+        Timing.RunCoroutine(Test());
     }
 
-    private async UniTask Rotate()
-    {
+    IEnumerator<float> Test()
+	{
         Protocol.C_SET_TRANSFORM st = new()
         {
             GameObjectId = gameObjectId
@@ -68,9 +71,7 @@ public class DummyConnection : Connection
 
         while (state == ConnectionState.NORMAL)
         {
-            r_x = (r_x + UnityEngine.Random.Range(1, 5)) % 360;
-            r_y = (r_y + UnityEngine.Random.Range(1, 5)) % 360;
-            r_z = (r_z + UnityEngine.Random.Range(1, 5)) % 360;
+            r_y = (r_y + UnityEngine.Random.Range(0, 2)) % 360;
 
             rotation.X = r_x;
             rotation.Y = r_y;
@@ -78,7 +79,7 @@ public class DummyConnection : Connection
 
             Send(PacketManager.MakeSendBuffer(st));
 
-            await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
+            yield return Timing.WaitForOneFrame;
         }
     }
 }

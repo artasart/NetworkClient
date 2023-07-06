@@ -13,6 +13,8 @@ public class Popup_Base : UI_Base
 		GameObject group_Modal = this.transform.Search(nameof(group_Modal))?.gameObject;
 
 		if (group_Modal != null) group_Modal.GetComponent<RectTransform>().localScale = Vector3.zero;
+
+		CloseTabAll();
 	}
 
 	protected void OnClick_Confirm()

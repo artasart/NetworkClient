@@ -1,44 +1,35 @@
-using Cinemachine;
+using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.InputSystem;
+using UnityEngine.Rendering.Universal;
 
 public class GameTestInputManager : MonoBehaviour
 {
 	private void Start()
 	{
-		GameManager.Sound.PlayBGM("Ambient");
-
-		GameManager.UI.StackPanel<Panel_Network>();
+		GameManager.Sound.PlayBGM("Space", 1f);
 	}
-
 
 	public void Update()
 	{
 		if (Input.GetKeyDown(KeyCode.Alpha1))
 		{
-			FindObjectOfType<MonsterGenerator>().Generate();
+			FindObjectOfType<MonsterGenerator>().Generate(1);
 		}
 
 		if (Input.GetKeyDown(KeyCode.Alpha2))
 		{
-			FindObjectOfType<MonsterActor>().Move(this.transform, (MoveType)UnityEngine.Random.Range(0, 2));
+			FindObjectOfType<MonsterGenerator>().Generate(20f);
 		}
 
 		if (Input.GetKeyDown(KeyCode.Alpha3))
 		{
-			FindObjectOfType<MonsterActor>().Stop();
-		}
+			var monsters = FindObjectsOfType<MonsterActor>();
 
-		if (Input.GetKeyDown(KeyCode.Z))
-		{
-			CinemachineSwitcher.SwitchMainCamera();
-		}
-
-		if (Input.GetKeyDown(KeyCode.X))
-		{
-			var virtualCamrea = GameObject.Find("1").GetComponent<CinemachineVirtualCamera>();
-
-			CinemachineSwitcher.SwitchCamera(virtualCamrea);
+			for(int i = 0; i < monsters.Length;i ++)
+			{
+				monsters[i].Die();
+			}
 		}
 	}
 }

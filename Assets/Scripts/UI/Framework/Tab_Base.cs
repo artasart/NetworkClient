@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Tab_Base : Panel_Base
+public class Tab_Base : UI_Base
 {
 	protected override void Awake()
 	{
