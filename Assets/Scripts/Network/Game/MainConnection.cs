@@ -12,9 +12,10 @@ public class MainConnection : Connection
 	{
 		AddHandler(S_ENTER);
 		AddHandler(INSTANTIATE_GAME_OBJECT);
+		AddHandler(S_ADD_CLIENT);
 		AddHandler(S_ADD_GAME_OBJECT);
 		AddHandler(S_REMOVE_GAME_OBJECT);
-		AddHandler(S_SET_TRANSFORM);
+		//AddHandler(S_SET_TRANSFORM);
 
 		Debug.Log("Main Connection Constructor");
 	}
@@ -64,11 +65,19 @@ public class MainConnection : Connection
 		if(myObjectId < 0) myObjectId = _packet.GameObjectId;
 	}
 
+	public void S_ADD_CLIENT(S_ADD_CLIENT _packet)
+	{
+		foreach (var clients in _packet.ClientInfos)
+		{
+			Debug.Log(clients.ClientId);
+		}			
+	}
+
 	public void S_ADD_GAME_OBJECT(S_ADD_GAME_OBJECT _packet)
 	{
 		Debug.Log("Add GameObject : " + _packet);
 
-		foreach (S_ADD_GAME_OBJECT.Types.GameObjectInfo gameObject in _packet.GameObjects)
+		foreach (var gameObject in _packet.GameObjects)
 		{
 			UnityEngine.Vector3 position = new(gameObject.Position.X, gameObject.Position.Y, gameObject.Position.Z);
 			UnityEngine.Quaternion rotation = Quaternion.Euler(gameObject.Rotation.X, gameObject.Rotation.Y, gameObject.Rotation.Z);
@@ -103,6 +112,22 @@ public class MainConnection : Connection
 					gameObjects.Add(gameObject.Id.ToString(), ride);
 				}
 
+				else if (gameObject.PrefabName == "MarkerMan")
+				{
+					var prefab = Resources.Load<GameObject>("Prefab/" + gameObject.PrefabName);
+
+					UnityEngine.Object.Destroy(prefab.GetComponent<PlayerController>());
+					UnityEngine.Object.Destroy(prefab.transform.Search("Camera").gameObject);
+
+					prefab.GetComponent<NetworkTransform>().objectId = gameObject.Id;
+					prefab.GetComponent<NetworkTransform>().isMine = true;
+
+					var player = UnityEngine.Object.Instantiate(prefab, position, rotation);
+					player.name = "MarkerMan_" + gameObject.Id;
+					UnityEngine.Object.FindObjectOfType<EffectPool>().Spawn(EffectType.Effect_Thunder, position, Quaternion.identity);
+
+					gameObjects.Add(gameObject.Id.ToString(), player);
+				}
 
 				else
 				{

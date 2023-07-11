@@ -52,15 +52,13 @@ namespace FrameWork.Network
 
 		private void Update()
 		{
-			//var lerpPosition = Vector3.Lerp(this.transform.position, position, lerpSpeed * Time.deltaTime);
-			//var lerpRotation = Quaternion.Lerp(this.transform.rotation, rotation, lerpSpeed * Time.deltaTime);
+			if (isMine) return;
 
-			//Vector3 moveDir = (position - this.transform.position).normalized;
-			//float moveDistance = Vector3.Distance(position, this.transform.position);
-			//float moveSpeed = moveDistance / (lerpSpeed * Time.deltaTime);
+			var lerpPosition = Vector3.Lerp(this.transform.position, position, lerpSpeed * Time.deltaTime);
+			var lerpRotation = Quaternion.Lerp(this.transform.rotation, rotation, lerpSpeed * Time.deltaTime);
 
-			//this.transform.position = lerpPosition;
-			//this.transform.rotation = lerpRotation;
+			this.transform.position = lerpPosition;
+			this.transform.rotation = lerpRotation;
 		}
 
 		private IEnumerator<float> Co_Update()
@@ -71,9 +69,9 @@ namespace FrameWork.Network
 			{
 				var position = this.transform.position;
 
-				yield return Timing.WaitForOneFrame;
+				yield return Timing.WaitForSeconds(.01f);
 
-				if (!Equals(this.transform.position, position))
+				if (Vector3.Distance(this.transform.position, position) > 0.001f)
 				{
 					C_SET_TRANSFORM();
 				}

@@ -2058,7 +2058,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clientId: 
   objectId: 0
-  isMine: 0
+  isMine: 1
 --- !u!1 &5670869384234494948
 GameObject:
   m_ObjectHideFlags: 0

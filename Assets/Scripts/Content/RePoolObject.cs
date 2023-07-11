@@ -26,16 +26,13 @@ public class RePoolObject : MonoBehaviour
 
 	private bool IsPlaying()
 	{
-		if (!mainParticle.isPlaying)
-			return true;
-
 		foreach (Transform child in mainParticle.transform)
 		{
 			var childParticle = child.GetComponent<ParticleSystem>();
 
-			if (childParticle.isPlaying) return false;
+			if (childParticle != null && childParticle.isPlaying) return false;
 		}
 
-		return false;
+		return true;
 	}
 }
