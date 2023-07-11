@@ -120,7 +120,7 @@ public class MainConnection : Connection
 					UnityEngine.Object.Destroy(prefab.transform.Search("Camera").gameObject);
 
 					prefab.GetComponent<NetworkTransform>().objectId = gameObject.Id;
-					prefab.GetComponent<NetworkTransform>().isMine = true;
+					prefab.GetComponent<NetworkTransform>().isMine = false;
 
 					var player = UnityEngine.Object.Instantiate(prefab, position, rotation);
 					player.name = "MarkerMan_" + gameObject.Id;

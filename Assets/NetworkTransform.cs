@@ -69,7 +69,7 @@ namespace FrameWork.Network
 			{
 				var position = this.transform.position;
 
-				yield return Timing.WaitForSeconds(.01f);
+				yield return Timing.WaitForOneFrame;
 
 				if (Vector3.Distance(this.transform.position, position) > 0.001f)
 				{
