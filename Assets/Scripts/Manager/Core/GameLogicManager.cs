@@ -29,7 +29,7 @@ public class GameLogicManager : MonoBehaviour
 	[SerializeField] float[] weights;
 
 	public Sprite[] sprites;
-	
+
 	private int[,] array;
 	private int[,] origin;
 
@@ -48,8 +48,11 @@ public class GameLogicManager : MonoBehaviour
 	Dictionary<int, int> wildCards = new Dictionary<int, int>();
 	List<int> columnIndexes = new List<int>();
 
+	bool isJackPot = false;
+
 	public int gold { set; get; }
 	public int credit { set; get; }
+	public int exp { set; get; }
 
 	CoroutineHandle handle_spin;
 	CoroutineHandle handle_display;
@@ -63,6 +66,8 @@ public class GameLogicManager : MonoBehaviour
 
 	private void Awake()
 	{
+		GameManager.UI.Restart();
+
 		array = new int[Define.ROW, Define.PICTURECOUNT];
 		current = new int[Define.ROW];
 		prev = new int[Define.ROW];
@@ -73,7 +78,7 @@ public class GameLogicManager : MonoBehaviour
 		for (int i = 0; i < sprites.Length; i++)
 		{
 			sprites[i] = Resources.Load<Sprite>("Sprite/" + (i + 1));
-		}
+		}		
 	}
 
 	private void Start()
@@ -93,6 +98,27 @@ public class GameLogicManager : MonoBehaviour
 		}
 
 		RefreshReels();
+
+		Timing.RunCoroutine(Co_TestFade());
+	}
+
+	IEnumerator<float> Co_TestFade()
+	{
+		FindObjectOfType<MobileTouchInteracter>().maxInteractDistance = 0f;
+
+		GameManager.Scene.FadeInstant(true);
+
+		yield return Timing.WaitForSeconds(.5f);
+
+		GameManager.Sound.PlayBGM("Forest", 1f);
+
+		GameManager.Scene.Fade(false, .01f);
+
+		yield return Timing.WaitUntilTrue(() => GameManager.Scene.IsFaded());
+
+		GameManager.UI.StackPanel<Panel_HUD>();
+
+		FindObjectOfType<MobileTouchInteracter>().maxInteractDistance = 100f;
 	}
 
 	#endregion
@@ -197,7 +223,7 @@ public class GameLogicManager : MonoBehaviour
 			panel.reels[i, 1].sprite = sprites[origin[i, winIndex] - 1];
 			panel.reels[i, 2].sprite = sprites[origin[i, nextIndex] - 1];
 		}
-				
+
 		handle_display = Timing.RunCoroutine(Co_Display(), "Display");
 	}
 
@@ -205,7 +231,7 @@ public class GameLogicManager : MonoBehaviour
 	{
 		yield return Timing.WaitForSeconds(.75f);
 
-		GameManager.UI.GetPanel<Panel_Casino>().SpinUI(true);
+		if (credit > 0) GameManager.UI.GetPanel<Panel_Casino>().SpinUI(true);
 
 		var panel = GameManager.UI.GetPanel<Panel_Casino>();
 
@@ -322,6 +348,8 @@ public class GameLogicManager : MonoBehaviour
 	{
 		if (IsJackPot(winIndex))
 		{
+			isJackPot = true;
+
 			SetGold(gold + (array[0, winIndex] * Define.UNIT * jackpotMultiplier));
 
 			DebugManager.ClearLog($"JackPot..! You just won {(array[0, winIndex] * Define.UNIT * jackpotMultiplier)} Golds.");
@@ -372,7 +400,7 @@ public class GameLogicManager : MonoBehaviour
 				}
 
 				else if (first != number)
-				{	
+				{
 					return 0;
 				}
 			}
@@ -407,7 +435,7 @@ public class GameLogicManager : MonoBehaviour
 		int result = numberCount.Where(item => item.Value.Count > 1).Sum(item =>
 		{
 			columnIndexes = item.Value;
-						
+
 			return item.Key * item.Value.Count;
 		});
 
@@ -471,15 +499,15 @@ public class GameLogicManager : MonoBehaviour
 
 		if (amount == 0)
 		{
-			Debug.Log("Not enough gold.");
+			DebugManager.ClearLog("Not enough gold.");
+
+			GameManager.Sound.PlaySound("Warnning");
 
 			return;
 		}
 
 		SetGold(gold - _gold);
 		SetCredit(credit + amount);
-
-		Debug.Log($"Purchased, Total : {credit}");
 	}
 
 	public void ExchangeAll()
@@ -488,15 +516,19 @@ public class GameLogicManager : MonoBehaviour
 
 		if (amount == 0)
 		{
-			Debug.Log("Not enough gold.");
+			DebugManager.ClearLog("Not enough gold.");
+
+			GameManager.Sound.PlaySound("Warnning");
 
 			return;
 		}
 
+		GameManager.Sound.PlaySound("Click_2");
+
 		SetGold(gold - (amount * Define.PAYMENT));
 		SetCredit(credit + amount);
 
-		Debug.Log($"Purchased, Total : {credit}");
+		GameManager.UI.GetPanel<Panel_Casino>().SpinUI(credit > 0);
 	}
 
 	#endregion
@@ -528,9 +560,19 @@ public class GameLogicManager : MonoBehaviour
 				yield break;
 			}
 
+			if (isJackPot)
+			{
+				DebugManager.ClearLog("JackPot.");
+				yield break;
+			}
+
 			Play();
 
 			playCount++;
+
+			Debug.Log("Played.");
+
+			yield return Timing.WaitUntilTrue(()=>handle_display.IsRunning);
 
 			yield return Timing.WaitUntilDone(handle_display);
 		}

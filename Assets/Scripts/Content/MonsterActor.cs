@@ -33,5 +33,8 @@ public class MonsterActor : Actor
 		yield return Timing.WaitForOneFrame;
 
 		FindObjectOfType<MonsterPool>().RePool(this.gameObject);
+
+		GameLogicManager.Instance.gold += monster.Gold;
+		GameLogicManager.Instance.exp += monster.Exp;
 	}
 }

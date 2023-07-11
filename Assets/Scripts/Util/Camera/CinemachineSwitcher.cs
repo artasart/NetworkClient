@@ -49,7 +49,7 @@ public class CinemachineSwitcher
 			current = null;
 		}
 
-		var virtualCam = PlayerController.Instance.virtualCamera;
+		var virtualCam = CrystalController.Instance.virtualCamera;
 		virtualCam.Priority = 1;
 
 		Timing.KillCoroutines(handle_match);
@@ -59,14 +59,14 @@ public class CinemachineSwitcher
 
 	public static void SetWatchSpeed(CinemachineBlendDefinition.Style _blendStyle, float _speed)
 	{
-		PlayerController.Instance.cinemachineBrain.m_DefaultBlend = new CinemachineBlendDefinition(_blendStyle, _speed);
+		CrystalController.Instance.cinemachineBrain.m_DefaultBlend = new CinemachineBlendDefinition(_blendStyle, _speed);
 	}
 
 	private static IEnumerator<float> Co_MatchCamera(CinemachineVirtualCamera _current)
 	{
 		yield return Timing.WaitUntilTrue(()=> 
-			Vector3.Distance(PlayerController.Instance.mainCamera.transform.position, _current.transform.position) <= 0.001f &&
-			Quaternion.Dot(PlayerController.Instance.mainCamera.transform.rotation, _current.transform.rotation) <= 0.001f
+			Vector3.Distance(CrystalController.Instance.mainCamera.transform.position, _current.transform.position) <= 0.001f &&
+			Quaternion.Dot(CrystalController.Instance.mainCamera.transform.rotation, _current.transform.rotation) <= 0.001f
 		);
 
 		Debug.Log("Matched");

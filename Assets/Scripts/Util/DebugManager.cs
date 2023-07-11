@@ -2,6 +2,8 @@ using System;
 using System.Reflection;
 using System.Text;
 using UnityEngine;
+using System.Diagnostics;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -32,17 +34,17 @@ public class DebugManager
 #endif
 	public static void Log(string _message, DebugColor _colorManager = DebugColor.none)
     {
-        Debug.Log(GetSbManager(_message, _colorManager));
+        UnityEngine.Debug.Log(GetSbManager(_message, _colorManager));
     }
 
     public static void Warnning(string _message, DebugColor _colorManager = DebugColor.none)
     {
-        Debug.LogWarning(GetSbManager(_message, _colorManager));
+        UnityEngine.Debug.LogWarning(GetSbManager(_message, _colorManager));
     }
 
     public static void Error(string _message, DebugColor _colorManager = DebugColor.none)
     {
-        Debug.LogError(GetSbManager(_message, _colorManager));
+        UnityEngine.Debug.LogError(GetSbManager(_message, _colorManager));
     }
 
     private static StringBuilder GetSbManager(string _message, DebugColor _colorManager = DebugColor.none)
@@ -98,7 +100,7 @@ public class DebugManager
         string message = _message?.ToString();
         if (!string.IsNullOrEmpty(message))
         {
-            Debug.Log(message);
+            UnityEngine.Debug.Log(message);
         }
     }
 }

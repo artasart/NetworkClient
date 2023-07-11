@@ -67,7 +67,7 @@ public class UI_Base : MonoBehaviour
 
 			if (_sound == null)
 			{
-				button.onClick.AddListener(() => GameManager.Sound.PlaySound("Click_2"));
+				button.onClick.AddListener(PlaySound);
 			}
 
 			else button.onClick.AddListener(() => _sound?.Invoke());
@@ -86,9 +86,40 @@ public class UI_Base : MonoBehaviour
 		{
 			var slider = childUI[_hierarchyName].GetComponent<Slider>();
 
-			slider.onValueChanged.AddListener((float value) => _action?.Invoke(value));
+			slider.onValueChanged.AddListener((value) => _action?.Invoke(value));
 
 			return slider;
+		}
+
+		else { Debug.Log($"WARNING : {_hierarchyName} is not in this hierarchy."); return null; }
+	}
+
+	protected TMP_InputField GetUI_TMPInputField(string _hierarchyName, Action<string> _action = null)
+	{
+		if (childUI.ContainsKey(_hierarchyName))
+		{
+			var inputField = childUI[_hierarchyName].GetComponent<TMP_InputField>();
+			var placeHolder = inputField.placeholder.GetComponent<TextMeshProUGUI>().text;
+
+			inputField.onValueChanged.AddListener((value) => _action?.Invoke(value));
+
+			inputField.onSelect.AddListener((value) =>
+			{
+				if (placeHolder != string.Empty)
+				{
+					inputField.placeholder.GetComponent<TextMeshProUGUI>().text = string.Empty;
+				}
+			});
+
+			inputField.onDeselect.AddListener((value) =>
+			{
+				if (inputField.text == string.Empty)
+				{
+					inputField.placeholder.GetComponent<TextMeshProUGUI>().text = placeHolder;
+				}
+			});
+
+			return inputField;
 		}
 
 		else { Debug.Log($"WARNING : {_hierarchyName} is not in this hierarchy."); return null; }
@@ -148,4 +179,6 @@ public class UI_Base : MonoBehaviour
 			Debug.Log($"Key: {item.Key}, Value: {item.Value}");
 		}
 	}
+
+	protected void PlaySound() => GameManager.Sound.PlaySound("Click_2");
 }

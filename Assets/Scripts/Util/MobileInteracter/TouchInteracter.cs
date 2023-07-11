@@ -7,9 +7,9 @@ using UnityEngine.InputSystem;
 
 public class TouchInteracter : MonoBehaviour
 {
-	[SerializeField] protected QueryTriggerInteraction triggerInteraction;
-	[SerializeField] protected LayerMask ignoreLayerMask;
-	[SerializeField] private float maxInteractDistance = 100f;
+	public QueryTriggerInteraction triggerInteraction;
+	public LayerMask ignoreLayerMask;
+	public float maxInteractDistance = 100f;
 
 	protected Camera overlayCamera;
 	protected static Vector3 pointerPosition;

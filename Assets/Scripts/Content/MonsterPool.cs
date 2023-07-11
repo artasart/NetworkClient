@@ -113,7 +113,7 @@ public class MonsterPool : ObjectPool
 	}
 
 
-	public void Spawn(Monster _monster, Vector3 position, Quaternion _rotation)
+	public GameObject Spawn(Monster _monster, Vector3 position, Quaternion _rotation)
 	{
 		var monster = GetPool(_monster.monsterType);
 
@@ -125,13 +125,7 @@ public class MonsterPool : ObjectPool
 
 		monster.SetActive(true);
 
-		generateMonster = monster;
-	}
-
-	GameObject generateMonster;
-	public GameObject GetGenerateMonster()
-	{
-		return generateMonster;
+		return monster;
 	}
 
 	#endregion

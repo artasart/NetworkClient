@@ -7,6 +7,8 @@ public enum EffectType
 {
 	Effect_Thunder,
 	Effect_Explosion,
+	Effect_Puff,
+	Effect_SmokePuff,
 }
 
 

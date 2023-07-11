@@ -17,8 +17,8 @@ public class GameSceneManager : SingletonManager<GameSceneManager>
 
 	GameObject go_MasterCanvas;
 
-	GameObject go_Fade;
-	GameObject go_Dim;
+	public GameObject go_Fade { get; set; }
+	public GameObject go_Dim { get; set; }
 
 	CoroutineHandle handle_Show;
 	CoroutineHandle handle_Fade;
@@ -77,8 +77,6 @@ public class GameSceneManager : SingletonManager<GameSceneManager>
 
 		string sceneName = GetSceneName(_sceneName);
 
-		Debug.Log("SceneName : " + sceneName);
-
         if (_isAsync)
         {
             SceneManager.LoadSceneAsync(sceneName);
@@ -89,9 +87,7 @@ public class GameSceneManager : SingletonManager<GameSceneManager>
 			SceneManager.LoadScene(sceneName);
 		}
 
-        yield return Timing.WaitUntilTrue(() => IsSceneLoaded(sceneName));
-
-		Fade(false, .5f);
+		yield return Timing.WaitUntilTrue(() => IsSceneLoaded(sceneName));
 
 		DebugManager.Log($"{_sceneName} is loaded.", DebugColor.Scene);
 	}
@@ -162,8 +158,6 @@ public class GameSceneManager : SingletonManager<GameSceneManager>
 
 	public void Fade(bool _isFade, float _fadeSpeed = 1f)
 	{
-		isDone = false;
-
 		handle_Fade = Timing.RunCoroutine(Co_Transition(go_Fade, _isFade, _fadeSpeed), Define.FADE);
 
 		DebugManager.Log($"Fade : {_isFade}", DebugColor.UI);
@@ -183,6 +177,8 @@ public class GameSceneManager : SingletonManager<GameSceneManager>
 	{
 		if (handle_Show.IsRunning) yield break;
 
+		isDone = false;
+
 		_meta.transform.SetAsLastSibling();
 		_meta.SetActive(true);
 
@@ -200,7 +196,7 @@ public class GameSceneManager : SingletonManager<GameSceneManager>
 
 	public bool IsFaded()
 	{
-		return handle_Fade.IsRunning;
+		return isDone;
 	}
 
 	private IEnumerator<float> Co_Show(GameObject _gameObject, bool _isShow, float _lerpSpeed = 1f)
@@ -224,6 +220,13 @@ public class GameSceneManager : SingletonManager<GameSceneManager>
 
 		if (_isShow) canvasGroup.blocksRaycasts = true;
 		else _gameObject.SetActive(false);
+	}
+
+	public void FadeInstant(bool _enable)
+	{
+		go_Fade.SetActive(_enable);
+		go_Fade.GetComponent<CanvasGroup>().alpha = _enable ? 1f : 0f;
+		go_Fade.GetComponent<CanvasGroup>().blocksRaycasts = _enable;
 	}
 
 	#endregion

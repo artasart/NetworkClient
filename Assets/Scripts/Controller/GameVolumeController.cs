@@ -32,6 +32,9 @@ public class GameVolumeController : MonoBehaviour
 
 		vignette.current = vignette.origin = AddVolume<Vignette>();
 		bloom.current = bloom.origin = AddVolume<Bloom>();
+
+		SetVignette(.45f, Color.black);
+		SetBloom(5f, .9f);
 	}
 
 	public T AddVolume<T>(bool _isActivate = true) where T : VolumeComponent

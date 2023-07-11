@@ -13,6 +13,13 @@ public class Panel_Casino : Panel_Base
 	Button btn_Spin;
 	Button btn_Exchange;
 
+	Button btn_Menu_1;
+	Button btn_Menu_2;
+	Button btn_Menu_3;
+
+	Button btn_Waste;
+	Button btn_Stop;
+
 	TMP_Text txtmp_Gold;
 	TMP_Text txtmp_Credit;
 
@@ -42,7 +49,35 @@ public class Panel_Casino : Panel_Base
 			() => GameManager.Sound.PlaySound("Reel")
 		);
 
+		btn_Menu_1 = GetUI_Button(nameof(btn_Menu_1),
+			() => GameLogicManager.Instance.SetGold(GameLogicManager.Instance.gold + 10000),
+			() => GameManager.Sound.PlaySound("Register")
+		);
+
+		btn_Menu_2 = GetUI_Button(nameof(btn_Menu_2),
+			() => GameLogicManager.Instance.SetGold(GameLogicManager.Instance.gold + 100000),
+			() => GameManager.Sound.PlaySound("Register")
+		);
+
+		btn_Menu_3 = GetUI_Button(nameof(btn_Menu_3),
+			() => GameLogicManager.Instance.SetGold(GameLogicManager.Instance.gold + 100000000),
+			() => GameManager.Sound.PlaySound("Register")
+		);
+
+		btn_Waste = GetUI_Button(nameof(btn_Waste), () =>
+		{
+			GameLogicManager.Instance.PlayUntilJackpot();
+			btn_Waste.interactable = false;
+		});
+
+		btn_Stop = GetUI_Button(nameof(btn_Stop), () =>
+		{
+			GameLogicManager.Instance.KillJackPot();
+			btn_Waste.interactable = true;
+		});
+
 		btn_Exchange = GetUI_Button(nameof(btn_Exchange), () => GameLogicManager.Instance.ExchangeAll());
+		btn_Exchange.onClick.RemoveListener(PlaySound);
 
 		txtmp_Gold = GetUI_TMPText(nameof(txtmp_Gold), string.Empty);
 		txtmp_Credit = GetUI_TMPText(nameof(txtmp_Credit), string.Empty);
@@ -76,7 +111,7 @@ public class Panel_Casino : Panel_Base
 
 	public void FlickSlots(List<int> _row)
 	{
-		foreach(var item in _row)
+		foreach (var item in _row)
 		{
 			if (prize.Contains(reels[item, 1].GetHashCode())) continue;
 
@@ -121,8 +156,6 @@ public class Panel_Casino : Panel_Base
 
 	public void SetCreditUI(int _start, int _end, float _duration = .25f)
 	{
-		SpinUI(_end > 0);
-
 		Timing.RunCoroutine(Co_AnimateText(txtmp_Credit, _start, _end, _duration));
 	}
 
@@ -175,7 +208,7 @@ public class Panel_Casino : Panel_Base
 
 		GameManager.UI.Show(winPrice.gameObject, true);
 
-		yield return Timing.WaitForSeconds(1f);
+		yield return Timing.WaitForSeconds(1.5f);
 
 		GameManager.UI.Show(winPrice.gameObject, false);
 
@@ -199,7 +232,8 @@ public class Panel_Casino : Panel_Base
 
 	public void SpinUI(bool _interactable)
 	{
-		GameManager.UI.ShowButton(btn_Spin.gameObject, _interactable ? 1f : .5f, 5f);
+		btn_Spin.GetComponent<CanvasGroup>().alpha = _interactable ? 1f : .75f;
+		btn_Spin.GetComponent<CanvasGroup>().blocksRaycasts = _interactable;
 	}
 }
 

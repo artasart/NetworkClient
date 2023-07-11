@@ -28,6 +28,10 @@ public static class Define
 	public const string PATH_VFX = PATH_PREFAB + "VFx/";
 
 	public const string MOVEMENT = "Movement";
+	public const string JUMP = "Jump";
+
+	public const int JUMPRUN = 1;
+	public const int JUMPSTAND = 2;
 
 	public const string MODEL = "Model";
 

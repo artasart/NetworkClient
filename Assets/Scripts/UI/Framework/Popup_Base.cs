@@ -17,12 +17,12 @@ public class Popup_Base : UI_Base
 		CloseTabAll();
 	}
 
-	protected void OnClick_Confirm()
+	protected virtual void OnClick_Confirm()
 	{
 		callback_confirm?.Invoke();
 	}
 
-	protected void OnClick_Cancel()
+	protected virtual void OnClick_Close()
 	{
 		GameManager.UI.PopPopup();
 

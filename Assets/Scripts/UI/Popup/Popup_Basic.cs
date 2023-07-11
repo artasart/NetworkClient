@@ -10,7 +10,7 @@ public enum ModalType
 public class Popup_Basic : Popup_Base
 {
 	Button btn_Confirm;
-	Button btn_Cancel;
+	Button btn_Close;
 	Button btn_Background;
 
 	public ModalType modalType = ModalType.ConfirmCancel;
@@ -21,7 +21,7 @@ public class Popup_Basic : Popup_Base
 		{
 			case ModalType.Confrim:
 				btn_Confirm.gameObject.SetActive(false);
-				btn_Cancel.gameObject.SetActive(true);
+				btn_Close.gameObject.SetActive(true);
 				break;
 			case ModalType.ConfirmCancel:
 				btn_Confirm.gameObject.SetActive(true);
@@ -35,7 +35,7 @@ public class Popup_Basic : Popup_Base
 		base.Awake();
 
 		btn_Confirm = GetUI_Button(nameof(btn_Confirm), OnClick_Confirm);
-		btn_Cancel = GetUI_Button(nameof(btn_Cancel), OnClick_Cancel);
-		btn_Background = GetUI_Button(nameof(btn_Background), OnClick_Cancel);
+		btn_Close = GetUI_Button(nameof(btn_Close), OnClick_Close);
+		btn_Background = GetUI_Button(nameof(btn_Background), OnClick_Close);
 	}
 }

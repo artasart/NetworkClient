@@ -7,29 +7,39 @@ public class GameTestInputManager : MonoBehaviour
 {
 	private void Start()
 	{
-		GameManager.Sound.PlayBGM("Space", 1f);
+		GameManager.UI.StackPanel<Panel_GameStart>();
 	}
 
 	public void Update()
 	{
+		if (Input.GetKeyDown(KeyCode.Z))
+		{
+			GameClientManager.Instance.CreateRide();
+		}
+
+		if (Input.GetKeyDown(KeyCode.X))
+		{
+			GameClientManager.Instance.DestroyRide();
+		}
+
 		if (Input.GetKeyDown(KeyCode.Alpha1))
 		{
-			FindObjectOfType<MonsterGenerator>().Generate(1);
+			GameClientManager.Instance.CreateMain("ARTASART");
 		}
 
 		if (Input.GetKeyDown(KeyCode.Alpha2))
 		{
-			FindObjectOfType<MonsterGenerator>().Generate(20f);
-		}
+			GameClientManager.Instance.DestroyMain();
 
+		}
 		if (Input.GetKeyDown(KeyCode.Alpha3))
 		{
-			var monsters = FindObjectsOfType<MonsterActor>();
+			GameClientManager.Instance.CreateDummy();
+		}
 
-			for(int i = 0; i < monsters.Length;i ++)
-			{
-				monsters[i].Die();
-			}
+		if (Input.GetKeyDown(KeyCode.Alpha4))
+		{
+			GameClientManager.Instance.DestroyDummy();
 		}
 	}
 }

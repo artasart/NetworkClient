@@ -10,7 +10,7 @@ public class Monster
 	public int MaxHealth;
 	public int Damage;
 	public int Defense;
-	public int Experience;
+	public int Exp;
 	public int Gold;
 	public int level;
 
@@ -25,7 +25,7 @@ public class Monster
 		MaxHealth = _maxHealth;
 		Damage = _damage;
 		Defense = _defense;
-		Experience = _experience;
+		Exp = _experience;
 		Gold = _gold;
 		level = _level;
 	}

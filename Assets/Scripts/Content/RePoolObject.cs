@@ -19,8 +19,23 @@ public class RePoolObject : MonoBehaviour
 
 	private IEnumerator<float> Co_CheckAlive()
 	{
-		yield return Timing.WaitUntilTrue(() => !mainParticle.isPlaying);
+		yield return Timing.WaitUntilTrue(() => IsPlaying());
 
         FindObjectOfType<EffectPool>().RePool(this.gameObject);
     }
+
+	private bool IsPlaying()
+	{
+		if (!mainParticle.isPlaying)
+			return true;
+
+		foreach (Transform child in mainParticle.transform)
+		{
+			var childParticle = child.GetComponent<ParticleSystem>();
+
+			if (childParticle.isPlaying) return false;
+		}
+
+		return false;
+	}
 }

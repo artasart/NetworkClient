@@ -1,6 +1,8 @@
 using MEC;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using static EasingFunction;
 
 public class GameUIManager : SingletonManager<GameUIManager>
@@ -16,6 +18,8 @@ public class GameUIManager : SingletonManager<GameUIManager>
 	GameObject group_MasterCanvas;
 	GameObject group_Panel;
 	GameObject group_Popup;
+
+	bool isInitialized = false;
 
 	public Canvas MasterCanvas { get => group_MasterCanvas.GetComponent<Canvas>(); }
 
@@ -34,6 +38,8 @@ public class GameUIManager : SingletonManager<GameUIManager>
 
 		CacheUI(group_Panel, panels);
 		CacheUI(group_Popup, popups);
+
+		isInitialized = true;
 	}
 
 	private void CacheUI(GameObject _parent, Dictionary<string, GameObject> _objects)
@@ -77,8 +83,31 @@ public class GameUIManager : SingletonManager<GameUIManager>
 
 		else if (openPanels.Count > 0)
 		{
+			if (Equals(openPanels.Peek(), nameof(Panel_HUD)))
+			{
+				return;
+			}
+
 			PopPanel();
 		}
+	}
+
+	public void Restart()
+	{
+		if (!isInitialized) return;
+
+		panels.Clear();
+		popups.Clear();
+		openPanels.Clear();
+		openPopups.Clear();
+
+		group_MasterCanvas = GameObject.Find("go_Canvas");
+
+		group_Panel = GameObject.Find(nameof(group_Panel));
+		group_Popup = GameObject.Find(nameof(group_Popup));
+
+		CacheUI(group_Panel, panels);
+		CacheUI(group_Popup, popups);
 	}
 
 	#endregion
@@ -100,20 +129,25 @@ public class GameUIManager : SingletonManager<GameUIManager>
 
 		if (openPanels.Contains(panelName)) return;
 
-		openPanels.Push(panelName);
-
-		panels[panelName].transform.SetAsLastSibling();
-
-		if (_instant)
+		if(panels.ContainsKey(panelName))
 		{
-			panels[panelName].SetActive(true);
-			panels[panelName].GetComponent<CanvasGroup>().alpha = 1f;
-			panels[panelName].GetComponent<CanvasGroup>().blocksRaycasts = true;
+			openPanels.Push(panelName);
+
+			panels[panelName].transform.SetAsLastSibling();
+
+			if (_instant)
+			{
+				panels[panelName].SetActive(true);
+				panels[panelName].GetComponent<CanvasGroup>().alpha = 1f;
+				panels[panelName].GetComponent<CanvasGroup>().blocksRaycasts = true;
+			}
+
+			else ShowPanel(panels[panelName], true);
+
+			DebugManager.Log($"Push: {panelName}", DebugColor.UI);
 		}
 
-		else ShowPanel(panels[panelName], true);
-
-		DebugManager.Log($"Push: {panelName}", DebugColor.UI);
+		else DebugManager.Log($"{panelName} does not exist in this scene.", DebugColor.UI);
 	}
 
 	public void PopPanel(bool _instant = false)
@@ -162,26 +196,31 @@ public class GameUIManager : SingletonManager<GameUIManager>
 		return popups[typeof(T).ToString()].GetComponent<T>();
 	}
 
-	public void PushPopup<T>(bool _instant = false) where T : MonoBehaviour
+	public void StackPopup<T>(bool _instant = false) where T : MonoBehaviour
 	{
 		string popupName = typeof(T).Name;
 
 		if (openPopups.Contains(popupName)) return;
 
-		openPopups.Push(popupName);
-
-		popups[popupName].transform.SetAsLastSibling();
-
-		if (_instant)
+		if (popups.ContainsKey(popupName))
 		{
-			popups[popupName].SetActive(true);
-			popups[popupName].GetComponent<CanvasGroup>().alpha = 1f;
-			popups[popupName].GetComponent<CanvasGroup>().blocksRaycasts = true;
+			openPopups.Push(popupName);
+
+			popups[popupName].transform.SetAsLastSibling();
+
+			if (_instant)
+			{
+				popups[popupName].SetActive(true);
+				popups[popupName].GetComponent<CanvasGroup>().alpha = 1f;
+				popups[popupName].GetComponent<CanvasGroup>().blocksRaycasts = true;
+			}
+
+			else ShowPanel(popups[popupName], true);
+
+			DebugManager.Log($"Push: {popupName}", DebugColor.UI);
 		}
 
-		else ShowPanel(popups[popupName], true);
-
-		DebugManager.Log($"Push: {popupName}", DebugColor.UI);
+		else DebugManager.Log($"{popupName} does not exist in this scene.", DebugColor.UI);
 	}
 
 	public void PopPopup(bool _instant = false)
@@ -246,11 +285,6 @@ public class GameUIManager : SingletonManager<GameUIManager>
 		Timing.RunCoroutine(Co_Show(_gameObject, _isShow), _gameObject.GetHashCode());
 	}
 
-	public void ShowButton(GameObject _gameObject, float _target, float _lerpspeed = 1f)
-	{
-		Timing.RunCoroutine(Co_ShowButton(_gameObject, _target, _lerpspeed), _gameObject.GetHashCode());
-	}
-
 	private IEnumerator<float> Co_Show(GameObject _gameObject, bool _isShow, float _lerpspeed = 1f)
 	{
 		var canvasGroup = _gameObject.GetComponent<CanvasGroup>();
@@ -307,25 +341,33 @@ public class GameUIManager : SingletonManager<GameUIManager>
 		group_Modal.GetComponent<RectTransform>().localScale = Vector3.one * target;
 	}
 
-	private IEnumerator<float> Co_ShowButton(GameObject _gameObject, float _target, float _lerpspeed = 1f)
+	public void FadeMaskableGrahpic<T>(T _current, float _target, float _lerpspeed = 1f, float _delay = 0f, Action _start = null, Action _end = null) where T : MaskableGraphic
 	{
-		var canvasGroup = _gameObject.GetComponent<CanvasGroup>();
-		var targetAlpha = _target;
-		var lerpvalue = 0f;
-		var lerpspeed = _lerpspeed;
+		Timing.RunCoroutine(Co_FadeMaskableGraphic(_current, _target, _lerpspeed, _start, _end).Delay(_delay), _current.GetHashCode().ToString()); ;
+	}
 
-		if (_target != 1) canvasGroup.blocksRaycasts = false;
+	private IEnumerator<float> Co_FadeMaskableGraphic<T>(T _current, float _target, float _lerpspeed = 1f, Action _start = null, Action _end = null) where T : MaskableGraphic
+	{
+		float lerpvalue = 0f;
 
-		while (Mathf.Abs(canvasGroup.alpha - targetAlpha) >= 0.001f)
+		Color target = new Color(_current.color.r, _current.color.g, _current.color.b, _target);
+
+		_start?.Invoke();
+
+		_current.raycastTarget = true;
+
+		while (Mathf.Abs(_current.color.a - _target) >= 0.001f)
 		{
-			canvasGroup.alpha = Mathf.Lerp(canvasGroup.alpha, targetAlpha, lerpvalue += lerpspeed * Time.deltaTime);
+			_current.color = Color.Lerp(_current.color, target, lerpvalue += _lerpspeed * Time.deltaTime);
 
 			yield return Timing.WaitForOneFrame;
 		}
 
-		if (_target == 1) canvasGroup.blocksRaycasts = true;
+		_current.color = target;
 
-		canvasGroup.alpha = targetAlpha;
+		_end?.Invoke();
+
+		yield return Timing.WaitForOneFrame;
 	}
 
 	#endregion

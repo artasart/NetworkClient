@@ -11,8 +11,10 @@ public class GameSoundManager : SingletonManager<GameSoundManager>
 	public AudioSource soundEffect;
 
 	float pausedTime = 0;
+	string currentFile;
 
 	CoroutineHandle handle_bgm;
+	CoroutineHandle handle_replay;
 
 	public float bgmVolume = 1f;
 	public float effectVolume = 1f;
@@ -63,16 +65,22 @@ public class GameSoundManager : SingletonManager<GameSoundManager>
 
 		if (clip != null)
 		{
-			if (pausedTime == 0)
+			if(currentFile != _filename)
 			{
-				pausedTime = bgm.time;
+				pausedTime = 0;
+				bgm.time = 0;
+				currentFile = _filename;
 			}
+
+			else pausedTime = bgm.time;
 
 			bgm.clip = clip;
 			bgm.time = pausedTime;
+			bgm.loop = true;
 			bgm.Play();
 
 			Timing.KillCoroutines(handle_bgm);
+			Timing.KillCoroutines(handle_replay);
 
 			handle_bgm = Timing.RunCoroutine(Co_SetVolume(bgm, _volume * bgmVolume), Define.BGM);
 		}
@@ -206,7 +214,7 @@ public class GameSoundManager : SingletonManager<GameSoundManager>
 	IEnumerator<float> Co_SetVolume(AudioSource _audioSource, float _volume, Action _action = null)
 	{
 		float elapsedTime = 0f;
-		float lerpSpeed = .5f;
+		float lerpSpeed = .01f;
 
 		while (Mathf.Abs(_audioSource.volume - _volume) >= 0.001f)
 		{

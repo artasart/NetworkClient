@@ -15,6 +15,7 @@ MonoBehaviour:
   bgm:
   - {fileID: 8300000, guid: db05f1c5fc81f3840a8425dacb6bfa8d, type: 3}
   - {fileID: 8300000, guid: 1aeffb731225936459c243ed729e7d2c, type: 3}
+  - {fileID: 8300000, guid: 6c1cf692028cc174792bfdbcc4e50f9d, type: 3}
   soundEffects:
   - {fileID: 8300000, guid: faa5b02a57b466b48bcee941a324a1ba, type: 3}
   - {fileID: 8300000, guid: 1aff8da7c9bd5a04194426e287c94018, type: 3}
@@ -22,3 +23,5 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 4401a06e40f11d34fb8039447d8e10e8, type: 3}
   - {fileID: 8300000, guid: 5e79d86d1e0dcac428531d3679cd24e4, type: 3}
   - {fileID: 8300000, guid: f93c782cede5aeb4d9291dcc1a95451c, type: 3}
+  - {fileID: 8300000, guid: 8fcee510e54d5d54da50281dcf8b28b1, type: 3}
+  - {fileID: 8300000, guid: de7f2e01edc6a374e8a65a07d4b3be3d, type: 3}
