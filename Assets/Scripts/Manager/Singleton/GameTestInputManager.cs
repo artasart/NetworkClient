@@ -24,7 +24,7 @@ public class GameTestInputManager : MonoBehaviour
 
 		if (Input.GetKeyDown(KeyCode.Alpha1))
 		{
-			GameClientManager.Instance.CreateMain("ARTASART");
+			GameClientManager.Instance.CreateMain("ARTASART_" + Random.Range(0,100000000));
 		}
 
 		if (Input.GetKeyDown(KeyCode.Alpha2))

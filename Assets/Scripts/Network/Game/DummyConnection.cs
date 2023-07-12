@@ -39,47 +39,13 @@ public class DummyConnection : Connection
 
         packet.Position = position;
         packet.Rotation = rotation;
+        packet.PrefabName = "MarkerMan";
 
         Send(PacketManager.MakeSendBuffer(packet));
     }
 
     public void Handle_S_INSTANTIATE_GAME_OBJECT( Protocol.S_INSTANTIATE_GAME_OBJECT enter )
     {
-        //Protocol.C_LEAVE leave = new();
-        //Send(PacketManager.MakeSendBuffer(leave));
-
         gameObjectId = enter.GameObjectId;
-
-        Timing.RunCoroutine(Test());
-    }
-
-    IEnumerator<float> Test()
-	{
-        Protocol.C_SET_TRANSFORM st = new()
-        {
-            GameObjectId = gameObjectId
-        };
-
-        Protocol.Vector3 position = new();
-        st.Position = position;
-        position.X = p_x;
-        position.Y = p_y;
-        position.Z = p_z;
-
-        Protocol.Vector3 rotation = new();
-        st.Rotation = rotation;
-
-        while (state == ConnectionState.NORMAL)
-        {
-            r_y = (r_y + UnityEngine.Random.Range(0, 2)) % 360;
-
-            rotation.X = r_x;
-            rotation.Y = r_y;
-            rotation.Z = r_z;
-
-            Send(PacketManager.MakeSendBuffer(st));
-
-            yield return Timing.WaitForOneFrame;
-        }
     }
 }

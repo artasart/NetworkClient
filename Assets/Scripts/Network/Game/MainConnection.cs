@@ -87,6 +87,7 @@ public class MainConnection : Connection
 				var prefab = Resources.Load<GameObject>("Prefab/" + gameObject.PrefabName);
 				prefab.GetComponent<NetworkTransform>().objectId = gameObject.Id;
 				prefab.GetComponent<NetworkTransform>().isMine = true;
+				prefab.GetComponent<NetworkTransform>().isPlayer = true;
 
 				var player = UnityEngine.Object.Instantiate(prefab, position, rotation);
 				player.name = "MarkerMan_" + gameObject.Id;
@@ -115,12 +116,9 @@ public class MainConnection : Connection
 				else if (gameObject.PrefabName == "MarkerMan")
 				{
 					var prefab = Resources.Load<GameObject>("Prefab/" + gameObject.PrefabName);
-
-					UnityEngine.Object.Destroy(prefab.GetComponent<PlayerController>());
-					UnityEngine.Object.Destroy(prefab.transform.Search("Camera").gameObject);
-
 					prefab.GetComponent<NetworkTransform>().objectId = gameObject.Id;
 					prefab.GetComponent<NetworkTransform>().isMine = false;
+					prefab.GetComponent<NetworkTransform>().isPlayer = true;
 
 					var player = UnityEngine.Object.Instantiate(prefab, position, rotation);
 					player.name = "MarkerMan_" + gameObject.Id;
@@ -167,26 +165,5 @@ public class MainConnection : Connection
 
 			gameObjects.Remove(gameObjectId.ToString());
 		}
-	}
-
-	public void S_SET_TRANSFORM(S_SET_TRANSFORM _packet)
-	{
-		GameObject gameObject;
-
-		if (!gameObjects.TryGetValue(_packet.GameObjectId.ToString(), out gameObject))
-		{
-			return;
-		}
-
-		if (gameObject == null)
-		{
-			return;
-		}
-
-		UnityEngine.Vector3 position = new(_packet.Position.X, _packet.Position.Y, _packet.Position.Z);
-		Quaternion rotation = Quaternion.Euler(_packet.Rotation.X, _packet.Rotation.Y, _packet.Rotation.Z);
-
-		gameObject.transform.localPosition = position;
-		gameObject.transform.localRotation = rotation;
 	}
 }

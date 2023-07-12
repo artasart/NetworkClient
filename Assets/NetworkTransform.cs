@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Framework.Network;
-using Google.Protobuf;
 using MEC;
 using Protocol;
+using TMPro;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
@@ -13,12 +12,8 @@ namespace FrameWork.Network
 	{
 		#region Members
 
-		float lerpSpeed = 10f;
-
 		Vector3 position;
 		Quaternion rotation;
-
-		CoroutineHandle handle_update;
 
 		#endregion
 
@@ -29,13 +24,22 @@ namespace FrameWork.Network
 		protected override void OnDestroy()
 		{
 			base.OnDestroy();
-
-			Timing.KillCoroutines(handle_update);
 		}
 
 		protected override void Awake()
 		{
 			base.Awake();
+
+			if (!isMine)
+			{
+				Destroy(this.GetComponent<PlayerController>());
+				Destroy(this.GetComponentInChildren<CameraShake>().gameObject);
+			}
+
+			if(isPlayer)
+			{
+				this.transform.GetComponentInChildren<TMP_Text>().text = "MarkerMan_" + objectId;
+			}
 		}
 
 		protected override void Start()
@@ -95,16 +99,14 @@ namespace FrameWork.Network
 			C_SET_TRANSFORM.Rotation = NetworkUtils.UnityVector3ToProtocolVector3(this.transform.eulerAngles);
 
 			GameClientManager.Instance.mainConnection.Send(PacketManager.MakeSendBuffer(C_SET_TRANSFORM));
-
-			Debug.Log("C_SET_TRANSFORM");
 		}
 
 		private void S_SET_TRANSFORM(S_SET_TRANSFORM _packet)
 		{
+			if (_packet.GameObjectId != objectId) return;
+
 			position = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position);
 			rotation = NetworkUtils.ProtocolVector3ToUnityQuaternion(_packet.Rotation);
-
-			Debug.Log("S_SET_TRANSFORM : " + position + " " + rotation);
 		}
 
 		#endregion

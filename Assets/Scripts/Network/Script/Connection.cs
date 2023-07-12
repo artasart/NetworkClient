@@ -87,12 +87,14 @@ namespace Framework.Network
             {
                 ClientId = "Test"
             };
+
             Send(PacketManager.MakeSendBuffer(enter));
         }
 
         public void Leave()
         {
             Protocol.C_LEAVE leave = new();
+
             Send(PacketManager.MakeSendBuffer(leave));
         }
 
@@ -102,6 +104,7 @@ namespace Framework.Network
             {
                 ClientId = "Test"
             };
+
             Send(PacketManager.MakeSendBuffer(reEnter));
         }
 
@@ -114,6 +117,7 @@ namespace Framework.Network
         private void Handle_S_DISCONNECTED( Protocol.S_DISCONNECT pkt )
         {
             UnityEngine.Debug.Log("Handle S Disconnect");
+
             Close();
         }
 

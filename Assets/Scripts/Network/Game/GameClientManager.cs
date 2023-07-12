@@ -63,7 +63,7 @@ public class GameClientManager : MonoBehaviour
 	{
 		IPEndPoint endPoint = new(IPAddress.Parse("192.168.0.104"), 7777);
 
-		for (int i = 0; i < 20; i++)
+		for (int i = 0; i < 1; i++)
 		{
 			DummyConnection connection = (DummyConnection)ConnectionManager.GetConnection<DummyConnection>();
 

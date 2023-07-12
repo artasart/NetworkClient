@@ -26,6 +26,8 @@ namespace Framework.Network
         PKT_S_REMOVE_GAME_OBJECT = 104,
         PKT_C_SET_TRANSFORM = 105,
         PKT_S_SET_TRANSFORM = 106,
+        PKT_C_SET_ANIMATION = 107,
+        PKT_S_SET_ANIMATION = 108,
     }
 
     public static class PacketManager
@@ -44,6 +46,7 @@ namespace Framework.Network
             onRecv.Add((ushort)MsgId.PKT_S_ADD_GAME_OBJECT, MakePacket<S_ADD_GAME_OBJECT>);
             onRecv.Add((ushort)MsgId.PKT_S_REMOVE_GAME_OBJECT, MakePacket<S_REMOVE_GAME_OBJECT>);
             onRecv.Add((ushort)MsgId.PKT_S_SET_TRANSFORM, MakePacket<S_SET_TRANSFORM>);
+            onRecv.Add((ushort)MsgId.PKT_S_SET_ANIMATION, MakePacket<S_SET_ANIMATION>);
         }
 
         public static void OnRecv( ArraySegment<byte> buffer, PacketQueue packetQueue )
@@ -78,6 +81,7 @@ namespace Framework.Network
         public static ArraySegment<byte> MakeSendBuffer( Protocol.C_INSTANTIATE_GAME_OBJECT pkt ) { return MakeSendBuffer(pkt, 100); }
         public static ArraySegment<byte> MakeSendBuffer( Protocol.C_GET_GAME_OBJECT pkt ) { return MakeSendBuffer(pkt, 102); }
         public static ArraySegment<byte> MakeSendBuffer( Protocol.C_SET_TRANSFORM pkt ) { return MakeSendBuffer(pkt, 105); }
+        public static ArraySegment<byte> MakeSendBuffer( Protocol.C_SET_ANIMATION pkt ) { return MakeSendBuffer(pkt, 107); }
 
         private static ArraySegment<byte> MakeSendBuffer( IMessage pkt, ushort pktId )
         {
