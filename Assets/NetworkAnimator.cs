@@ -45,5 +45,20 @@ namespace FrameWork.Network
 		}
 
 		#endregion
+
+
+
+
+		//private void S_BASE_ANIMATION(PacketSession _session, IMessage _packet)
+		//{
+		//	var packet = _packet as S_SET_ANIMATION;
+
+		//	if (packet.ObjectId != objectId) return;
+
+		//	packetAnimation = packet.Animation.Decompress().TrimEnd();
+		//	animations = packet.Animation.Decompress().TrimEnd().Split(' ');
+
+		//	isRecieved = true;
+		//}
 	}
 }
