@@ -152,6 +152,8 @@ public class GameClientManager : MonoBehaviour
 
 	public void CreateRide()
 	{
+		FindObjectOfType<CinemachineTPSController>().ShowCursor(true);
+
 		var player = FindObjectOfType<PlayerController>();
 
 		var position = player.transform.position + player.transform.forward * spawnDistance;

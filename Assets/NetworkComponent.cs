@@ -7,18 +7,19 @@ namespace FrameWork.Network
 	public class NetworkComponent : MonoBehaviour
 	{
 		[HideInInspector] public string clientId;
-		public int objectId = 0;
+		[HideInInspector] public int objectId = 0;
 		public float interval = 0;
 		public int totalStep;
 		[HideInInspector] public float lerpSpeed = 10f;
 
 		public bool isMine = false;
-		public bool isPlayer = false;
+		[HideInInspector] public bool isPlayer = false;
 
-		public bool isRecieved = false;
+		[HideInInspector] public bool isRecieved = false;
 
 		protected Stopwatch stopwatch = new Stopwatch();
 		public CoroutineHandle handle_update;
+		public bool isRunning = false;
 
 		protected virtual void Awake() 
 		{

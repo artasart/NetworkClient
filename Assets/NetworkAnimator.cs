@@ -14,20 +14,13 @@ namespace FrameWork.Network
 
 		Animator animator;
 
-		float movement;
-		int jump;
-		bool sit;
+		Queue<S_SET_ANIMATION> queue = new Queue<S_SET_ANIMATION>();
 
 		#endregion
 
 
 
 		#region Initialize
-
-		protected override void OnDestroy()
-		{
-
-		}
 
 		protected override void Awake()
 		{
@@ -45,21 +38,9 @@ namespace FrameWork.Network
 			if (!isMine) GameClientManager.Instance.mainConnection.AddHandler(S_SET_ANIMATION);
 		}
 
-		private void Update()
-		{
-			if (isMine) return;
-
-			//if (isRecieved)
-			//{
-			//	animator.SetFloat(Define.MOVEMENT, Mathf.Lerp(animator.GetFloat(Define.MOVEMENT), movement, lerpSpeed * Time.deltaTime));
-			//	animator.SetInteger(Define.JUMP, jump);
-			//	animator.SetBool(Define.SIT, sit);
-			//}
-		}
-
 		private IEnumerator<float> Co_Update()
 		{
-			if (!isMine) yield break;
+			if (!isMine || !isPlayer) yield break;
 
 			string prev = string.Empty;
 
@@ -79,6 +60,10 @@ namespace FrameWork.Network
 		}
 
 		#endregion
+
+
+
+		#region Core Methods
 
 		private void C_SET_ANIMATION()
 		{
@@ -108,12 +93,10 @@ namespace FrameWork.Network
 
 			queue.Enqueue(_packet);
 
-			Debug.Log("Enqueue");
-
-			if (!isRunning) Timing.RunCoroutine(Co_Test(), "Co_Test");
+			if (!isRunning) Timing.RunCoroutine(Co_SET_ANIMATION(), "Co_SET_ANIMATION");
 		}
 
-		IEnumerator<float> Co_Test()
+		private IEnumerator<float> Co_SET_ANIMATION()
 		{
 			isRunning = true;
 
@@ -121,8 +104,6 @@ namespace FrameWork.Network
 
 			while (queue.Count > 0)
 			{
-				Debug.Log("Queue Count : " + queue.Count);
-
 				stopwatch.Reset();
 				stopwatch.Start();
 
@@ -152,9 +133,11 @@ namespace FrameWork.Network
 			isRunning = false;
 		}
 
-		Queue<S_SET_ANIMATION> queue = new Queue<S_SET_ANIMATION>();
 
-		bool isRunning = false;
+		#endregion
+
+
+		#region Basic Methods
 
 		private string GetParameters()
 		{
@@ -166,5 +149,7 @@ namespace FrameWork.Network
 
 			return builder.ToString();
 		}
+
+		#endregion
 	}
 }

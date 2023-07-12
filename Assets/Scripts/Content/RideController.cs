@@ -33,11 +33,11 @@ public class RideController : MonoBehaviour
 
 		yield return Timing.WaitUntilTrue(() => !playerController.isPathFinding);
 
-		yield return Timing.WaitForSeconds(1f);
-
-		Debug.Log("Ride");
+		yield return Timing.WaitForSeconds(.5f);
 
 		boxCollider.enabled = false;
+
+		FindObjectOfType<CinemachineTPSController>().ShowCursor(false);
 
 		FindObjectOfType<EffectPool>().Spawn(EffectType.Effect_Thunder, playerController.transform.position, Quaternion.identity);
 

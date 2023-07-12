@@ -76,7 +76,7 @@ public class CinemachineTPSController : MonoBehaviour
 
     public void ShowCursor(bool isShow)
     {
-        Cursor.lockState = isShow ? CursorLockMode.None : CursorLockMode.Locked;
+        Cursor.lockState = isShow ? CursorLockMode.None : CursorLockMode.Confined;
         Cursor.visible = isShow;
     }
 

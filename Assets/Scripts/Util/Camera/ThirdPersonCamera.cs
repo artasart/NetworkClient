@@ -41,8 +41,7 @@ public class ThirdPersonCamera : MonoBehaviour
 
 		if (lockCursor)
 		{
-			Cursor.lockState = CursorLockMode.Locked;
-			Cursor.visible = false;
+			ShowCursor(false);
 		}
 	}
 

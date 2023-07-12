@@ -121,9 +121,11 @@ public class PlayerController : MonoBehaviour
 	{
 		float jumpVelocity = Mathf.Sqrt(-2 * gravity * jumpHeight);
 		float movement = animator.GetFloat(Define.MOVEMENT);
-		bool isMoving = movement >= Define.THRESHOLD_MOVEMENT * 10;
+		bool isMoving = moveInput.x + moveInput.y > 0;
 
 		isJumping = true;
+
+		DebugManager.ClearLog(isMoving);
 
 		animator.SetInteger(Define.JUMP, isMoving ? Define.JUMPRUN : Define.JUMPSTAND);
 
@@ -140,11 +142,16 @@ public class PlayerController : MonoBehaviour
 
 		animator.SetInteger(Define.JUMP, 0);
 
-		isJumping = false;
+		if (isMoving) isJumping = false;
 
-		yield return Timing.WaitForSeconds(1.25f);
+		else
+		{
+			yield return Timing.WaitForSeconds(1.25f);
 
-		moveMultiplier = 1f;
+			isJumping = false;
+
+			moveMultiplier = 1f;
+		}
 	}
 
 	private float GetModifiedSmoothTime(float _smoothTime)

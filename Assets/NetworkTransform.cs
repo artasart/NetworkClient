@@ -11,10 +11,7 @@ namespace FrameWork.Network
 	{
 		#region Members
 
-		Vector3 position;
-		Quaternion rotation;
-
-		bool isRunning = false;
+		Queue<S_SET_TRANSFORM> queue = new Queue<S_SET_TRANSFORM>();
 
 		#endregion
 
@@ -37,9 +34,6 @@ namespace FrameWork.Network
 		protected override void Start()
 		{
 			base.Start();
-
-			position = this.transform.position;
-			rotation = this.transform.rotation;
 
 			handle_update = Timing.RunCoroutine(Co_Update());
 
@@ -73,8 +67,6 @@ namespace FrameWork.Network
 
 		#region Core Methods
 
-		Queue<S_SET_TRANSFORM> queue = new Queue<S_SET_TRANSFORM>();
-		
 		private void C_SET_TRANSFORM()
 		{
 			C_SET_TRANSFORM packet = new()
@@ -94,10 +86,10 @@ namespace FrameWork.Network
 
 			queue.Enqueue(_packet);
 
-			if (!isRunning) Timing.RunCoroutine(Co_Test(), "Co_Test");
+			if (!isRunning) Timing.RunCoroutine(Co_SET_TRANSFORM(), "Co_SET_TRANSFORM");
 		}
 
-		IEnumerator<float> Co_Test()
+		private IEnumerator<float> Co_SET_TRANSFORM()
 		{
 			isRunning = true;
 
