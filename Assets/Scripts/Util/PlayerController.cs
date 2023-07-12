@@ -126,7 +126,7 @@ public class PlayerController : MonoBehaviour
 	{
 		float jumpVelocity = Mathf.Sqrt(-2 * gravity * jumpHeight);
 		float movement = animator.GetFloat(Define.MOVEMENT);
-		bool isMoving = moveInput.x + moveInput.y >= 0;
+		bool isMoving = moveInput.x + moveInput.y > 0;
 
 		isJumping = true;
 

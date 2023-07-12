@@ -106,23 +106,7 @@ namespace FrameWork.Network
 		{
 			if (_packet.GameObjectId != objectId) return;
 
-			foreach (var item in _packet.Params)
-			{
-				switch(item.Key)
-				{
-					case Define.MOVEMENT:
-						movementQueue.Enqueue(item.Value.FloatParam);
-						break;
-
-					case Define.JUMP:
-						animator.SetInteger(Define.JUMP, item.Value.IntParam);
-						break;
-
-					case Define.SIT:
-						animator.SetBool(Define.SIT, item.Value.BoolParam);
-						break;
-				}
-			}
+			queue.Enqueue(_packet);
 
 			if (!isRunning) Timing.RunCoroutine(Co_Test(), "Co_Test");
 		}
@@ -133,17 +117,35 @@ namespace FrameWork.Network
 
 			yield return Timing.WaitForSeconds(interval * 3f);
 
-			while (movementQueue.Count > 0)
+			while (queue.Count > 0)
 			{
+				Debug.Log("Queue Count : " + queue.Count);
+
 				stopwatch.Restart();
 
-				var target = movementQueue.Dequeue();
+				var target = queue.Dequeue();
 
-				for (int currentStep = 1; currentStep <= totalStep; currentStep++)
+				foreach (var item in target.Params)
 				{
-					animator.SetFloat(Define.MOVEMENT, Mathf.Lerp(animator.GetFloat(Define.MOVEMENT), target, (float)currentStep / totalStep));
+					switch (item.Key)
+					{
+						case Define.MOVEMENT:
+							for (int currentStep = 1; currentStep <= totalStep; currentStep++)
+							{
+								animator.SetFloat(Define.MOVEMENT, Mathf.Lerp(animator.GetFloat(Define.MOVEMENT), item.Value.FloatParam, (float)currentStep / totalStep));
 
-					yield return Timing.WaitForSeconds((float)(interval * currentStep / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds);
+								yield return Timing.WaitForSeconds((float)(interval * currentStep / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds);
+							}
+							break;
+
+						case Define.JUMP:
+							jump = item.Value.IntParam;
+							break;
+
+						case Define.SIT:
+							sit = item.Value.BoolParam;
+							break;
+					}
 				}
 
 				stopwatch.Stop();
@@ -152,7 +154,7 @@ namespace FrameWork.Network
 			isRunning = false;
 		}
 
-		Queue<float> movementQueue = new Queue<float>();
+		Queue<S_SET_ANIMATION> queue = new Queue<S_SET_ANIMATION>();
 
 		bool isRunning = false;
 
