@@ -1,4 +1,5 @@
 ﻿using MEC;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace FrameWork.Network
@@ -8,6 +9,7 @@ namespace FrameWork.Network
 		[HideInInspector] public string clientId;
 		public int objectId = 0;
 		public float interval = 0;
+		public int totalStep;
 		[HideInInspector] public float lerpSpeed = 10f;
 
 		public bool isMine = false;
@@ -15,11 +17,13 @@ namespace FrameWork.Network
 
 		public bool isRecieved = false;
 
+		protected Stopwatch stopwatch = new Stopwatch();
 		public CoroutineHandle handle_update;
 
 		protected virtual void Awake() 
 		{
-			interval = .1f;
+			interval = .05f;
+			totalStep = 6;
 		}
 
 		protected virtual void Start() { }

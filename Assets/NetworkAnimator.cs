@@ -14,6 +14,10 @@ namespace FrameWork.Network
 
 		Animator animator;
 
+		float movement;
+		int jump;
+		bool sit;
+
 		#endregion
 
 
@@ -36,7 +40,7 @@ namespace FrameWork.Network
 		{
 			base.Start();
 
-			//handle_update = Timing.RunCoroutine(Co_Update());
+			handle_update = Timing.RunCoroutine(Co_Update());
 
 			if (!isMine) GameClientManager.Instance.mainConnection.AddHandler(S_SET_ANIMATION);
 		}
@@ -45,12 +49,12 @@ namespace FrameWork.Network
 		{
 			if (isMine) return;
 
-			if (isRecieved)
-			{
-				animator.SetFloat(Define.MOVEMENT, Mathf.Lerp(animator.GetFloat(Define.MOVEMENT), movement, lerpSpeed * Time.deltaTime));
-				animator.SetInteger(Define.JUMP, jump);
-				animator.SetBool(Define.SIT, sit);
-			}
+			//if (isRecieved)
+			//{
+			//	animator.SetFloat(Define.MOVEMENT, Mathf.Lerp(animator.GetFloat(Define.MOVEMENT), movement, lerpSpeed * Time.deltaTime));
+			//	animator.SetInteger(Define.JUMP, jump);
+			//	animator.SetBool(Define.SIT, sit);
+			//}
 		}
 
 		private IEnumerator<float> Co_Update()
@@ -107,37 +111,50 @@ namespace FrameWork.Network
 				switch(item.Key)
 				{
 					case Define.MOVEMENT:
-						//animator.SetFloat(Define.MOVEMENT, item.Value.FloatParam);
-						movement = item.Value.FloatParam;
+						movementQueue.Enqueue(item.Value.FloatParam);
 						break;
 
 					case Define.JUMP:
-						//animator.SetInteger(Define.JUMP, item.Value.IntParam);
-						jump = item.Value.IntParam;
+						animator.SetInteger(Define.JUMP, item.Value.IntParam);
 						break;
 
 					case Define.SIT:
-						//animator.SetBool(Define.SIT, item.Value.BoolParam);
-						sit = item.Value.BoolParam;
+						animator.SetBool(Define.SIT, item.Value.BoolParam);
 						break;
 				}
 			}
 
-			StringBuilder builder = new StringBuilder();
-
-			builder.Append(movement.ToString("N4"))
-				   .Append(jump)
-				   .Append(sit);
-
-			parameters = builder.ToString();
-
-			isRecieved = true;
+			if (!isRunning) Timing.RunCoroutine(Co_Test(), "Co_Test");
 		}
-		string parameters;
 
-		float movement;
-		int jump;
-		bool sit;
+		IEnumerator<float> Co_Test()
+		{
+			isRunning = true;
+
+			yield return Timing.WaitForSeconds(interval * 3f);
+
+			while (movementQueue.Count > 0)
+			{
+				stopwatch.Restart();
+
+				var target = movementQueue.Dequeue();
+
+				for (int currentStep = 1; currentStep <= totalStep; currentStep++)
+				{
+					animator.SetFloat(Define.MOVEMENT, Mathf.Lerp(animator.GetFloat(Define.MOVEMENT), target, (float)currentStep / totalStep));
+
+					yield return Timing.WaitForSeconds((float)(interval * currentStep / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds);
+				}
+
+				stopwatch.Stop();
+			}
+
+			isRunning = false;
+		}
+
+		Queue<float> movementQueue = new Queue<float>();
+
+		bool isRunning = false;
 
 		private string GetParameters()
 		{

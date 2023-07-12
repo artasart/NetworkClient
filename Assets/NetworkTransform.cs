@@ -1,9 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using Framework.Network;
 using MEC;
 using Protocol;
-using TMPro;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
@@ -16,6 +14,8 @@ namespace FrameWork.Network
 		Vector3 position;
 		Quaternion rotation;
 
+		bool isRunning = false;
+
 		#endregion
 
 
@@ -25,6 +25,8 @@ namespace FrameWork.Network
 		protected override void OnDestroy()
 		{
 			base.OnDestroy();
+
+			Timing.KillCoroutines("Co_Test");
 		}
 
 		protected override void Awake()
@@ -42,29 +44,6 @@ namespace FrameWork.Network
 			handle_update = Timing.RunCoroutine(Co_Update());
 
 			if (!isMine) GameClientManager.Instance.mainConnection.AddHandler(S_SET_TRANSFORM);
-		}
-
-		private void Update()
-		{
-			if (isMine) return;
-
-			//if (isRecieved)
-			//{
-
-			//	var lerpPosition = Vector3.Lerp(this.transform.position, position, lerpSpeed * Time.deltaTime);
-			//	var lerpRotation = Quaternion.Lerp(this.transform.rotation, rotation, lerpSpeed * Time.deltaTime);
-
-			//	this.transform.position = lerpPosition;
-			//	this.transform.rotation = lerpRotation;
-
-			//	if (Vector3.Distance(this.transform.position, position) <= 0.001f)
-			//	{
-			//		isRecieved = false;
-
-			//		this.transform.position = position;
-			//		this.transform.rotation = rotation;
-			//	}
-			//}
 		}
 
 		private IEnumerator<float> Co_Update()
@@ -121,52 +100,31 @@ namespace FrameWork.Network
 			if (!isRunning) Timing.RunCoroutine(Co_Test(), "Co_Test");
 		}
 
-		bool isRunning = false;
-
 		IEnumerator<float> Co_Test()
 		{
 			isRunning = true;
 
-			stopwatch = new Stopwatch();
-
-			yield return Timing.WaitForSeconds(.5f);
-
-			//DebugManager.ClearLog(queue.Count);
+			yield return Timing.WaitForSeconds(interval * 3f);
 
 			while (queue.Count > 0)
 			{
-				stopwatch.Reset();
-				stopwatch.Start();
+				stopwatch.Restart();
 
 				var target = queue.Dequeue();
 
-				var startPos = this.transform.position;
-				var startRot = this.transform.rotation;
-				int totalStep = 6;
-
-				for (int i = 0; i < totalStep; i++)
+				for (int currentStep = 1; currentStep <= totalStep; currentStep++)
 				{
-					float t = ((float)i / totalStep);
+					this.transform.position = Vector3.Lerp(this.transform.position, target.Key, (float)currentStep / totalStep);
+					this.transform.rotation = Quaternion.Lerp(this.transform.rotation, target.Value, (float)currentStep / totalStep);
 
-					this.transform.position = Vector3.Lerp(startPos, target.Key, t);
-					this.transform.rotation = Quaternion.Lerp(startRot, target.Value, t);
-
-					//DebugManager.Log(((float)(interval * i / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds).ToString());
-
-					yield return Timing.WaitForSeconds((float)(interval * i / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds);
+					yield return Timing.WaitForSeconds((float)(interval * currentStep / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds);
 				}
 
 				stopwatch.Stop();
-
-				//DebugManager.Log(stopwatch.Elapsed.TotalSeconds.ToString());
 			}
 
 			isRunning = false;
-
-			DebugManager.Log("Done");
 		}
-
-		private Stopwatch stopwatch;
 
 		#endregion
 	}
