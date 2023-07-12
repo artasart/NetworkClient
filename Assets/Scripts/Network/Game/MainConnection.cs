@@ -85,9 +85,9 @@ public class MainConnection : Connection
 			if (gameObject.Id == myObjectId)
 			{
 				var prefab = Resources.Load<GameObject>("Prefab/" + gameObject.PrefabName);
-				prefab.GetComponent<NetworkTransform>().objectId = gameObject.Id;
-				prefab.GetComponent<NetworkTransform>().isMine = true;
-				prefab.GetComponent<NetworkTransform>().isPlayer = true;
+				prefab.GetComponent<NetworkObserver>().objectId = gameObject.Id;
+				prefab.GetComponent<NetworkObserver>().isMine = true;
+				prefab.GetComponent<NetworkObserver>().isPlayer = true;
 
 				var player = UnityEngine.Object.Instantiate(prefab, position, rotation);
 				player.name = "MarkerMan_" + gameObject.Id;
@@ -104,8 +104,8 @@ public class MainConnection : Connection
 
 					UnityEngine.Vector3 offset = UnityEngine.Vector3.up * prefab.transform.localScale.x * .5f;
 
-					prefab.GetComponent<NetworkTransform>().objectId = gameObject.Id;
-					prefab.GetComponent<NetworkTransform>().isMine = true;
+					prefab.GetComponent<NetworkObserver>().objectId = gameObject.Id;
+					prefab.GetComponent<NetworkObserver>().isMine = true;
 					GameObject ride = UnityEngine.Object.Instantiate(prefab, position + offset, rotation);
 
 					UnityEngine.Object.FindObjectOfType<EffectPool>().Spawn(EffectType.Effect_SmokePuff, position + offset, rotation);
@@ -116,9 +116,9 @@ public class MainConnection : Connection
 				else if (gameObject.PrefabName == "MarkerMan")
 				{
 					var prefab = Resources.Load<GameObject>("Prefab/" + gameObject.PrefabName);
-					prefab.GetComponent<NetworkTransform>().objectId = gameObject.Id;
-					prefab.GetComponent<NetworkTransform>().isMine = false;
-					prefab.GetComponent<NetworkTransform>().isPlayer = true;
+					prefab.GetComponent<NetworkObserver>().objectId = gameObject.Id;
+					prefab.GetComponent<NetworkObserver>().isMine = false;
+					prefab.GetComponent<NetworkObserver>().isPlayer = true;
 
 					var player = UnityEngine.Object.Instantiate(prefab, position, rotation);
 					player.name = "MarkerMan_" + gameObject.Id;

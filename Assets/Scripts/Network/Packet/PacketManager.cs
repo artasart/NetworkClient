@@ -23,13 +23,16 @@ namespace Framework.Network
         PKT_S_INSTANTIATE_GAME_OBJECT = 101,
         PKT_C_DESTORY_GAME_OBJECT = 102,
         PKT_S_DESTORY_GAME_OBJECT = 103,
-        PKT_C_GET_GAME_OBJECT = 104,
-        PKT_S_ADD_GAME_OBJECT = 105,
-        PKT_S_REMOVE_GAME_OBJECT = 106,
-        PKT_C_SET_TRANSFORM = 107,
-        PKT_S_SET_TRANSFORM = 108,
-        PKT_C_SET_ANIMATION = 109,
-        PKT_S_SET_ANIMATION = 110,
+        PKT_C_CHANGE_GMAE_OBJECT = 104,
+        PKT_S_CHANGE_GMAE_OBJECT = 105,
+        PKT_S_CHANGE_GMAE_OBJECT_NOTICE = 106,
+        PKT_C_GET_GAME_OBJECT = 107,
+        PKT_S_ADD_GAME_OBJECT = 108,
+        PKT_S_REMOVE_GAME_OBJECT = 109,
+        PKT_C_SET_TRANSFORM = 110,
+        PKT_S_SET_TRANSFORM = 111,
+        PKT_C_SET_ANIMATION = 112,
+        PKT_S_SET_ANIMATION = 113,
     }
 
     public static class PacketManager
@@ -46,6 +49,8 @@ namespace Framework.Network
             onRecv.Add((ushort)MsgId.PKT_S_TEST, MakePacket<S_TEST>);
             onRecv.Add((ushort)MsgId.PKT_S_INSTANTIATE_GAME_OBJECT, MakePacket<S_INSTANTIATE_GAME_OBJECT>);
             onRecv.Add((ushort)MsgId.PKT_S_DESTORY_GAME_OBJECT, MakePacket<S_DESTORY_GAME_OBJECT>);
+            onRecv.Add((ushort)MsgId.PKT_S_CHANGE_GMAE_OBJECT, MakePacket<S_CHANGE_GMAE_OBJECT>);
+            onRecv.Add((ushort)MsgId.PKT_S_CHANGE_GMAE_OBJECT_NOTICE, MakePacket<S_CHANGE_GMAE_OBJECT_NOTICE>);
             onRecv.Add((ushort)MsgId.PKT_S_ADD_GAME_OBJECT, MakePacket<S_ADD_GAME_OBJECT>);
             onRecv.Add((ushort)MsgId.PKT_S_REMOVE_GAME_OBJECT, MakePacket<S_REMOVE_GAME_OBJECT>);
             onRecv.Add((ushort)MsgId.PKT_S_SET_TRANSFORM, MakePacket<S_SET_TRANSFORM>);
@@ -83,9 +88,10 @@ namespace Framework.Network
         public static ArraySegment<byte> MakeSendBuffer( Protocol.C_TEST pkt ) { return MakeSendBuffer(pkt, 10); }
         public static ArraySegment<byte> MakeSendBuffer( Protocol.C_INSTANTIATE_GAME_OBJECT pkt ) { return MakeSendBuffer(pkt, 100); }
         public static ArraySegment<byte> MakeSendBuffer( Protocol.C_DESTORY_GAME_OBJECT pkt ) { return MakeSendBuffer(pkt, 102); }
-        public static ArraySegment<byte> MakeSendBuffer( Protocol.C_GET_GAME_OBJECT pkt ) { return MakeSendBuffer(pkt, 104); }
-        public static ArraySegment<byte> MakeSendBuffer( Protocol.C_SET_TRANSFORM pkt ) { return MakeSendBuffer(pkt, 107); }
-        public static ArraySegment<byte> MakeSendBuffer( Protocol.C_SET_ANIMATION pkt ) { return MakeSendBuffer(pkt, 109); }
+        public static ArraySegment<byte> MakeSendBuffer( Protocol.C_CHANGE_GMAE_OBJECT pkt ) { return MakeSendBuffer(pkt, 104); }
+        public static ArraySegment<byte> MakeSendBuffer( Protocol.C_GET_GAME_OBJECT pkt ) { return MakeSendBuffer(pkt, 107); }
+        public static ArraySegment<byte> MakeSendBuffer( Protocol.C_SET_TRANSFORM pkt ) { return MakeSendBuffer(pkt, 110); }
+        public static ArraySegment<byte> MakeSendBuffer( Protocol.C_SET_ANIMATION pkt ) { return MakeSendBuffer(pkt, 112); }
 
         private static ArraySegment<byte> MakeSendBuffer( IMessage pkt, ushort pktId )
         {

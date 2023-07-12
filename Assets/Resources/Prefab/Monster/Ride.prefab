@@ -14,7 +14,9 @@ GameObject:
   - component: {fileID: 3149344481466438804}
   - component: {fileID: 3210152536338066379}
   - component: {fileID: 3288898720624166189}
+  - component: {fileID: 4169402671200125551}
   - component: {fileID: 1351719221946618328}
+  - component: {fileID: 1534088293188932427}
   m_Layer: 0
   m_Name: Ride
   m_TagString: Untagged
@@ -127,6 +129,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9cb95497f75e4f40a0dbbd60de4f500, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &4169402671200125551
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4597911199662742986}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3e7e6b0d83a3d347980130dad2dd511, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  clientId: 
+  objectId: 0
+  lerpSpeed: 10
+  isMine: 0
+  isPlayer: 0
 --- !u!114 &1351719221946618328
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -141,4 +160,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clientId: 
   objectId: 1
+  lerpSpeed: 10
   isMine: 0
+  isPlayer: 0
+--- !u!114 &1534088293188932427
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4597911199662742986}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93eb4a066bbf43c40bb04b51e44be9d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  clientId: 
+  objectId: 0
+  lerpSpeed: 10
+  isMine: 0
+  isPlayer: 0

@@ -1991,10 +1991,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5542088576257694955}
-  - component: {fileID: 4483705137149165772}
   - component: {fileID: 5971882560164758885}
   - component: {fileID: 165391906}
+  - component: {fileID: 4483705137149165772}
+  - component: {fileID: 4613233504512435085}
   - component: {fileID: 295737866290879258}
+  - component: {fileID: 2063911816766389750}
   m_Layer: 6
   m_Name: MarkerMan
   m_TagString: Player
@@ -2020,31 +2022,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4483705137149165772
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5542088576257694954}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 125fc91440cb496429f9c672c2f955d8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  walkSpeed: 4
-  runSpeed: 8
-  gravity: -12
-  jumpHeight: 1
-  airControlPercent: 1
-  turnSmoothTime: 0.2
-  speedSmoothTime: 0.1
-  standJumpDelay: 0.85
-  isPathFinding: 0
-  rotationSpeed: 720
-  stopDistance: 2
-  moveInput: {x: 0, y: 0}
-  gravityMultiplier: 10
 --- !u!143 &5971882560164758885
 CharacterController:
   m_ObjectHideFlags: 0
@@ -2077,6 +2054,48 @@ CapsuleCollider:
   m_Height: 1.75
   m_Direction: 1
   m_Center: {x: 0, y: 0.92, z: 0}
+--- !u!114 &4483705137149165772
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5542088576257694954}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 125fc91440cb496429f9c672c2f955d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  walkSpeed: 4
+  runSpeed: 8
+  gravity: -12
+  jumpHeight: 1
+  airControlPercent: 1
+  turnSmoothTime: 0.2
+  speedSmoothTime: 0.1
+  standJumpDelay: 0.85
+  isPathFinding: 0
+  rotationSpeed: 720
+  stopDistance: 2
+  moveInput: {x: 0, y: 0}
+  gravityMultiplier: 10
+--- !u!114 &4613233504512435085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5542088576257694954}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3e7e6b0d83a3d347980130dad2dd511, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  clientId: 
+  objectId: 0
+  lerpSpeed: 10
+  isMine: 0
+  isPlayer: 0
 --- !u!114 &295737866290879258
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2091,7 +2110,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clientId: 
   objectId: 0
-  isMine: 1
+  lerpSpeed: 10
+  isMine: 0
+  isPlayer: 0
+--- !u!114 &2063911816766389750
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5542088576257694954}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93eb4a066bbf43c40bb04b51e44be9d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  clientId: 
+  objectId: 0
+  lerpSpeed: 10
+  isMine: 0
+  isPlayer: 0
 --- !u!1 &5670869384234494948
 GameObject:
   m_ObjectHideFlags: 0

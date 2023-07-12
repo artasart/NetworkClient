@@ -5,12 +5,13 @@ namespace FrameWork.Network
 {
 	public class NetworkComponent : MonoBehaviour
 	{
-		public string clientId;
+		[HideInInspector] public string clientId;
 		public int objectId = 0;
+		public float interval = 0;
+		[HideInInspector] public float lerpSpeed = 10f;
+
 		public bool isMine = false;
 		public bool isPlayer = false;
-
-		public float lerpSpeed = 10f;
 
 		public CoroutineHandle handle_update;
 
@@ -18,13 +19,13 @@ namespace FrameWork.Network
 
 		protected virtual void Start() { }
 
-		protected virtual void OnDestroy() 
+		protected virtual void OnDestroy()
 		{
 			Timing.KillCoroutines(handle_update);
 
-			FindObjectOfType<EffectPool>().Spawn(EffectType.Effect_Thunder, this.transform.position, Quaternion.identity);
-		}
+			var effectPool = FindObjectOfType<EffectPool>();
 
-		protected virtual void Dispose() { }
+			effectPool?.Spawn(EffectType.Effect_Thunder, this.transform.position, Quaternion.identity);
+		}
 	}
 }

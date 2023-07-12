@@ -29,17 +29,6 @@ namespace FrameWork.Network
 		protected override void Awake()
 		{
 			base.Awake();
-
-			if (!isMine)
-			{
-				Destroy(this.GetComponent<PlayerController>());
-				Destroy(this.GetComponentInChildren<CameraShake>().gameObject);
-			}
-
-			if(isPlayer)
-			{
-				this.transform.GetComponentInChildren<TMP_Text>().text = "MarkerMan_" + objectId;
-			}
 		}
 
 		protected override void Start()
@@ -69,16 +58,20 @@ namespace FrameWork.Network
 		{
 			if (!isMine) yield break;
 
+			Vector3 prev = Vector3.zero;
+
 			while (true)
 			{
-				var position = this.transform.position;
+				var current = this.transform.position;
 
-				yield return Timing.WaitForOneFrame;
+				yield return Timing.WaitForSeconds(interval);
 
-				if (Vector3.Distance(this.transform.position, position) > 0.001f)
+				if (Vector3.Distance(current, prev) > 0.001f)
 				{
 					C_SET_TRANSFORM();
 				}
+
+				prev = current;
 			}
 		}
 
@@ -90,15 +83,15 @@ namespace FrameWork.Network
 
 		private void C_SET_TRANSFORM()
 		{
-			C_SET_TRANSFORM C_SET_TRANSFORM = new()
+			C_SET_TRANSFORM packet = new()
 			{
 				GameObjectId = objectId
 			};
 
-			C_SET_TRANSFORM.Position = NetworkUtils.UnityVector3ToProtocolVector3(this.transform.position);
-			C_SET_TRANSFORM.Rotation = NetworkUtils.UnityVector3ToProtocolVector3(this.transform.eulerAngles);
+			packet.Position = NetworkUtils.UnityVector3ToProtocolVector3(this.transform.position);
+			packet.Rotation = NetworkUtils.UnityVector3ToProtocolVector3(this.transform.eulerAngles);
 
-			GameClientManager.Instance.mainConnection.Send(PacketManager.MakeSendBuffer(C_SET_TRANSFORM));
+			GameClientManager.Instance.mainConnection.Send(PacketManager.MakeSendBuffer(packet));
 		}
 
 		private void S_SET_TRANSFORM(S_SET_TRANSFORM _packet)

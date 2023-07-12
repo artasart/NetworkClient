@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Google.Protobuf;
+using Framework.Network;
 using MEC;
 using Protocol;
 using UnityEngine;
@@ -22,21 +22,23 @@ namespace FrameWork.Network
 
 		protected override void OnDestroy()
 		{
-			base.OnDestroy();
 
-			Timing.KillCoroutines(handle_update);
 		}
 
 		protected override void Awake()
 		{
 			base.Awake();
 
-			animator = GetComponent<Animator>();
+			animator = GetComponentInChildren<Animator>();
 		}
 
 		protected override void Start()
 		{
 			base.Start();
+
+			handle_update = Timing.RunCoroutine(Co_Update());
+
+			if (!isMine) GameClientManager.Instance.mainConnection.AddHandler(S_SET_ANIMATION);
 		}
 
 		private void Update()
@@ -44,21 +46,83 @@ namespace FrameWork.Network
 			if (isMine) return;
 		}
 
+		private IEnumerator<float> Co_Update()
+		{
+			if (!isMine) yield break;
+
+			string prev = string.Empty;
+
+			while (true)
+			{
+				var current = GetParameters();
+
+				yield return Timing.WaitForSeconds(interval);
+
+				if (!Equals(current, prev))
+				{
+					C_SET_ANIMATION();
+				}
+
+				prev = current.ToString();
+			}
+		}
+
 		#endregion
 
+		private void C_SET_ANIMATION()
+		{
+			C_SET_ANIMATION packet = new()
+			{
+				GameObjectId = objectId
+			};
 
+			AnimationParameter movement = new AnimationParameter();
+			movement.FloatParam = animator.GetFloat(Define.MOVEMENT);
+			packet.Params.Add(Define.MOVEMENT, movement);
 
+			AnimationParameter jump = new AnimationParameter();
+			jump.IntParam = animator.GetInteger(Define.JUMP);
+			packet.Params.Add(Define.JUMP, jump);
 
-		//private void S_BASE_ANIMATION(PacketSession _session, IMessage _packet)
-		//{
-		//	var packet = _packet as S_SET_ANIMATION;
+			AnimationParameter sit = new AnimationParameter();
+			sit.BoolParam = animator.GetBool(Define.SIT);
+			packet.Params.Add(Define.SIT, sit);
 
-		//	if (packet.ObjectId != objectId) return;
+			GameClientManager.Instance.mainConnection.Send(PacketManager.MakeSendBuffer(packet));
+		}
 
-		//	packetAnimation = packet.Animation.Decompress().TrimEnd();
-		//	animations = packet.Animation.Decompress().TrimEnd().Split(' ');
+		private void S_SET_ANIMATION(S_SET_ANIMATION _packet)
+		{
+			if (_packet.GameObjectId != objectId) return;
 
-		//	isRecieved = true;
-		//}
+			foreach (var item in _packet.Params)
+			{
+				switch(item.Key)
+				{
+					case Define.MOVEMENT:
+						animator.SetFloat(Define.MOVEMENT, item.Value.FloatParam);
+						break;
+
+					case Define.JUMP:
+						animator.SetInteger(Define.JUMP, item.Value.IntParam);
+						break;
+
+					case Define.SIT:
+						animator.SetBool(Define.SIT, item.Value.BoolParam);
+						break;
+				}
+			}
+		}
+
+		private string GetParameters()
+		{
+			StringBuilder builder = new StringBuilder();
+
+			builder.Append(animator.GetFloat(Define.MOVEMENT).ToString("N4"))
+				.Append(animator.GetInteger(Define.JUMP))
+				.Append(animator.GetBool(Define.SIT));
+
+			return builder.ToString();
+		}
 	}
 }

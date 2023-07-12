@@ -29,6 +29,7 @@ public static class Define
 
 	public const string MOVEMENT = "Movement";
 	public const string JUMP = "Jump";
+	public const string SIT = "Sit";
 
 	public const int JUMPRUN = 1;
 	public const int JUMPSTAND = 2;
