@@ -47,11 +47,23 @@ namespace FrameWork.Network
 		{
 			if (isMine) return;
 
-			var lerpPosition = Vector3.Lerp(this.transform.position, position, lerpSpeed * Time.deltaTime);
-			var lerpRotation = Quaternion.Lerp(this.transform.rotation, rotation, lerpSpeed * Time.deltaTime);
+			if (isRecieved)
+			{
 
-			this.transform.position = lerpPosition;
-			this.transform.rotation = lerpRotation;
+				var lerpPosition = Vector3.Lerp(this.transform.position, position, lerpSpeed * Time.deltaTime);
+				var lerpRotation = Quaternion.Lerp(this.transform.rotation, rotation, lerpSpeed * Time.deltaTime);
+
+				this.transform.position = lerpPosition;
+				this.transform.rotation = lerpRotation;
+
+				if (Vector3.Distance(this.transform.position, position) <= 0.001f)
+				{
+					isRecieved = false;
+
+					this.transform.position = position;
+					this.transform.rotation = rotation;
+				}
+			}
 		}
 
 		private IEnumerator<float> Co_Update()
@@ -100,6 +112,8 @@ namespace FrameWork.Network
 
 			position = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position);
 			rotation = NetworkUtils.ProtocolVector3ToUnityQuaternion(_packet.Rotation);
+
+			isRecieved = true;
 		}
 
 		#endregion

@@ -13,6 +13,8 @@ namespace FrameWork.Network
 		public bool isMine = false;
 		public bool isPlayer = false;
 
+		public bool isRecieved = false;
+
 		public CoroutineHandle handle_update;
 
 		protected virtual void Awake() { }
