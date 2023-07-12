@@ -31,8 +31,8 @@ public class PlayerController : MonoBehaviour
 	public Animator animator { get; set; }
 	Transform cameraTransform;
 
-
-	int moveMultiplier = 1;
+	[Header("Test")]
+	public float moveMultiplier = 1;
 	public bool isPathFinding = false;
 
 	private void Awake()
@@ -73,17 +73,12 @@ public class PlayerController : MonoBehaviour
 
 		float movement = (isRunning ? currentSpeed / runSpeed : currentSpeed / walkSpeed * 0.5f);
 
-		if (movement <= Define.THRESHOLD_MOVEMENT)
+		if (movement < Define.THRESHOLD_MOVEMENT)
 		{
 			movement = 0f;
 		}
 
-		if(currentSpeed > 0)
-		{
-			animator.SetFloat(Define.MOVEMENT, movement, speedSmoothTime, Time.deltaTime);
-		}
-
-		else animator.SetFloat(Define.MOVEMENT, 0f);
+		animator.SetFloat(Define.MOVEMENT, movement, speedSmoothTime, Time.deltaTime);
 	}
 
 	private void Move(Vector2 inputDir, bool running)
@@ -126,16 +121,16 @@ public class PlayerController : MonoBehaviour
 	{
 		float jumpVelocity = Mathf.Sqrt(-2 * gravity * jumpHeight);
 		float movement = animator.GetFloat(Define.MOVEMENT);
-		bool isMoving = moveInput.x + moveInput.y > 0;
+		bool isMoving = movement >= Define.THRESHOLD_MOVEMENT * 10;
 
 		isJumping = true;
 
 		animator.SetInteger(Define.JUMP, isMoving ? Define.JUMPRUN : Define.JUMPSTAND);
 
+		moveMultiplier = isMoving ? 1f : 0f;
+
 		if (!isMoving)
 		{
-			moveMultiplier = 0;
-
 			yield return Timing.WaitForSeconds(standJumpDelay);
 		}
 
@@ -149,7 +144,7 @@ public class PlayerController : MonoBehaviour
 
 		yield return Timing.WaitForSeconds(1.25f);
 
-		moveMultiplier = 1;
+		moveMultiplier = 1f;
 	}
 
 	private float GetModifiedSmoothTime(float _smoothTime)

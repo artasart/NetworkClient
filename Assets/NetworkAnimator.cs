@@ -72,8 +72,6 @@ namespace FrameWork.Network
 				if (!Equals(current, prev) || animator.GetFloat(Define.MOVEMENT) >= Define.THRESHOLD_MOVEMENT)
 				{
 					C_SET_ANIMATION();
-
-					Debug.Log("Send");
 				}
 
 				prev = current.ToString();
