@@ -17,7 +17,10 @@ namespace FrameWork.Network
 
 		public CoroutineHandle handle_update;
 
-		protected virtual void Awake() { }
+		protected virtual void Awake() 
+		{
+			interval = .1f;
+		}
 
 		protected virtual void Start() { }
 

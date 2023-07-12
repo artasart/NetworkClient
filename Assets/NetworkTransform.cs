@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using Framework.Network;
 using MEC;
 using Protocol;
@@ -47,23 +48,23 @@ namespace FrameWork.Network
 		{
 			if (isMine) return;
 
-			if (isRecieved)
-			{
+			//if (isRecieved)
+			//{
 
-				var lerpPosition = Vector3.Lerp(this.transform.position, position, lerpSpeed * Time.deltaTime);
-				var lerpRotation = Quaternion.Lerp(this.transform.rotation, rotation, lerpSpeed * Time.deltaTime);
+			//	var lerpPosition = Vector3.Lerp(this.transform.position, position, lerpSpeed * Time.deltaTime);
+			//	var lerpRotation = Quaternion.Lerp(this.transform.rotation, rotation, lerpSpeed * Time.deltaTime);
 
-				this.transform.position = lerpPosition;
-				this.transform.rotation = lerpRotation;
+			//	this.transform.position = lerpPosition;
+			//	this.transform.rotation = lerpRotation;
 
-				if (Vector3.Distance(this.transform.position, position) <= 0.001f)
-				{
-					isRecieved = false;
+			//	if (Vector3.Distance(this.transform.position, position) <= 0.001f)
+			//	{
+			//		isRecieved = false;
 
-					this.transform.position = position;
-					this.transform.rotation = rotation;
-				}
-			}
+			//		this.transform.position = position;
+			//		this.transform.rotation = rotation;
+			//	}
+			//}
 		}
 
 		private IEnumerator<float> Co_Update()
@@ -93,6 +94,8 @@ namespace FrameWork.Network
 
 		#region Core Methods
 
+		Queue<KeyValuePair<Vector3, Quaternion>> queue = new Queue<KeyValuePair<Vector3, Quaternion>>();
+		
 		private void C_SET_TRANSFORM()
 		{
 			C_SET_TRANSFORM packet = new()
@@ -113,8 +116,57 @@ namespace FrameWork.Network
 			position = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position);
 			rotation = NetworkUtils.ProtocolVector3ToUnityQuaternion(_packet.Rotation);
 
-			isRecieved = true;
+			queue.Enqueue(new KeyValuePair<Vector3, Quaternion>(position, rotation));
+
+			if (!isRunning) Timing.RunCoroutine(Co_Test(), "Co_Test");
 		}
+
+		bool isRunning = false;
+
+		IEnumerator<float> Co_Test()
+		{
+			isRunning = true;
+
+			stopwatch = new Stopwatch();
+
+			yield return Timing.WaitForSeconds(.5f);
+
+			//DebugManager.ClearLog(queue.Count);
+
+			while (queue.Count > 0)
+			{
+				stopwatch.Reset();
+				stopwatch.Start();
+
+				var target = queue.Dequeue();
+
+				var startPos = this.transform.position;
+				var startRot = this.transform.rotation;
+				int totalStep = 6;
+
+				for (int i = 0; i < totalStep; i++)
+				{
+					float t = ((float)i / totalStep);
+
+					this.transform.position = Vector3.Lerp(startPos, target.Key, t);
+					this.transform.rotation = Quaternion.Lerp(startRot, target.Value, t);
+
+					//DebugManager.Log(((float)(interval * i / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds).ToString());
+
+					yield return Timing.WaitForSeconds((float)(interval * i / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds);
+				}
+
+				stopwatch.Stop();
+
+				//DebugManager.Log(stopwatch.Elapsed.TotalSeconds.ToString());
+			}
+
+			isRunning = false;
+
+			DebugManager.Log("Done");
+		}
+
+		private Stopwatch stopwatch;
 
 		#endregion
 	}

@@ -36,7 +36,7 @@ namespace FrameWork.Network
 		{
 			base.Start();
 
-			handle_update = Timing.RunCoroutine(Co_Update());
+			//handle_update = Timing.RunCoroutine(Co_Update());
 
 			if (!isMine) GameClientManager.Instance.mainConnection.AddHandler(S_SET_ANIMATION);
 		}
@@ -47,14 +47,9 @@ namespace FrameWork.Network
 
 			if (isRecieved)
 			{
-				animator.SetFloat(Define.MOVEMENT, Mathf.Lerp(movement, animator.GetFloat(Define.MOVEMENT), lerpSpeed * Time.deltaTime));
-				animator.SetInteger(Define.JUMP, animator.GetInteger(Define.JUMP));
+				animator.SetFloat(Define.MOVEMENT, Mathf.Lerp(animator.GetFloat(Define.MOVEMENT), movement, lerpSpeed * Time.deltaTime));
+				animator.SetInteger(Define.JUMP, jump);
 				animator.SetBool(Define.SIT, sit);
-
-				if (Equals(parameters, GetParameters()))
-				{
-					isRecieved = false;
-				}
 			}
 		}
 
@@ -112,17 +107,17 @@ namespace FrameWork.Network
 				switch(item.Key)
 				{
 					case Define.MOVEMENT:
-						animator.SetFloat(Define.MOVEMENT, item.Value.FloatParam);
+						//animator.SetFloat(Define.MOVEMENT, item.Value.FloatParam);
 						movement = item.Value.FloatParam;
 						break;
 
 					case Define.JUMP:
-						animator.SetInteger(Define.JUMP, item.Value.IntParam);
+						//animator.SetInteger(Define.JUMP, item.Value.IntParam);
 						jump = item.Value.IntParam;
 						break;
 
 					case Define.SIT:
-						animator.SetBool(Define.SIT, item.Value.BoolParam);
+						//animator.SetBool(Define.SIT, item.Value.BoolParam);
 						sit = item.Value.BoolParam;
 						break;
 				}
