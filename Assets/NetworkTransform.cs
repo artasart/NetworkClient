@@ -105,7 +105,8 @@ namespace FrameWork.Network
 
 			while (queue.Count > 0)
 			{
-				stopwatch.Restart();
+				stopwatch.Reset();
+				stopwatch.Start();
 
 				var target = queue.Dequeue();
 

@@ -69,9 +69,11 @@ namespace FrameWork.Network
 
 				yield return Timing.WaitForSeconds(interval);
 
-				if (!Equals(current, prev) || animator.GetFloat(Define.MOVEMENT) > Define.THRESHOLD_MOVEMENT)
+				if (!Equals(current, prev) || animator.GetFloat(Define.MOVEMENT) >= Define.THRESHOLD_MOVEMENT)
 				{
 					C_SET_ANIMATION();
+
+					Debug.Log("Send");
 				}
 
 				prev = current.ToString();
@@ -108,6 +110,8 @@ namespace FrameWork.Network
 
 			queue.Enqueue(_packet);
 
+			Debug.Log("Enqueue");
+
 			if (!isRunning) Timing.RunCoroutine(Co_Test(), "Co_Test");
 		}
 
@@ -117,13 +121,12 @@ namespace FrameWork.Network
 
 			yield return Timing.WaitForSeconds(interval * 3f);
 
-
-
 			while (queue.Count > 0)
 			{
 				Debug.Log("Queue Count : " + queue.Count);
 
-				stopwatch.Restart();
+				stopwatch.Reset();
+				stopwatch.Start();
 
 				var target = queue.Dequeue();
 								

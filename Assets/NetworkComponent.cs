@@ -23,7 +23,7 @@ namespace FrameWork.Network
 		protected virtual void Awake() 
 		{
 			interval = .05f;
-			totalStep = 6;
+			totalStep = 3;
 		}
 
 		protected virtual void Start() { }
