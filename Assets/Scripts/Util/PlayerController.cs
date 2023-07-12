@@ -5,21 +5,21 @@ using MEC;
 
 public class PlayerController : MonoBehaviour
 {
-	public float walkSpeed = 2;
-	public float runSpeed = 6;
-	public float gravity = -12;
-	public float jumpHeight = 1;
+	[Range(0, 50)] public float walkSpeed = 4;
+	[Range(0, 1)] public float runSpeed = 8;
+	[Range(0, 1)] public float gravity = -12;
+	[Range(0, 1)] public float jumpHeight = 1;
 
 	[Range(0, 1)] public float airControlPercent;
 
 	public float turnSmoothTime = 0.2f;
 	float turnSmoothVelocity;
 
-	public float speedSmoothTime = 0.1f;
+	float speedSmoothTime = 0.1f;
 	float speedSmoothVelocity;
 	float currentSpeed;
 
-	public float standJumpDelay = .15f;
+	float standJumpDelay = .85f;
 	bool isJumping = false;
 	float velocityY;
 	float eulerY = 0;
@@ -27,10 +27,15 @@ public class PlayerController : MonoBehaviour
 	bool isRotationFixed = false;
 
 	CharacterController controller;
+
 	public Animator animator { get; set; }
 	Transform cameraTransform;
 
-	private void Start()
+
+	int moveMultiplier = 1;
+	public bool isPathFinding = false;
+
+	private void Awake()
 	{
 		animator = GetComponentInChildren<Animator>();
 		controller = GetComponent<CharacterController>();
@@ -38,13 +43,11 @@ public class PlayerController : MonoBehaviour
 		cameraTransform = this.transform.Search("LookTarget");
 	}
 
-	public bool isPathFinding = false;
-
 	private void Update()
 	{
 		if(!isPathFinding)
 		{
-			moveInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
+			moveInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized * moveMultiplier;
 		}
 
 		bool isRunning = Input.GetKey(KeyCode.LeftShift);
@@ -70,9 +73,17 @@ public class PlayerController : MonoBehaviour
 
 		float movement = (isRunning ? currentSpeed / runSpeed : currentSpeed / walkSpeed * 0.5f);
 
-		if (movement < 0.02f) movement = 0;
+		if (movement <= Define.THRESHOLD_MOVEMENT)
+		{
+			movement = 0f;
+		}
 
-		animator.SetFloat(Define.MOVEMENT, movement, speedSmoothTime, Time.deltaTime);
+		if(currentSpeed > 0)
+		{
+			animator.SetFloat(Define.MOVEMENT, movement, speedSmoothTime, Time.deltaTime);
+		}
+
+		else animator.SetFloat(Define.MOVEMENT, 0f);
 	}
 
 	private void Move(Vector2 inputDir, bool running)
@@ -108,20 +119,25 @@ public class PlayerController : MonoBehaviour
 	{
 		if (isJumping) return;
 
-		Timing.RunCoroutine(Co_Jump());
+		Timing.RunCoroutine(Co_Jump(), "Jump");
 	}
 
 	private IEnumerator<float> Co_Jump()
 	{
 		float jumpVelocity = Mathf.Sqrt(-2 * gravity * jumpHeight);
-		float movement = animator.GetFloat(Define.MOVEMENT);		
-		bool isMoving = movement > 0.02f;
+		float movement = animator.GetFloat(Define.MOVEMENT);
+		bool isMoving = moveInput.x + moveInput.y >= 0;
 
 		isJumping = true;
 
 		animator.SetInteger(Define.JUMP, isMoving ? Define.JUMPRUN : Define.JUMPSTAND);
 
-		if (!isMoving) yield return Timing.WaitForSeconds(standJumpDelay);
+		if (!isMoving)
+		{
+			moveMultiplier = 0;
+
+			yield return Timing.WaitForSeconds(standJumpDelay);
+		}
 
 		velocityY = jumpVelocity;
 
@@ -130,6 +146,10 @@ public class PlayerController : MonoBehaviour
 		animator.SetInteger(Define.JUMP, 0);
 
 		isJumping = false;
+
+		yield return Timing.WaitForSeconds(1.25f);
+
+		moveMultiplier = 1;
 	}
 
 	private float GetModifiedSmoothTime(float _smoothTime)

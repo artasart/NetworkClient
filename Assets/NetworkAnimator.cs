@@ -69,7 +69,7 @@ namespace FrameWork.Network
 
 				yield return Timing.WaitForSeconds(interval);
 
-				if (!Equals(current, prev))
+				if (!Equals(current, prev) || animator.GetFloat(Define.MOVEMENT) > Define.THRESHOLD_MOVEMENT)
 				{
 					C_SET_ANIMATION();
 				}

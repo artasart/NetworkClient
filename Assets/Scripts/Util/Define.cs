@@ -31,6 +31,8 @@ public static class Define
 	public const string JUMP = "Jump";
 	public const string SIT = "Sit";
 
+	public const float THRESHOLD_MOVEMENT = 0.001f;
+
 	public const int JUMPRUN = 1;
 	public const int JUMPSTAND = 2;
 
