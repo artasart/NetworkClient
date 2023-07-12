@@ -117,6 +117,8 @@ namespace FrameWork.Network
 
 			yield return Timing.WaitForSeconds(interval * 3f);
 
+
+
 			while (queue.Count > 0)
 			{
 				Debug.Log("Queue Count : " + queue.Count);
@@ -124,6 +126,9 @@ namespace FrameWork.Network
 				stopwatch.Restart();
 
 				var target = queue.Dequeue();
+								
+				animator.SetInteger(Define.JUMP, target.Params[Define.JUMP].IntParam);
+				animator.SetBool(Define.SIT, target.Params[Define.SIT].BoolParam);
 
 				foreach (var item in target.Params)
 				{
@@ -136,14 +141,6 @@ namespace FrameWork.Network
 
 								yield return Timing.WaitForSeconds((float)(interval * currentStep / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds);
 							}
-							break;
-
-						case Define.JUMP:
-							jump = item.Value.IntParam;
-							break;
-
-						case Define.SIT:
-							sit = item.Value.BoolParam;
 							break;
 					}
 				}

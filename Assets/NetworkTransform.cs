@@ -73,7 +73,7 @@ namespace FrameWork.Network
 
 		#region Core Methods
 
-		Queue<KeyValuePair<Vector3, Quaternion>> queue = new Queue<KeyValuePair<Vector3, Quaternion>>();
+		Queue<S_SET_TRANSFORM> queue = new Queue<S_SET_TRANSFORM>();
 		
 		private void C_SET_TRANSFORM()
 		{
@@ -92,10 +92,7 @@ namespace FrameWork.Network
 		{
 			if (_packet.GameObjectId != objectId) return;
 
-			position = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position);
-			rotation = NetworkUtils.ProtocolVector3ToUnityQuaternion(_packet.Rotation);
-
-			queue.Enqueue(new KeyValuePair<Vector3, Quaternion>(position, rotation));
+			queue.Enqueue(_packet);
 
 			if (!isRunning) Timing.RunCoroutine(Co_Test(), "Co_Test");
 		}
@@ -114,8 +111,8 @@ namespace FrameWork.Network
 
 				for (int currentStep = 1; currentStep <= totalStep; currentStep++)
 				{
-					this.transform.position = Vector3.Lerp(this.transform.position, target.Key, (float)currentStep / totalStep);
-					this.transform.rotation = Quaternion.Lerp(this.transform.rotation, target.Value, (float)currentStep / totalStep);
+					this.transform.position = Vector3.Lerp(this.transform.position, NetworkUtils.ProtocolVector3ToUnityVector3(target.Position), (float)currentStep / totalStep);
+					this.transform.rotation = Quaternion.Lerp(this.transform.rotation, NetworkUtils.ProtocolVector3ToUnityQuaternion(target.Rotation), (float)currentStep / totalStep);
 
 					yield return Timing.WaitForSeconds((float)(interval * currentStep / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds);
 				}
