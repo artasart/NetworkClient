@@ -138,7 +138,7 @@ namespace Framework.Network
 
             lock (@lock)
             {
-                if (isDisconnectRegistered)
+                if (!isConnected || isDisconnectRegistered)
                 {
                     return;
                 }
@@ -164,8 +164,7 @@ namespace Framework.Network
             {
                 while (sendQueue.Count > 0)
                 {
-                    ArraySegment<byte> buff = sendQueue.Dequeue();
-                    pendingList.Add(buff);
+                    pendingList.Add(sendQueue.Dequeue());
                 }
             }
 
