@@ -1,9 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.CompilerServices;
 using Google.Protobuf;
 using Protocol;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Framework.Network
 {
@@ -38,8 +40,10 @@ namespace Framework.Network
         private readonly PacketQueue packetQueue;
         private DateTime lastMessageSent;
 
-        private Queue<long> Pings;
-        private long PingAverage;
+        private Queue<long> pings;
+        private long pingAverage;
+
+        private long serverTime;
 
         ~Connection()
         {
@@ -52,15 +56,19 @@ namespace Framework.Network
 
             AddHandler(Handle_S_DISCONNECTED);
             AddHandler(Handle_S_PING);
+            AddHandler(Handle_S_SERVERTIME);
 
             packetQueue = new();
             lastMessageSent = new(1970, 1, 1);
-            Pings = new();
+            pings = new();
+
+            serverTime = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
 
             AsyncPacketUpdate().Forget();
             //HeartBeat().Forget();
             //Ping Works as HeartBeat
             Ping().Forget();
+            UpdateServerTime().Forget();
         }
 
         private void OnConnected()
@@ -101,22 +109,32 @@ namespace Framework.Network
             long tick = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
             long ping = tick - pkt.Tick;
 
-            Pings.Enqueue(ping);
+            pings.Enqueue(ping);
 
-            if (Pings.Count > 5)
+            if (pings.Count > 5)
             {
-                Pings.Dequeue();
+                pings.Dequeue();
             }
 
             long sum = 0;
-            foreach (var item in Pings)
+            foreach (var item in pings)
             {
                 sum += item;
             }
 
-            PingAverage = sum / Pings.Count;
+            pingAverage = sum / pings.Count;
 
-            UnityEngine.Debug.Log("Ping : " + PingAverage);
+            //UnityEngine.Debug.Log("Ping : " + pingAverage);
+        }
+
+        private void Handle_S_SERVERTIME( Protocol.S_SERVERTIME pkt )
+        {
+            //print servertime
+            Debug.Log("ServerTime Before : " + serverTime);
+
+            serverTime = pkt.Tick + pingAverage/2;
+
+            Debug.Log("ServerTime After : " + serverTime);
         }
 
         public void Close()
@@ -177,6 +195,17 @@ namespace Framework.Network
                 Send(PacketManager.MakeSendBuffer(ping));
 
                 await UniTask.Delay(TimeSpan.FromSeconds(0.2));
+            }
+        }
+
+        public async UniTaskVoid UpdateServerTime()
+        {
+            while (state == ConnectionState.NORMAL)
+            {
+                //add servertime, in milliseconds, from last update servertime
+                serverTime += (long)(Time.deltaTime * 1000);
+                
+                await UniTask.Yield();
             }
         }
     }
