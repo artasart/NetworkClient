@@ -13,9 +13,11 @@ namespace FrameWork.Network
 
 		Queue<S_SET_TRANSFORM> queue = new Queue<S_SET_TRANSFORM>();
 
+		float x_velocity;
+		float y_velocity;
+		float z_velocity;
+
 		#endregion
-
-
 
 		#region Initialize
 
@@ -35,39 +37,55 @@ namespace FrameWork.Network
 		{
 			base.Start();
 
-			handle_update = Timing.RunCoroutine(Co_Update());
-
-			if (!isMine) GameClientManager.Instance.mainConnection.AddHandler(S_SET_TRANSFORM);
+			if (!isMine)
+			{
+				handle_update = Timing.RunCoroutine(Co_Update());
+                Timing.RunCoroutine(UpdateVelocity());
+                GameClientManager.Instance.mainConnection.AddHandler(S_SET_TRANSFORM);
+			}
 		}
 
 		private IEnumerator<float> Co_Update()
 		{
-			if (!isMine) yield break;
+            var prev = this.transform.position;
 
-			Vector3 prev = Vector3.zero;
-
-			while (true)
+            while (true)
 			{
 				var current = this.transform.position;
-
-				yield return Timing.WaitForSeconds(interval);
 
 				if (Vector3.Distance(current, prev) > 0.001f)
 				{
 					C_SET_TRANSFORM();
-				}
+                    prev = current;
+                }
 
-				prev = current;
-			}
+                yield return Timing.WaitForSeconds(interval);
+            }
 		}
 
-		#endregion
+        private IEnumerator<float> UpdateVelocity()
+        {
+            var prev = this.transform.position;
 
+            while (true)
+            {
+                var current = this.transform.position;
 
+				x_velocity = (current.x - prev.x) / (Time.deltaTime * 1000);
+				y_velocity = (current.y - prev.y) / (Time.deltaTime * 1000);
+                z_velocity = (current.z - prev.z) / (Time.deltaTime * 1000);
 
-		#region Core Methods
+                prev = current;
 
-		private void C_SET_TRANSFORM()
+                yield return Timing.WaitForOneFrame;
+            }
+        }
+
+        #endregion
+
+        #region Core Methods
+
+        private void C_SET_TRANSFORM()
 		{
 			C_SET_TRANSFORM packet = new()
 			{
