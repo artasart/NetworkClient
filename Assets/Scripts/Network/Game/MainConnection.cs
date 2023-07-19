@@ -7,8 +7,10 @@ using UnityEngine;
 public class MainConnection : Connection
 {
 	private Dictionary<string, GameObject> gameObjects = new();
+	private int myObjectId = -1;
 
-	public MainConnection()
+
+    public MainConnection()
 	{
 		AddHandler(S_ENTER);
 		AddHandler(INSTANTIATE_GAME_OBJECT);

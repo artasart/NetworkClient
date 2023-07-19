@@ -1,6 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
 using Google.Protobuf;
+using Protocol;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Framework.Network
 {
@@ -13,8 +16,6 @@ namespace Framework.Network
     public class Connection : PacketHandler
     {
         public string ConnectionId { get; set; }
-
-        public int myObjectId = -1;
 
         private ServerSession session;
         public ServerSession Session
@@ -37,6 +38,9 @@ namespace Framework.Network
         private readonly PacketQueue packetQueue;
         private DateTime lastMessageSent;
 
+        private Queue<long> Pings;
+        private long PingAverage;
+
         ~Connection()
         {
             UnityEngine.Debug.Log("Connection Destructor");
@@ -47,12 +51,16 @@ namespace Framework.Network
             state = ConnectionState.NORMAL;
 
             AddHandler(Handle_S_DISCONNECTED);
+            AddHandler(Handle_S_PING);
 
             packetQueue = new();
             lastMessageSent = new(1970, 1, 1);
+            Pings = new();
 
             AsyncPacketUpdate().Forget();
-            HeartBeat().Forget();
+            //HeartBeat().Forget();
+            //Ping Works as HeartBeat
+            Ping().Forget();
         }
 
         private void OnConnected()
@@ -81,44 +89,34 @@ namespace Framework.Network
             Session.Send(pkt);
         }
 
-        public void Enter()
-        {
-            Protocol.C_ENTER enter = new()
-            {
-                ClientId = "Test"
-            };
-
-            Send(PacketManager.MakeSendBuffer(enter));
-        }
-
-        public void Leave()
-        {
-            Protocol.C_LEAVE leave = new();
-
-            Send(PacketManager.MakeSendBuffer(leave));
-        }
-
-        public void ReEnter()
-        {
-            Protocol.C_REENTER reEnter = new()
-            {
-                ClientId = "Test"
-            };
-
-            Send(PacketManager.MakeSendBuffer(reEnter));
-        }
-
-        //테스트용. 일반적인 상황에서는 사용할 일 없음
-        public void Disconnect()
-        {
-            session.Disconnect();
-        }
-
         private void Handle_S_DISCONNECTED( Protocol.S_DISCONNECT pkt )
         {
             UnityEngine.Debug.Log("Handle S Disconnect : " + pkt.Code);
 
             Close();
+        }
+
+        private void Handle_S_PING( Protocol.S_PING pkt )
+        {
+            long tick = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
+            long ping = tick - pkt.Tick;
+
+            Pings.Enqueue(ping);
+
+            if (Pings.Count > 5)
+            {
+                Pings.Dequeue();
+            }
+
+            long sum = 0;
+            foreach (var item in Pings)
+            {
+                sum += item;
+            }
+
+            PingAverage = sum / Pings.Count;
+
+            UnityEngine.Debug.Log("Ping : " + PingAverage);
         }
 
         public void Close()
@@ -149,7 +147,7 @@ namespace Framework.Network
                     handler?.Invoke(packet.Message);
                 }
 
-                await UniTask.Delay(TimeSpan.FromSeconds(0.02f));
+                await UniTask.Yield();
             }
         }
 
@@ -166,6 +164,19 @@ namespace Framework.Network
                 }
 
                 await UniTask.Delay(TimeSpan.FromSeconds(5));
+            }
+        }
+
+        public async UniTaskVoid Ping()
+        {
+            Protocol.C_PING ping = new();
+            
+            while (state == ConnectionState.NORMAL)
+            {
+                ping.Tick = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
+                Send(PacketManager.MakeSendBuffer(ping));
+
+                await UniTask.Delay(TimeSpan.FromSeconds(0.2));
             }
         }
     }
