@@ -44,6 +44,8 @@ namespace Framework.Network
         private long pingAverage;
 
         private long serverTime;
+        private long calcuatedServerTime;
+        private float delTime;
 
         ~Connection()
         {
@@ -129,12 +131,14 @@ namespace Framework.Network
 
         private void Handle_S_SERVERTIME( Protocol.S_SERVERTIME pkt )
         {
-            //print servertime
-            Debug.Log("ServerTime Before : " + serverTime);
+            //Debug.Log("Time Diff : " + (pkt.Tick + pingAverage / 2 - serverTime));
 
+            delTime = 0;
             serverTime = pkt.Tick + pingAverage/2;
 
-            Debug.Log("ServerTime After : " + serverTime);
+            Debug.Log("Time Diff : " + (calcuatedServerTime - serverTime));
+
+            calcuatedServerTime = pkt.Tick + pingAverage / 2;
         }
 
         public void Close()
@@ -201,10 +205,9 @@ namespace Framework.Network
         public async UniTaskVoid UpdateServerTime()
         {
             while (state == ConnectionState.NORMAL)
-            {
-                //add servertime, in milliseconds, from last update servertime
-                serverTime += (long)(Time.deltaTime * 1000);
-                
+            {                
+                delTime += Time.deltaTime;
+                calcuatedServerTime = serverTime + (long)Math.Round(delTime * 1000, 1);
                 await UniTask.Yield();
             }
         }
