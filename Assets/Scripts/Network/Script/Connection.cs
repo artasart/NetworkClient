@@ -44,7 +44,7 @@ namespace Framework.Network
         private long pingAverage;
 
         private long serverTime;
-        private long calcuatedServerTime;
+        public long calcuatedServerTime;
         private float delTime;
 
         ~Connection()
@@ -138,7 +138,7 @@ namespace Framework.Network
 
             Debug.Log("Time Diff : " + (calcuatedServerTime - serverTime));
 
-            calcuatedServerTime = pkt.Tick + pingAverage / 2;
+            calcuatedServerTime = serverTime;
         }
 
         public void Close()
