@@ -1,4 +1,5 @@
-﻿using MEC;
+﻿using Framework.Network;
+using MEC;
 using System.Diagnostics;
 using UnityEngine;
 
@@ -20,6 +21,8 @@ namespace FrameWork.Network
 		protected Stopwatch stopwatch = new Stopwatch();
 		public CoroutineHandle handle_update;
 		public bool isRunning = false;
+
+		public Connection connection;
 
 		protected virtual void Awake() 
 		{

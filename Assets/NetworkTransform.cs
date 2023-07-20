@@ -37,12 +37,15 @@ namespace FrameWork.Network
 		{
 			base.Start();
 
-			if (!isMine)
+			if (isMine)
 			{
 				handle_update = Timing.RunCoroutine(Co_Update());
                 Timing.RunCoroutine(UpdateVelocity());
-                GameClientManager.Instance.mainConnection.AddHandler(S_SET_TRANSFORM);
 			}
+			else
+			{
+                connection.AddHandler(S_SET_TRANSFORM);
+            }
 		}
 
 		private IEnumerator<float> Co_Update()
@@ -75,6 +78,9 @@ namespace FrameWork.Network
 				y_velocity = (current.y - prev.y) / (Time.deltaTime * 1000);
                 z_velocity = (current.z - prev.z) / (Time.deltaTime * 1000);
 
+				//print x, y, z velocity
+				//print(x_velocity + ", " + y_velocity + ", " + z_velocity);
+
                 prev = current;
 
                 yield return Timing.WaitForOneFrame;
@@ -92,19 +98,32 @@ namespace FrameWork.Network
 				GameObjectId = objectId
 			};
 
+			packet.Timestamp = connection.calcuatedServerTime;
 			packet.Position = NetworkUtils.UnityVector3ToProtocolVector3(this.transform.position);
 			packet.Rotation = NetworkUtils.UnityVector3ToProtocolVector3(this.transform.eulerAngles);
+			packet.Velocity = new Protocol.Vector3 
+			{
+				X = x_velocity,
+                Y = y_velocity,
+                Z = z_velocity
+			};
 
-			GameClientManager.Instance.mainConnection.Send(PacketManager.MakeSendBuffer(packet));
+            connection.Send(PacketManager.MakeSendBuffer(packet));
 		}
 
 		private void S_SET_TRANSFORM(S_SET_TRANSFORM _packet)
 		{
 			if (_packet.GameObjectId != objectId) return;
 
-			queue.Enqueue(_packet);
+			var timeGap = connection.calcuatedServerTime - _packet.Timestamp;
+			//predict position by position + velocity * timeGap
+			var predictedPosition = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position) + NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Velocity) * timeGap;
+			//print predicted position
+			print("predicted Position : " + predictedPosition);
 
-			if (!isRunning) Timing.RunCoroutine(Co_SET_TRANSFORM(), "Co_SET_TRANSFORM");
+			//queue.Enqueue(_packet);
+
+			//if (!isRunning) Timing.RunCoroutine(Co_SET_TRANSFORM(), "Co_SET_TRANSFORM");
 		}
 
 		private IEnumerator<float> Co_SET_TRANSFORM()

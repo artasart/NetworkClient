@@ -90,8 +90,9 @@ public class MainConnection : Connection
 				prefab.GetComponent<NetworkObserver>().objectId = gameObject.Id;
 				prefab.GetComponent<NetworkObserver>().isMine = true;
 				prefab.GetComponent<NetworkObserver>().isPlayer = true;
+                prefab.GetComponent<NetworkObserver>().connection = this;
 
-				var player = UnityEngine.Object.Instantiate(prefab, position, rotation);
+                var player = UnityEngine.Object.Instantiate(prefab, position, rotation);
 				player.name = "MarkerMan_" + gameObject.Id;
 				UnityEngine.Object.FindObjectOfType<EffectPool>().Spawn(EffectType.Effect_Thunder, position, Quaternion.identity);
 
@@ -121,8 +122,9 @@ public class MainConnection : Connection
 					prefab.GetComponent<NetworkObserver>().objectId = gameObject.Id;
 					prefab.GetComponent<NetworkObserver>().isMine = false;
 					prefab.GetComponent<NetworkObserver>().isPlayer = true;
+                    prefab.GetComponent<NetworkObserver>().connection = this;
 
-					var player = UnityEngine.Object.Instantiate(prefab, position, rotation);
+                    var player = UnityEngine.Object.Instantiate(prefab, position, rotation);
 					player.name = "MarkerMan_" + gameObject.Id;
 					UnityEngine.Object.FindObjectOfType<EffectPool>().Spawn(EffectType.Effect_Thunder, position, Quaternion.identity);
 

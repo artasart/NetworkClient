@@ -33,6 +33,7 @@ public class NetworkObserver : NetworkComponent
 			item.objectId = objectId;
 			item.isMine = isMine;
 			item.isPlayer = isPlayer;
+			item.connection = connection;
 		}
 	}
 }
