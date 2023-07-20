@@ -9,7 +9,6 @@ public class MainConnection : Connection
 	private Dictionary<string, GameObject> gameObjects = new();
 	private int myObjectId = -1;
 
-
     public MainConnection()
 	{
 		AddHandler(S_ENTER);
@@ -17,14 +16,6 @@ public class MainConnection : Connection
 		AddHandler(S_ADD_CLIENT);
 		AddHandler(S_ADD_GAME_OBJECT);
 		AddHandler(S_REMOVE_GAME_OBJECT);
-		//AddHandler(S_SET_TRANSFORM);
-
-		Debug.Log("Main Connection Constructor");
-	}
-
-	~MainConnection()
-	{
-		UnityEngine.Debug.Log("Main Connection Destructor");
 	}
 
 	public void S_ENTER(S_ENTER _packet)
@@ -62,9 +53,7 @@ public class MainConnection : Connection
 
 	public void INSTANTIATE_GAME_OBJECT(S_INSTANTIATE_GAME_OBJECT _packet)
 	{
-		Debug.Log("Instantiate GameObject : " + _packet.GameObjectId);
-
-		if(myObjectId < 0) myObjectId = _packet.GameObjectId;
+		myObjectId = _packet.GameObjectId;
 	}
 
 	public void S_ADD_CLIENT(S_ADD_CLIENT _packet)
@@ -77,8 +66,6 @@ public class MainConnection : Connection
 
 	public void S_ADD_GAME_OBJECT(S_ADD_GAME_OBJECT _packet)
 	{
-		Debug.Log("Add GameObject : " + _packet);
-
 		foreach (var gameObject in _packet.GameObjects)
 		{
 			UnityEngine.Vector3 position = new(gameObject.Position.X, gameObject.Position.Y, gameObject.Position.Z);
@@ -155,7 +142,6 @@ public class MainConnection : Connection
 		foreach (int gameObjectId in _packet.GameObjects)
 		{
 			if (!gameObjects.ContainsKey(gameObjectId.ToString())) continue;
-
 
 			if (gameObjects[gameObjectId.ToString()].GetComponent<MonsterActor>() != null)
 			{
