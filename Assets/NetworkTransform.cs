@@ -126,22 +126,22 @@ namespace FrameWork.Network
 
             var timeGap = connection.calcuatedServerTime - _packet.Timestamp + interval * 1000;
 			var predictedPosition = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position) + NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Velocity) * timeGap;
-			print("predicted Position : " + predictedPosition);
 
-            if (updateTransformHandler != null) 
+            if (isRunning)
+			{
                 Timing.KillCoroutines(updateTransformHandler);
+				isRunning = false;
+            }
 
             updateTransformHandler = Timing.RunCoroutine(UpdateTransform(predictedPosition, NetworkUtils.ProtocolVector3ToUnityQuaternion(_packet.Rotation)));
-
-            //this.transform.position = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position);
-            //this.transform.rotation = NetworkUtils.ProtocolVector3ToUnityQuaternion(_packet.Rotation);
-
-            //queue.Enqueue(_packet
-            //if (!isRunning) Timing.RunCoroutine(Co_SET_TRANSFORM(), "Co_SET_TRANSFORM");
         }
+
+		bool isRunning = false;
 
         private IEnumerator<float> UpdateTransform(Vector3 newPosition, Quaternion newRotation)
         {
+            isRunning = true;
+
             var prevPosition = this.transform.position;
             var prevRotation = this.transform.rotation;
 
@@ -157,34 +157,9 @@ namespace FrameWork.Network
             }
 
             stopwatch.Stop();
+
+            isRunning = false;
         }
-
-        //private IEnumerator<float> Co_SET_TRANSFORM()
-        //{
-        //	isRunning = true;
-
-        //	yield return Timing.WaitForSeconds(interval * 3f);
-
-        //	while (queue.Count > 0)
-        //	{
-        //		stopwatch.Reset();
-        //		stopwatch.Start();
-
-        //		var target = queue.Dequeue();
-
-        //		for (int currentStep = 1; currentStep <= totalStep; currentStep++)
-        //		{
-        //			this.transform.position = Vector3.Lerp(this.transform.position, NetworkUtils.ProtocolVector3ToUnityVector3(target.Position), (float)currentStep / totalStep);
-        //			this.transform.rotation = Quaternion.Lerp(this.transform.rotation, NetworkUtils.ProtocolVector3ToUnityQuaternion(target.Rotation), (float)currentStep / totalStep);
-
-        //			yield return Timing.WaitForSeconds((float)(interval * currentStep / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds);
-        //		}
-
-        //		stopwatch.Stop();
-        //	}
-
-        //	isRunning = false;
-        //}
 
         #endregion
     }
