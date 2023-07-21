@@ -15,6 +15,7 @@ namespace Framework.Network
     public static class ConnectionManager
     {
         private static int idGenerator = 0;
+        private static readonly Dictionary<string, Connection> connections = new();
 
         public static Connection GetConnection<T>() where T : Connection, new()
         {
@@ -22,7 +23,13 @@ namespace Framework.Network
             {
                 ConnectionId = idGenerator++.ToString()
             };
+            connections[connection.ConnectionId] = connection;
             return connection;
+        }
+
+        public static Connection GetConnection(string connectionId)
+        {
+            return connections[connectionId];
         }
 
         public static async Task<bool> Connect( IPEndPoint endPoint, Connection connection )

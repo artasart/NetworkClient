@@ -1,3 +1,4 @@
+using Framework.Network;
 using FrameWork.Network;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,10 +11,10 @@ public class NetworkObserver : NetworkComponent
 {
 	[SerializeField] List<NetworkComponent> networkComponents = new List<NetworkComponent>();
 
-	protected override void Awake()
+	protected void Awake()
 	{
-		base.Awake();
-
+		connection = ConnectionManager.GetConnection(connectionId);
+		
 		if (!isMine)
 		{
 			Destroy(this.GetComponent<PlayerController>());

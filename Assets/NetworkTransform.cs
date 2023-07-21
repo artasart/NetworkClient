@@ -11,6 +11,8 @@ namespace FrameWork.Network
 	{
 		#region Members
 
+		float interval = 0.1f;
+
 		Queue<S_SET_TRANSFORM> queue = new Queue<S_SET_TRANSFORM>();
 
 		float x_velocity;
@@ -28,18 +30,16 @@ namespace FrameWork.Network
 			Timing.KillCoroutines("Co_Test");
 		}
 
-		protected override void Awake()
+		protected void Awake()
 		{
-			base.Awake();
+			//base.Awake();
 		}
 
-		protected override void Start()
+		protected void Start()
 		{
-			base.Start();
-
 			if (isMine)
 			{
-				handle_update = Timing.RunCoroutine(Co_Update());
+				Timing.RunCoroutine(Co_Update());
                 Timing.RunCoroutine(UpdateVelocity());
 			}
 			else
@@ -116,42 +116,39 @@ namespace FrameWork.Network
 			if (_packet.GameObjectId != objectId) return;
 
 			var timeGap = connection.calcuatedServerTime - _packet.Timestamp;
-			//predict position by position + velocity * timeGap
 			var predictedPosition = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position) + NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Velocity) * timeGap;
-			//print predicted position
 			print("predicted Position : " + predictedPosition);
 
-			//queue.Enqueue(_packet);
-
+			//queue.Enqueue(_packet
 			//if (!isRunning) Timing.RunCoroutine(Co_SET_TRANSFORM(), "Co_SET_TRANSFORM");
 		}
 
-		private IEnumerator<float> Co_SET_TRANSFORM()
-		{
-			isRunning = true;
+		//private IEnumerator<float> Co_SET_TRANSFORM()
+		//{
+		//	isRunning = true;
 
-			yield return Timing.WaitForSeconds(interval * 3f);
+		//	yield return Timing.WaitForSeconds(interval * 3f);
 
-			while (queue.Count > 0)
-			{
-				stopwatch.Reset();
-				stopwatch.Start();
+		//	while (queue.Count > 0)
+		//	{
+		//		stopwatch.Reset();
+		//		stopwatch.Start();
 
-				var target = queue.Dequeue();
+		//		var target = queue.Dequeue();
 
-				for (int currentStep = 1; currentStep <= totalStep; currentStep++)
-				{
-					this.transform.position = Vector3.Lerp(this.transform.position, NetworkUtils.ProtocolVector3ToUnityVector3(target.Position), (float)currentStep / totalStep);
-					this.transform.rotation = Quaternion.Lerp(this.transform.rotation, NetworkUtils.ProtocolVector3ToUnityQuaternion(target.Rotation), (float)currentStep / totalStep);
+		//		for (int currentStep = 1; currentStep <= totalStep; currentStep++)
+		//		{
+		//			this.transform.position = Vector3.Lerp(this.transform.position, NetworkUtils.ProtocolVector3ToUnityVector3(target.Position), (float)currentStep / totalStep);
+		//			this.transform.rotation = Quaternion.Lerp(this.transform.rotation, NetworkUtils.ProtocolVector3ToUnityQuaternion(target.Rotation), (float)currentStep / totalStep);
 
-					yield return Timing.WaitForSeconds((float)(interval * currentStep / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds);
-				}
+		//			yield return Timing.WaitForSeconds((float)(interval * currentStep / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds);
+		//		}
 
-				stopwatch.Stop();
-			}
+		//		stopwatch.Stop();
+		//	}
 
-			isRunning = false;
-		}
+		//	isRunning = false;
+		//}
 
 		#endregion
 	}

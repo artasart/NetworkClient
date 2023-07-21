@@ -12,6 +12,8 @@ namespace FrameWork.Network
 	{
 		#region Members
 
+		float interval = 0.1f;
+
 		Animator animator;
 
 		Queue<S_SET_ANIMATION> queue = new Queue<S_SET_ANIMATION>();
@@ -22,18 +24,15 @@ namespace FrameWork.Network
 
 		#region Initialize
 
-		protected override void Awake()
+		protected void Awake()
 		{
-			base.Awake();
+			//base.Awake();
 
 			animator = GetComponentInChildren<Animator>();
 		}
 
-		protected override void Start()
+		protected void Start()
 		{
-			base.Start();
-
-			handle_update = Timing.RunCoroutine(Co_Update());
 
 			if (!isMine) GameClientManager.Instance.mainConnection.AddHandler(S_SET_ANIMATION);
 		}
@@ -89,49 +88,49 @@ namespace FrameWork.Network
 
 		private void S_SET_ANIMATION(S_SET_ANIMATION _packet)
 		{
-			if (_packet.GameObjectId != objectId) return;
+			//if (_packet.GameObjectId != objectId) return;
 
-			queue.Enqueue(_packet);
+			//queue.Enqueue(_packet);
 
-			if (!isRunning) Timing.RunCoroutine(Co_SET_ANIMATION(), "Co_SET_ANIMATION");
+			//if (!isRunning) Timing.RunCoroutine(Co_SET_ANIMATION(), "Co_SET_ANIMATION");
 		}
 
-		private IEnumerator<float> Co_SET_ANIMATION()
-		{
-			isRunning = true;
+		//private IEnumerator<float> Co_SET_ANIMATION()
+		//{
+		//	isRunning = true;
 
-			yield return Timing.WaitForSeconds(interval * 3f);
+		//	yield return Timing.WaitForSeconds(interval * 3f);
 
-			while (queue.Count > 0)
-			{
-				stopwatch.Reset();
-				stopwatch.Start();
+		//	while (queue.Count > 0)
+		//	{
+		//		stopwatch.Reset();
+		//		stopwatch.Start();
 
-				var target = queue.Dequeue();
+		//		var target = queue.Dequeue();
 								
-				animator.SetInteger(Define.JUMP, target.Params[Define.JUMP].IntParam);
-				animator.SetBool(Define.SIT, target.Params[Define.SIT].BoolParam);
+		//		animator.SetInteger(Define.JUMP, target.Params[Define.JUMP].IntParam);
+		//		animator.SetBool(Define.SIT, target.Params[Define.SIT].BoolParam);
 
-				foreach (var item in target.Params)
-				{
-					switch (item.Key)
-					{
-						case Define.MOVEMENT:
-							for (int currentStep = 1; currentStep <= totalStep; currentStep++)
-							{
-								animator.SetFloat(Define.MOVEMENT, Mathf.Lerp(animator.GetFloat(Define.MOVEMENT), item.Value.FloatParam, (float)currentStep / totalStep));
+		//		foreach (var item in target.Params)
+		//		{
+		//			switch (item.Key)
+		//			{
+		//				case Define.MOVEMENT:
+		//					for (int currentStep = 1; currentStep <= totalStep; currentStep++)
+		//					{
+		//						animator.SetFloat(Define.MOVEMENT, Mathf.Lerp(animator.GetFloat(Define.MOVEMENT), item.Value.FloatParam, (float)currentStep / totalStep));
 
-								yield return Timing.WaitForSeconds((float)(interval * currentStep / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds);
-							}
-							break;
-					}
-				}
+		//						yield return Timing.WaitForSeconds((float)(interval * currentStep / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds);
+		//					}
+		//					break;
+		//			}
+		//		}
 
-				stopwatch.Stop();
-			}
+		//		stopwatch.Stop();
+		//	}
 
-			isRunning = false;
-		}
+		//	isRunning = false;
+		//}
 
 
 		#endregion
