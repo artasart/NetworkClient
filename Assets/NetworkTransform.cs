@@ -145,6 +145,7 @@ namespace FrameWork.Network
             
             pos = predictedPosition;
 
+            isRecieved = true;
    //         if (isRunning)
    //{
    //             Timing.KillCoroutines(updateTransformHandler);
@@ -155,10 +156,21 @@ namespace FrameWork.Network
         }
 
         Vector3 pos;
+        bool isRecieved = false;
 
         private void Update()
         {
-            this.transform.position = Vector3.Lerp(this.transform.position, pos, 10 * Time.deltaTime);
+            if (isMine) return;
+
+            if(isRecieved)
+			{
+                if (!Equals(this.transform.position, pos))
+                {
+                    this.transform.position = Vector3.Lerp(this.transform.position, pos, 10 * Time.deltaTime);
+                }
+
+                else isRecieved = false;
+            }
         }
 
         bool isRunning = false;
