@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using Framework.Network;
 using MEC;
 using Protocol;
@@ -12,12 +13,13 @@ namespace FrameWork.Network
 		#region Members
 
 		float interval = 0.1f;
-
-		Queue<S_SET_TRANSFORM> queue = new Queue<S_SET_TRANSFORM>();
+        int totalStep = 6;
 
 		float x_velocity;
 		float y_velocity;
 		float z_velocity;
+
+		Stopwatch stopwatch;
 
 		#endregion
 
@@ -37,7 +39,9 @@ namespace FrameWork.Network
 
 		protected void Start()
 		{
-			if (isMine)
+            stopwatch = new();
+
+            if (isMine)
 			{
 				Timing.RunCoroutine(Co_Update());
                 Timing.RunCoroutine(UpdateVelocity());
@@ -50,13 +54,16 @@ namespace FrameWork.Network
 
 		private IEnumerator<float> Co_Update()
 		{
-            var prev = this.transform.position;
+            var prev = new Vector3(x_velocity, y_velocity, z_velocity);
+			var current = new Vector3();
 
             while (true)
 			{
-				var current = this.transform.position;
+				current.x = x_velocity;
+				current.y = y_velocity;
+				current.z = z_velocity;
 
-				if (Vector3.Distance(current, prev) > 0.001f)
+				if (prev != current)
 				{
 					C_SET_TRANSFORM();
                     prev = current;
@@ -111,19 +118,45 @@ namespace FrameWork.Network
             connection.Send(PacketManager.MakeSendBuffer(packet));
 		}
 
+        CoroutineHandle updateTransformHandler;
+
 		private void S_SET_TRANSFORM(S_SET_TRANSFORM _packet)
 		{
 			if (_packet.GameObjectId != objectId) return;
 
-			var timeGap = connection.calcuatedServerTime - _packet.Timestamp;
+            var timeGap = connection.calcuatedServerTime - _packet.Timestamp + interval * 1000;
 			var predictedPosition = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position) + NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Velocity) * timeGap;
 			print("predicted Position : " + predictedPosition);
 
-			this.transform.position = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position);
-			this.transform.rotation = NetworkUtils.ProtocolVector3ToUnityQuaternion(_packet.Rotation);
+            if (updateTransformHandler != null) 
+                Timing.KillCoroutines(updateTransformHandler);
+
+            updateTransformHandler = Timing.RunCoroutine(UpdateTransform(predictedPosition, NetworkUtils.ProtocolVector3ToUnityQuaternion(_packet.Rotation)));
+
+            //this.transform.position = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position);
+            //this.transform.rotation = NetworkUtils.ProtocolVector3ToUnityQuaternion(_packet.Rotation);
 
             //queue.Enqueue(_packet
             //if (!isRunning) Timing.RunCoroutine(Co_SET_TRANSFORM(), "Co_SET_TRANSFORM");
+        }
+
+        private IEnumerator<float> UpdateTransform(Vector3 newPosition, Quaternion newRotation)
+        {
+            var prevPosition = this.transform.position;
+            var prevRotation = this.transform.rotation;
+
+            stopwatch.Reset();
+            stopwatch.Start();
+
+            for (int currentStep = 1; currentStep <= totalStep; currentStep++)
+            {
+                this.transform.position = Vector3.Lerp(prevPosition, newPosition, (float)currentStep / totalStep);
+                this.transform.rotation = Quaternion.Lerp(prevRotation, newRotation, (float)currentStep / totalStep);
+
+                yield return Timing.WaitForSeconds((float)(interval * currentStep / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds);
+            }
+
+            stopwatch.Stop();
         }
 
         //private IEnumerator<float> Co_SET_TRANSFORM()
