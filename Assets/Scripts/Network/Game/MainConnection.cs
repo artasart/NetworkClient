@@ -109,7 +109,7 @@ public class MainConnection : Connection
 					prefab.GetComponent<NetworkObserver>().objectId = gameObject.Id;
 					prefab.GetComponent<NetworkObserver>().isMine = false;
 					prefab.GetComponent<NetworkObserver>().isPlayer = true;
-                    prefab.GetComponent<NetworkObserver>().connection = this;
+                    prefab.GetComponent<NetworkObserver>().connectionId = this.ConnectionId;
 
                     var player = UnityEngine.Object.Instantiate(prefab, position, rotation);
 					player.name = "MarkerMan_" + gameObject.Id;
