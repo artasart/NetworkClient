@@ -12,8 +12,8 @@ namespace FrameWork.Network
 	{
 		#region Members
 
-		float interval = 0.05f;
-        int totalStep = 3;
+		float interval = 0.1f;
+        int totalStep = 6;
 
 		float x_velocity;
 		float y_velocity;
@@ -142,17 +142,26 @@ namespace FrameWork.Network
                 0.5f * acc * timeGap * timeGap;
 
             prevVelocity = new Vector3(_packet.Velocity.X, _packet.Velocity.Y, _packet.Velocity.Z);
+            
+            pos = predictedPosition;
 
-            if (isRunning)
-			{
-                Timing.KillCoroutines(updateTransformHandler);
-				isRunning = false;
-            }
+   //         if (isRunning)
+   //{
+   //             Timing.KillCoroutines(updateTransformHandler);
+   //	isRunning = false;
+   //         }
 
-            updateTransformHandler = Timing.RunCoroutine(UpdateTransform(predictedPosition, NetworkUtils.ProtocolVector3ToUnityQuaternion(_packet.Rotation)));
+            //         updateTransformHandler = Timing.RunCoroutine(UpdateTransform(predictedPosition, NetworkUtils.ProtocolVector3ToUnityQuaternion(_packet.Rotation)));
         }
 
-		bool isRunning = false;
+        Vector3 pos;
+
+        private void Update()
+        {
+            this.transform.position = Vector3.Lerp(this.transform.position, pos, 10 * Time.deltaTime);
+        }
+
+        bool isRunning = false;
 
         private IEnumerator<float> UpdateTransform(Vector3 newPosition, Quaternion newRotation)
         {
