@@ -120,12 +120,28 @@ namespace FrameWork.Network
 
         CoroutineHandle updateTransformHandler;
 
+		Vector3 prevVelocity = Vector3.zero;
+
 		private void S_SET_TRANSFORM(S_SET_TRANSFORM _packet)
 		{
 			if (_packet.GameObjectId != objectId) return;
 
             var timeGap = connection.calcuatedServerTime - _packet.Timestamp + interval * 1000;
-			var predictedPosition = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position) + NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Velocity) * timeGap;
+
+            Vector3 acc = new Vector3(
+				(_packet.Velocity.X - prevVelocity.x) / (interval * 1000),
+				(_packet.Velocity.Y - prevVelocity.y) / (interval * 1000),
+				(_packet.Velocity.Z - prevVelocity.z) / (interval * 1000)
+				);
+
+            //prevVelocity = new Vector3(_packet.Velocity.X, _packet.Velocity.Y, _packet.Velocity.Z);
+
+            var predictedPosition = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position) +
+                //NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Velocity) * timeGap +
+                prevVelocity * timeGap +
+                0.5f * acc * timeGap * timeGap;
+
+            prevVelocity = new Vector3(_packet.Velocity.X, _packet.Velocity.Y, _packet.Velocity.Z);
 
             if (isRunning)
 			{
