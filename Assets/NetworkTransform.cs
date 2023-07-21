@@ -12,8 +12,8 @@ namespace FrameWork.Network
 	{
 		#region Members
 
-		float interval = 0.1f;
-        int totalStep = 6;
+		float interval = 0.05f;
+        int totalStep = 3;
 
 		float x_velocity;
 		float y_velocity;
@@ -129,16 +129,16 @@ namespace FrameWork.Network
             var timeGap = connection.calcuatedServerTime - _packet.Timestamp + interval * 1000;
 
             Vector3 acc = new Vector3(
-				(_packet.Velocity.X - prevVelocity.x) / (interval * 1000),
-				(_packet.Velocity.Y - prevVelocity.y) / (interval * 1000),
-				(_packet.Velocity.Z - prevVelocity.z) / (interval * 1000)
-				);
+                (_packet.Velocity.X - prevVelocity.x) / (interval * 1000),
+                (_packet.Velocity.Y - prevVelocity.y) / (interval * 1000),
+                (_packet.Velocity.Z - prevVelocity.z) / (interval * 1000)
+            );
 
             //prevVelocity = new Vector3(_packet.Velocity.X, _packet.Velocity.Y, _packet.Velocity.Z);
 
             var predictedPosition = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position) +
-                //NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Velocity) * timeGap +
-                prevVelocity * timeGap +
+                NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Velocity) * timeGap +
+                //prevVelocity * timeGap +
                 0.5f * acc * timeGap * timeGap;
 
             prevVelocity = new Vector3(_packet.Velocity.X, _packet.Velocity.Y, _packet.Velocity.Z);
