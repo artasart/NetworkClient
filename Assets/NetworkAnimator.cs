@@ -10,31 +10,21 @@ namespace FrameWork.Network
 {
     public class NetworkAnimator : NetworkComponent
     {
-        #region Members
-
         private readonly float interval = 0.05f;
         private readonly int totalStep = 3;
         private Animator animator;
-        private readonly Queue<S_SET_ANIMATION> queue = new();
-        private CoroutineHandle SetAnimationHandler;
+        private CoroutineHandle updateAnimation;
         private Stopwatch stopwatch;
-
-        #endregion
-
-        #region Initialize
-
-        protected void Awake()
-        {
-            stopwatch = new Stopwatch();
-
-            animator = GetComponentInChildren<Animator>();
-        }
 
         protected void Start()
         {
+            animator = GetComponentInChildren<Animator>();
+
+            stopwatch = new Stopwatch();
+
             if (isMine)
             {
-                SetAnimationHandler = Timing.RunCoroutine(Co_Update());
+                updateAnimation = Timing.RunCoroutine(UpdateAnimation());
             }
             else
             {
@@ -42,7 +32,19 @@ namespace FrameWork.Network
             }
         }
 
-        private IEnumerator<float> Co_Update()
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+
+            _ = Timing.KillCoroutines(updateAnimation);
+
+            if (!isMine)
+            {
+                GameClientManager.Instance.mainConnection.RemoveHandler(S_SET_ANIMATION);
+            }
+        }
+
+        private IEnumerator<float> UpdateAnimation()
         {
             string prev = string.Empty;
 
@@ -50,35 +52,16 @@ namespace FrameWork.Network
             {
                 string current = GetParameters();
 
-                //if (!Equals(current, prev) || animator.GetFloat(Define.MOVEMENT) >= Define.THRESHOLD_MOVEMENT)
-                if (!Equals(current, prev))
+                if (!Equals(current, prev) || animator.GetFloat(Define.MOVEMENT) >= Define.THRESHOLD_MOVEMENT)
+                //if (!Equals(current, prev))
                 {
                     C_SET_ANIMATION();
+                    prev = current.ToString();
                 }
-
-                prev = current.ToString();
 
                 yield return Timing.WaitForSeconds(interval);
             }
         }
-
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
-
-            if (isMine)
-            {
-                _ = Timing.KillCoroutines(SetAnimationHandler);
-            }
-            else
-            {
-                GameClientManager.Instance.mainConnection.RemoveHandler(S_SET_ANIMATION);
-            }
-        }
-
-        #endregion
-
-        #region Core Methods
 
         private void C_SET_ANIMATION()
         {
@@ -108,16 +91,12 @@ namespace FrameWork.Network
             GameClientManager.Instance.mainConnection.Send(PacketManager.MakeSendBuffer(packet));
         }
 
-        private CoroutineHandle updateAnimation;
-
         private void S_SET_ANIMATION( S_SET_ANIMATION _packet )
         {
             if (_packet.GameObjectId != objectId)
             {
                 return;
             }
-
-            print("set animation arrived : " + connection.calcuatedServerTime);
 
             if (updateAnimation.IsRunning)
             {
@@ -155,11 +134,6 @@ namespace FrameWork.Network
             stopwatch.Stop();
         }
 
-        #endregion
-
-
-        #region Basic Methods
-
         private string GetParameters()
         {
             StringBuilder builder = new();
@@ -170,7 +144,5 @@ namespace FrameWork.Network
 
             return builder.ToString();
         }
-
-        #endregion
     }
 }

@@ -59,7 +59,7 @@ public class CinemachineSwitcher
 
 	public static void SetWatchSpeed(CinemachineBlendDefinition.Style _blendStyle, float _speed)
 	{
-		CrystalController.Instance.cinemachineBrain.m_DefaultBlend = new CinemachineBlendDefinition(_blendStyle, _speed);
+		//CrystalController.Instance.cinemachineBrain.m_DefaultBlend = new CinemachineBlendDefinition(_blendStyle, _speed);
 	}
 
 	private static IEnumerator<float> Co_MatchCamera(CinemachineVirtualCamera _current)

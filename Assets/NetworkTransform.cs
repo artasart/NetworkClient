@@ -10,34 +10,12 @@ namespace FrameWork.Network
 {
     public class NetworkTransform : NetworkComponent
     {
-        #region Members
-
         private readonly float interval = 0.05f;
         private readonly int totalStep = 3;
         private Vector3 velocity;
         private Stopwatch stopwatch;
-
-        CoroutineHandle setTransformHandler;
-        CoroutineHandle updateVelocityHandler;
-
-        #endregion
-
-        #region Initialize
-
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
-
-            if (isMine)
-            {
-                Timing.KillCoroutines(setTransformHandler);
-                Timing.KillCoroutines(updateVelocityHandler);
-            }
-            else
-            {
-                connection.RemoveHandler(S_SET_TRANSFORM);
-            }
-        }
+        private CoroutineHandle updateTransform;
+        private CoroutineHandle updateVelocity;
 
         protected void Start()
         {
@@ -45,8 +23,8 @@ namespace FrameWork.Network
 
             if (isMine)
             {
-                setTransformHandler = Timing.RunCoroutine(SetTransform());
-                updateVelocityHandler =  Timing.RunCoroutine(UpdateVelocity());
+                updateTransform = Timing.RunCoroutine(UpdateTransform());
+                updateVelocity = Timing.RunCoroutine(UpdateVelocity());
             }
             else
             {
@@ -54,7 +32,45 @@ namespace FrameWork.Network
             }
         }
 
-        private IEnumerator<float> SetTransform()
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+
+            _ = Timing.KillCoroutines(updateTransform);
+
+            if (isMine)
+            {
+                _ = Timing.KillCoroutines(updateVelocity);
+            }
+            else
+            {
+                connection.RemoveHandler(S_SET_TRANSFORM);
+            }
+        }
+
+        private IEnumerator<float> UpdateVelocity()
+        {
+            Vector3 prevPos = transform.position;
+            Vector3 currentPos;
+
+            while (true)
+            {
+                currentPos = transform.position;
+
+                if (currentPos != prevPos)
+                {
+                    velocity.x = (currentPos.x - prevPos.x) / (Time.deltaTime * 1000);
+                    velocity.y = (currentPos.y - prevPos.y) / (Time.deltaTime * 1000);
+                    velocity.z = (currentPos.z - prevPos.z) / (Time.deltaTime * 1000);
+
+                    prevPos = currentPos;
+                }
+
+                yield return Timing.WaitForOneFrame;
+            }
+        }
+
+        private IEnumerator<float> UpdateTransform()
         {
             Vector3 prev = velocity;
             Vector3 current = new();
@@ -75,32 +91,6 @@ namespace FrameWork.Network
             }
         }
 
-        private IEnumerator<float> UpdateVelocity()
-        {
-            Vector3 prevPos = transform.position;
-            Vector3 currentPos;
-
-            while (true)
-            {
-                currentPos = transform.position;
-
-                if(currentPos != prevPos)
-                {
-                    velocity.x = (currentPos.x - prevPos.x) / (Time.deltaTime * 1000);
-                    velocity.y = (currentPos.y - prevPos.y) / (Time.deltaTime * 1000);
-                    velocity.z = (currentPos.z - prevPos.z) / (Time.deltaTime * 1000);
-
-                    prevPos = currentPos;
-                }
-
-                yield return Timing.WaitForOneFrame;
-            }
-        }
-
-        #endregion
-
-        #region Core Methods
-
         private void C_SET_TRANSFORM()
         {
             C_SET_TRANSFORM packet = new()
@@ -120,30 +110,27 @@ namespace FrameWork.Network
             connection.Send(PacketManager.MakeSendBuffer(packet));
         }
 
-        private CoroutineHandle updateTransformHandler;
-
-        private void S_SET_TRANSFORM( S_SET_TRANSFORM _packet )
+        private void S_SET_TRANSFORM( S_SET_TRANSFORM packet )
         {
-            if (_packet.GameObjectId != objectId)
+            if (packet.GameObjectId != objectId)
             {
                 return;
             }
 
-            //print calcuatedServerTime
-            print("set transform arrived : " + connection.calcuatedServerTime);
+            float timeGap = connection.calcuatedServerTime - packet.Timestamp + (interval * 1000);
 
-            float timeGap = connection.calcuatedServerTime - _packet.Timestamp + (interval * 1000);
+            Vector3 predictedPosition = NetworkUtils.ProtocolVector3ToUnityVector3(packet.Position) +
+                (NetworkUtils.ProtocolVector3ToUnityVector3(packet.Velocity) * timeGap);
 
-            Vector3 predictedPosition = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position) +
-                (NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Velocity) * timeGap);
+            if (updateTransform.IsRunning)
+            {
+                _ = Timing.KillCoroutines(updateTransform);
+            }
 
-            if (updateTransformHandler.IsRunning)
-                Timing.KillCoroutines(updateTransformHandler);
-
-            updateTransformHandler = Timing.RunCoroutine(
+            updateTransform = Timing.RunCoroutine(
                 UpdateTransform(
                     predictedPosition,
-                    Quaternion.Euler(NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Rotation))
+                    Quaternion.Euler(NetworkUtils.ProtocolVector3ToUnityVector3(packet.Rotation))
                     )
                 );
         }
@@ -166,7 +153,5 @@ namespace FrameWork.Network
 
             stopwatch.Stop();
         }
-
-        #endregion
     }
 }

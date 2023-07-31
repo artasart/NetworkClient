@@ -5,33 +5,24 @@ using Cinemachine;
 
 public class Panel_Network : Panel_Base
 {
-	TMP_InputField inputField_IpAddress;
-	TMP_InputField inputField_Port;
 	TMP_InputField inputField_ConnectionId;
 
 	Button btn_Connect;
 	Button btn_CreateMain;
 	Button btn_DestroyMain;
-	Button btn_CreateDummy;
-	Button btn_DestroyDummy;
 
 	protected override void Awake()
 	{
 		base.Awake();
 
-		inputField_IpAddress = this.transform.Search(nameof(inputField_IpAddress)).GetComponent<TMP_InputField>();
-        inputField_Port = this.transform.Search(nameof(inputField_Port)).GetComponent<TMP_InputField>();
         inputField_ConnectionId = this.transform.Search(nameof(inputField_ConnectionId)).GetComponent<TMP_InputField>();
 
         btn_Connect = GetUI_Button(nameof(btn_Connect));
-        btn_CreateDummy = GetUI_Button(nameof(btn_CreateDummy), OnClick_CreateDummy);
-        btn_DestroyDummy = GetUI_Button(nameof(btn_DestroyDummy), OnClick_DestroyDummy);
+
         btn_CreateMain = GetUI_Button(nameof(btn_CreateMain), OnClick_CreateMain);
         btn_DestroyMain = GetUI_Button(nameof(btn_DestroyMain), OnClick_DestroyMain);
 
-        inputField_IpAddress.placeholder.GetComponent<TMP_Text>().text = "192.168.0.104";
-
-        inputField_Port.placeholder.GetComponent<TMP_Text>().text = "7777";
+		inputField_ConnectionId.placeholder.GetComponent<TMP_Text>().text = GenerateRandomString(5);
     }
 
 	private void OnClick_CreateMain()
@@ -41,6 +32,10 @@ public class Panel_Network : Panel_Base
 		CinemachineSwitcher.SwitchCamera(virtualCamrea);
 
 		var connectionId = inputField_ConnectionId.text;
+        if(string.IsNullOrEmpty(connectionId))
+        {
+            connectionId = inputField_ConnectionId.placeholder.GetComponent<TMP_Text>().text;
+        }
 
 		GameClientManager.Instance.CreateMain(connectionId);
 	}
@@ -52,13 +47,17 @@ public class Panel_Network : Panel_Base
         GameClientManager.Instance.DestroyMain();
 	}
 
-	private void OnClick_CreateDummy()
-	{
-		GameClientManager.Instance.CreateDummy();
-	}
-
-	private void OnClick_DestroyDummy()
+    public string GenerateRandomString( int length )
     {
-        GameClientManager.Instance.DestroyDummy();
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var random = new System.Random();
+        var randomString = new char[length];
+
+        for (int i = 0; i < length; i++)
+        {
+            randomString[i] = chars[random.Next(chars.Length)];
+        }
+
+        return new string(randomString);
     }
 }
