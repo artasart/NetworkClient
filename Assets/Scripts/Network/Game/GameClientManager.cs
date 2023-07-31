@@ -1,13 +1,13 @@
+using Cysharp.Threading.Tasks;
 using Framework.Network;
-using Google.Protobuf;
 using Protocol;
-using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.Networking;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 public class GameClientManager : MonoBehaviour
 {
@@ -26,12 +26,7 @@ public class GameClientManager : MonoBehaviour
 
 	#endregion
 
-
-
 	#region Members
-
-	public string ip = "192.168.0.104";
-	public int port = 7777;
 
 	private readonly Dictionary<string, GameObject> gameObjects = new();
 	public int dummyCount = 0;
@@ -48,8 +43,6 @@ public class GameClientManager : MonoBehaviour
 
 	#endregion
 
-
-
 	private void Awake()
 	{
 		go_Main = this.transform.Search(nameof(go_Main));
@@ -61,11 +54,51 @@ public class GameClientManager : MonoBehaviour
 		GameManager.UI.StackPanel<Panel_Network>();
 	}
 
-	public async void CreateDummy()
+	public async Task<IPEndPoint> GetAddress()
 	{
-		IPEndPoint endPoint = new(IPAddress.Parse("192.168.0.104"), 7777);
+        using (UnityWebRequest webRequest = UnityWebRequest.Get("http://20.200.230.139:32000/"))
+		{
+            await webRequest.SendWebRequest();
+            if (webRequest.result == UnityWebRequest.Result.Success)
+            {
+                string response = webRequest.downloadHandler.text;
+                JObject jsonResponse = JObject.Parse(response);
+                
+				string address = jsonResponse["status"]["address"].ToString();
+                
+				int defaultPort = 0;
+                JArray ports = (JArray)jsonResponse["status"]["ports"];
+                foreach (JObject port in ports)
+                {
+                    if (port["name"].ToString() == "default")
+                    {
+                        defaultPort = port["port"].ToObject<int>();
+                        break;
+                    }
+                }
 
-		for (int i = 0; i < 1; i++)
+				if (defaultPort != 0)
+					return new(IPAddress.Parse(address), defaultPort);
+				return null;
+            }
+            else
+			{
+                return null;
+			}
+        }
+
+    }
+
+    public async void CreateDummy()
+	{
+        IPEndPoint endPoint = await GetAddress();
+        if (endPoint == null)
+        {
+            Debug.Log("GetAddress Fail!");
+            return;
+        }
+
+        for (int i = 0; i < 1; i++)
 		{
 			DummyConnection connection = (DummyConnection)ConnectionManager.GetConnection<DummyConnection>();
 
@@ -104,7 +137,12 @@ public class GameClientManager : MonoBehaviour
 	{
 		if (mainConnection != null) return;
 
-		IPEndPoint endPoint = new(IPAddress.Parse("192.168.0.104"), 7777);
+		IPEndPoint endPoint = await GetAddress();
+		if(endPoint == null)
+		{
+            Debug.Log("GetAddress Fail!");
+            return;
+        }
 		MainConnection connection = (MainConnection)ConnectionManager.GetConnection<MainConnection>();
 
 		mainConnection = connection;
@@ -133,9 +171,6 @@ public class GameClientManager : MonoBehaviour
 			dummyConnections.Remove(clientId);
 		}
 	}
-
-
-
 
 	public float spawnDistance = 5f;
 
