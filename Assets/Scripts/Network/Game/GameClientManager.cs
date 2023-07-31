@@ -61,17 +61,6 @@ public class GameClientManager : MonoBehaviour
 		GameManager.UI.StackPanel<Panel_Network>();
 	}
 
-
-
-
-
-
-
-
-
-
-
-
 	public async void CreateDummy()
 	{
 		IPEndPoint endPoint = new(IPAddress.Parse("192.168.0.104"), 7777);

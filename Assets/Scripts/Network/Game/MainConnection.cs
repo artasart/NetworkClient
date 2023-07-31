@@ -20,6 +20,12 @@ public class MainConnection : Connection
 
 	public void S_ENTER(S_ENTER _packet)
 	{
+		if(_packet.Result != "SUCCESS")
+		{
+			Debug.Log(_packet.Result);
+			return;
+		}
+
 		{
 			C_GET_GAME_OBJECT packet = new();
 

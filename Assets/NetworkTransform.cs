@@ -1,94 +1,97 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
-using Framework.Network;
+﻿using Framework.Network;
 using MEC;
 using Protocol;
+using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
 namespace FrameWork.Network
 {
-	public class NetworkTransform : NetworkComponent
-	{
-		#region Members
+    public class NetworkTransform : NetworkComponent
+    {
+        #region Members
 
-		float interval = 0.1f;
-        int totalStep = 6;
+        private readonly float interval = 0.05f;
+        private readonly int totalStep = 3;
+        private Vector3 velocity;
+        private Stopwatch stopwatch;
 
-		float x_velocity;
-		float y_velocity;
-		float z_velocity;
+        CoroutineHandle setTransformHandler;
+        CoroutineHandle updateVelocityHandler;
 
-		Stopwatch stopwatch;
+        #endregion
 
-		#endregion
+        #region Initialize
 
-		#region Initialize
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
 
-		protected override void OnDestroy()
-		{
-			base.OnDestroy();
+            if (isMine)
+            {
+                Timing.KillCoroutines(setTransformHandler);
+                Timing.KillCoroutines(updateVelocityHandler);
+            }
+            else
+            {
+                connection.RemoveHandler(S_SET_TRANSFORM);
+            }
+        }
 
-			Timing.KillCoroutines("Co_Test");
-		}
-
-		protected void Awake()
-		{
-			//base.Awake();
-		}
-
-		protected void Start()
-		{
+        protected void Start()
+        {
             stopwatch = new();
 
             if (isMine)
-			{
-				Timing.RunCoroutine(Co_Update());
-                Timing.RunCoroutine(UpdateVelocity());
-			}
-			else
-			{
+            {
+                setTransformHandler = Timing.RunCoroutine(SetTransform());
+                updateVelocityHandler =  Timing.RunCoroutine(UpdateVelocity());
+            }
+            else
+            {
                 connection.AddHandler(S_SET_TRANSFORM);
             }
-		}
+        }
 
-		private IEnumerator<float> Co_Update()
-		{
-            var prev = new Vector3(x_velocity, y_velocity, z_velocity);
-			var current = new Vector3();
+        private IEnumerator<float> SetTransform()
+        {
+            Vector3 prev = velocity;
+            Vector3 current = new();
 
             while (true)
-			{
-				current.x = x_velocity;
-				current.y = y_velocity;
-				current.z = z_velocity;
+            {
+                current.x = velocity.x;
+                current.y = velocity.y;
+                current.z = velocity.z;
 
-				if (prev != current)
-				{
-					C_SET_TRANSFORM();
+                if (prev != current)
+                {
+                    C_SET_TRANSFORM();
                     prev = current;
                 }
 
                 yield return Timing.WaitForSeconds(interval);
             }
-		}
+        }
 
         private IEnumerator<float> UpdateVelocity()
         {
-            var prev = this.transform.position;
+            Vector3 prevPos = transform.position;
+            Vector3 currentPos;
 
             while (true)
             {
-                var current = this.transform.position;
+                currentPos = transform.position;
 
-				x_velocity = (current.x - prev.x) / (Time.deltaTime * 1000);
-				y_velocity = (current.y - prev.y) / (Time.deltaTime * 1000);
-                z_velocity = (current.z - prev.z) / (Time.deltaTime * 1000);
+                if(currentPos != prevPos)
+                {
+                    velocity.x = (currentPos.x - prevPos.x) / (Time.deltaTime * 1000);
+                    velocity.y = (currentPos.y - prevPos.y) / (Time.deltaTime * 1000);
+                    velocity.z = (currentPos.z - prevPos.z) / (Time.deltaTime * 1000);
 
-				//print x, y, z velocity
-				//print(x_velocity + ", " + y_velocity + ", " + z_velocity);
-
-                prev = current;
+                    prevPos = currentPos;
+                }
 
                 yield return Timing.WaitForOneFrame;
             }
@@ -99,103 +102,69 @@ namespace FrameWork.Network
         #region Core Methods
 
         private void C_SET_TRANSFORM()
-		{
-			C_SET_TRANSFORM packet = new()
-			{
-				GameObjectId = objectId
-			};
-
-			packet.Timestamp = connection.calcuatedServerTime;
-			packet.Position = NetworkUtils.UnityVector3ToProtocolVector3(this.transform.position);
-			packet.Rotation = NetworkUtils.UnityVector3ToProtocolVector3(this.transform.eulerAngles);
-			packet.Velocity = new Protocol.Vector3 
-			{
-				X = x_velocity,
-                Y = y_velocity,
-                Z = z_velocity
-			};
+        {
+            C_SET_TRANSFORM packet = new()
+            {
+                GameObjectId = objectId,
+                Timestamp = connection.calcuatedServerTime,
+                Position = NetworkUtils.UnityVector3ToProtocolVector3(transform.position),
+                Rotation = NetworkUtils.UnityVector3ToProtocolVector3(transform.eulerAngles),
+                Velocity = new Protocol.Vector3
+                {
+                    X = velocity.x,
+                    Y = velocity.y,
+                    Z = velocity.z
+                }
+            };
 
             connection.Send(PacketManager.MakeSendBuffer(packet));
-		}
-
-        CoroutineHandle updateTransformHandler;
-
-		Vector3 prevVelocity = Vector3.zero;
-
-		private void S_SET_TRANSFORM(S_SET_TRANSFORM _packet)
-		{
-			if (_packet.GameObjectId != objectId) return;
-
-            var timeGap = connection.calcuatedServerTime - _packet.Timestamp + interval * 1000;
-
-            Vector3 acc = new Vector3(
-                (_packet.Velocity.X - prevVelocity.x) / (interval * 1000),
-                (_packet.Velocity.Y - prevVelocity.y) / (interval * 1000),
-                (_packet.Velocity.Z - prevVelocity.z) / (interval * 1000)
-            );
-
-            //prevVelocity = new Vector3(_packet.Velocity.X, _packet.Velocity.Y, _packet.Velocity.Z);
-
-            var predictedPosition = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position) +
-                NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Velocity) * timeGap +
-                //prevVelocity * timeGap +
-                0.5f * acc * timeGap * timeGap;
-
-            prevVelocity = new Vector3(_packet.Velocity.X, _packet.Velocity.Y, _packet.Velocity.Z);
-            
-            pos = predictedPosition;
-
-            isRecieved = true;
-   //         if (isRunning)
-   //{
-   //             Timing.KillCoroutines(updateTransformHandler);
-   //	isRunning = false;
-   //         }
-
-            //         updateTransformHandler = Timing.RunCoroutine(UpdateTransform(predictedPosition, NetworkUtils.ProtocolVector3ToUnityQuaternion(_packet.Rotation)));
         }
 
-        Vector3 pos;
-        bool isRecieved = false;
+        private CoroutineHandle updateTransformHandler;
 
-        private void Update()
+        private void S_SET_TRANSFORM( S_SET_TRANSFORM _packet )
         {
-            if (isMine) return;
-
-            if(isRecieved)
-			{
-                if (!Equals(this.transform.position, pos))
-                {
-                    this.transform.position = Vector3.Lerp(this.transform.position, pos, 10 * Time.deltaTime);
-                }
-
-                else isRecieved = false;
+            if (_packet.GameObjectId != objectId)
+            {
+                return;
             }
+
+            //print calcuatedServerTime
+            print("set transform arrived : " + connection.calcuatedServerTime);
+
+            float timeGap = connection.calcuatedServerTime - _packet.Timestamp + (interval * 1000);
+
+            Vector3 predictedPosition = NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Position) +
+                (NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Velocity) * timeGap);
+
+            if (updateTransformHandler.IsRunning)
+                Timing.KillCoroutines(updateTransformHandler);
+
+            updateTransformHandler = Timing.RunCoroutine(
+                UpdateTransform(
+                    predictedPosition,
+                    Quaternion.Euler(NetworkUtils.ProtocolVector3ToUnityVector3(_packet.Rotation))
+                    )
+                );
         }
 
-        bool isRunning = false;
-
-        private IEnumerator<float> UpdateTransform(Vector3 newPosition, Quaternion newRotation)
+        private IEnumerator<float> UpdateTransform( Vector3 newPosition, Quaternion newRotation )
         {
-            isRunning = true;
-
-            var prevPosition = this.transform.position;
-            var prevRotation = this.transform.rotation;
+            Vector3 prevPosition = transform.position;
+            Quaternion prevRotation = transform.rotation;
 
             stopwatch.Reset();
             stopwatch.Start();
 
             for (int currentStep = 1; currentStep <= totalStep; currentStep++)
             {
-                this.transform.position = Vector3.Lerp(prevPosition, newPosition, (float)currentStep / totalStep);
-                this.transform.rotation = Quaternion.Lerp(prevRotation, newRotation, (float)currentStep / totalStep);
+                transform.position = Vector3.Lerp(prevPosition, newPosition, (float)currentStep / totalStep);
+                transform.rotation = Quaternion.Lerp(prevRotation, newRotation, (float)currentStep / totalStep);
 
-                yield return Timing.WaitForSeconds((float)(interval * currentStep / (float)totalStep) - (float)stopwatch.Elapsed.TotalSeconds);
+                yield return Timing.WaitForSeconds((float)(interval * currentStep / totalStep) - (float)stopwatch.Elapsed.TotalSeconds);
             }
 
             stopwatch.Stop();
-
-            isRunning = false;
         }
 
         #endregion

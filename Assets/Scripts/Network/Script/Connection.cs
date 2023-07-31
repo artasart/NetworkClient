@@ -5,6 +5,7 @@ using Protocol;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 
 namespace Framework.Network
@@ -38,7 +39,6 @@ namespace Framework.Network
         protected Action disconnectedHandler;
 
         private readonly PacketQueue packetQueue;
-        private DateTime lastMessageSent;
 
         private Queue<long> pings;
         private long pingAverage;
@@ -59,16 +59,15 @@ namespace Framework.Network
             AddHandler(Handle_S_DISCONNECTED);
             AddHandler(Handle_S_PING);
             AddHandler(Handle_S_SERVERTIME);
+            AddHandler(GetServerTime);
 
             packetQueue = new();
-            lastMessageSent = new(1970, 1, 1);
             pings = new();
+            pingAverage = 0;
 
             serverTime = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
 
             AsyncPacketUpdate().Forget();
-            //HeartBeat().Forget();
-            //Ping Works as HeartBeat
             Ping().Forget();
             UpdateServerTime().Forget();
         }
@@ -95,8 +94,16 @@ namespace Framework.Network
                 return;
             }
 
-            lastMessageSent = DateTime.UtcNow;
             Session.Send(pkt);
+        }
+
+        private void GetServerTime(Protocol.S_ENTER pkt)
+        {
+            if(pkt.Result == "SUCCESS")
+            {
+                Protocol.C_SERVERTIME c_SERVERTIME = new();
+                Send(PacketManager.MakeSendBuffer(c_SERVERTIME));
+            }
         }
 
         private void Handle_S_DISCONNECTED( Protocol.S_DISCONNECT pkt )
@@ -125,19 +132,12 @@ namespace Framework.Network
             }
 
             pingAverage = sum / pings.Count;
-
-            //UnityEngine.Debug.Log("Ping : " + pingAverage);
         }
 
         private void Handle_S_SERVERTIME( Protocol.S_SERVERTIME pkt )
         {
-            //Debug.Log("Time Diff : " + (pkt.Tick + pingAverage / 2 - serverTime));
-
             delTime = 0;
             serverTime = pkt.Tick + pingAverage/2;
-
-            Debug.Log("Time Diff : " + (calcuatedServerTime - serverTime));
-
             calcuatedServerTime = serverTime;
         }
 
@@ -165,27 +165,11 @@ namespace Framework.Network
                 for (int i = 0; i < packets.Count; i++)
                 {
                     PacketMessage packet = packets[i];
-                    _ = Handlers.TryGetValue(packet.Id, out Action<IMessage> handler);
+                    Handlers.TryGetValue(packet.Id, out Action<IMessage> handler);
                     handler?.Invoke(packet.Message);
                 }
 
                 await UniTask.Yield();
-            }
-        }
-
-        public async UniTaskVoid HeartBeat()
-        {
-            Protocol.C_HEARTBEAT heartbeat = new();
-            ArraySegment<byte> heartbeatPkt = PacketManager.MakeSendBuffer(heartbeat);
-
-            while (state == ConnectionState.NORMAL)
-            {
-                if ((long)(DateTime.UtcNow - lastMessageSent).TotalSeconds > 5)
-                {
-                    Send(heartbeatPkt);
-                }
-
-                await UniTask.Delay(TimeSpan.FromSeconds(5));
             }
         }
 
