@@ -115,7 +115,7 @@ BlendTree:
   m_BlendParameterY: Blend
   m_MinThreshold: 0
   m_MaxThreshold: 1
-  m_UseAutomaticThresholds: 1
+  m_UseAutomaticThresholds: 0
   m_NormalizedBlendValues: 0
   m_BlendType: 0
 --- !u!91 &9100000
@@ -132,19 +132,19 @@ AnimatorController:
     m_DefaultFloat: 0
     m_DefaultInt: 0
     m_DefaultBool: 0
-    m_Controller: {fileID: 0}
+    m_Controller: {fileID: 9100000}
   - m_Name: Jump
     m_Type: 3
     m_DefaultFloat: 0
     m_DefaultInt: 0
     m_DefaultBool: 0
-    m_Controller: {fileID: 0}
+    m_Controller: {fileID: 9100000}
   - m_Name: Sit
     m_Type: 4
     m_DefaultFloat: 0
     m_DefaultInt: 0
     m_DefaultBool: 0
-    m_Controller: {fileID: 0}
+    m_Controller: {fileID: 9100000}
   m_AnimatorLayers:
   - serializedVersion: 5
     m_Name: Base Layer
@@ -326,7 +326,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Jump_Run
-  m_Speed: 1
+  m_Speed: 0.85
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: 7037880496571213030}
@@ -362,7 +362,7 @@ AnimatorStateTransition:
   m_Mute: 0
   m_IsExit: 0
   serializedVersion: 3
-  m_TransitionDuration: 0.175
+  m_TransitionDuration: 0.25
   m_TransitionOffset: 0
   m_ExitTime: 0.7115385
   m_HasExitTime: 0

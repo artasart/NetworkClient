@@ -114,27 +114,19 @@ public class PlayerController : MonoBehaviour
 	{
 		if (isJumping) return;
 
-		Timing.RunCoroutine(Co_Jump(), "Jump");
+		Timing.KillCoroutines(nameof(Co_Jump));
+
+		Timing.RunCoroutine(Co_Jump(), nameof(Co_Jump));
+
+		isJumping = true;
 	}
 
 	private IEnumerator<float> Co_Jump()
 	{
 		float jumpVelocity = Mathf.Sqrt(-2 * gravity * jumpHeight);
 		float movement = animator.GetFloat(Define.MOVEMENT);
-		bool isMoving = moveInput.x + moveInput.y > 0;
 
-		isJumping = true;
-
-		DebugManager.ClearLog(isMoving);
-
-		animator.SetInteger(Define.JUMP, isMoving ? Define.JUMPRUN : Define.JUMPSTAND);
-
-		moveMultiplier = isMoving ? 1f : 0f;
-
-		if (!isMoving)
-		{
-			yield return Timing.WaitForSeconds(standJumpDelay);
-		}
+		animator.SetInteger(Define.JUMP, Define.JUMPRUN);
 
 		velocityY = jumpVelocity;
 
@@ -142,16 +134,7 @@ public class PlayerController : MonoBehaviour
 
 		animator.SetInteger(Define.JUMP, 0);
 
-		if (isMoving) isJumping = false;
-
-		else
-		{
-			yield return Timing.WaitForSeconds(1.25f);
-
-			isJumping = false;
-
-			moveMultiplier = 1f;
-		}
+		isJumping = false;
 	}
 
 	private float GetModifiedSmoothTime(float _smoothTime)

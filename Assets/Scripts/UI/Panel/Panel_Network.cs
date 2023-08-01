@@ -7,7 +7,6 @@ public class Panel_Network : Panel_Base
 {
 	TMP_InputField inputField_ConnectionId;
 
-	Button btn_Connect;
 	Button btn_CreateMain;
 	Button btn_DestroyMain;
 
@@ -17,7 +16,6 @@ public class Panel_Network : Panel_Base
 
         inputField_ConnectionId = this.transform.Search(nameof(inputField_ConnectionId)).GetComponent<TMP_InputField>();
 
-        btn_Connect = GetUI_Button(nameof(btn_Connect));
 
         btn_CreateMain = GetUI_Button(nameof(btn_CreateMain), OnClick_CreateMain);
         btn_DestroyMain = GetUI_Button(nameof(btn_DestroyMain), OnClick_DestroyMain);

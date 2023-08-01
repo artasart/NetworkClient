@@ -61,7 +61,7 @@ public class CrystalController : MonoBehaviour
 
 	private void Start()
 	{
-		handle_rotate = Timing.RunCoroutine(Co_RotateCrystal());
+
 	}
 
 	#endregion
@@ -69,16 +69,6 @@ public class CrystalController : MonoBehaviour
 
 
 	#region Basic Methods
-
-	private IEnumerator<float> Co_RotateCrystal()
-	{
-		while (true)
-		{
-			crystal.transform.Rotate(Vector3.up * rotateSpeed * Time.deltaTime);
-
-			yield return Timing.WaitForOneFrame;
-		}
-	}
 
 	#endregion
 }
