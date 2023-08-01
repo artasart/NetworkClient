@@ -24,20 +24,9 @@ public class UI_Base : MonoBehaviour
 	{
 		foreach (Transform child in _parent)
 		{
-			Tab_Base tab = child.GetComponent<Tab_Base>();
-
-			if (tab != null)
-			{
-				childUI[child.name] = child.gameObject;
-			}
-
-			else
-			{
-				childUI[child.name] = child.gameObject;
-
-				SearchUI(child);
-			}
-		}
+            childUI[child.name] = child.gameObject;
+            SearchUI(child);
+        }
 	}
 
 	#endregion
@@ -126,59 +115,6 @@ public class UI_Base : MonoBehaviour
 	}
 
 	#endregion
-
-
-
-
-	protected void ChangeTab(string _hierarchyName)
-	{
-		CloseTabAll();
-
-		childUI[_hierarchyName].SetActive(true);
-	}
-
-	protected void CloseTab(string _hierarchyName)
-	{
-		childUI[_hierarchyName].SetActive(false);
-	}
-
-	protected void ChangeTab<T>() where T : Component
-	{
-		CloseTabAll();
-
-		if (childUI.ContainsKey(typeof(T).Name))
-		{
-			childUI[typeof(T).Name].SetActive(true);
-		}
-
-		else Debug.Log($"WARNING: {typeof(T).Name} not found.");
-	}
-
-	protected void CloseTab<T>() where T : Component
-	{
-		if (childUI.ContainsKey(typeof(T).Name))
-		{
-			childUI[typeof(T).Name].SetActive(false);
-		}
-
-		else Debug.Log($"WARNING: {typeof(T).Name} not found.");
-	}
-
-	protected void CloseTabAll()
-	{
-		childUI.Values
-			.Where(uiObject => uiObject.GetComponent<Tab_Base>() != null)
-			.ToList()
-			.ForEach(tabObject => tabObject.SetActive(false));
-	}
-
-	public void Display()
-	{
-		foreach (var item in childUI)
-		{
-			Debug.Log($"Key: {item.Key}, Value: {item.Value}");
-		}
-	}
 
 	protected void PlaySound() => GameManager.Sound.PlaySound("Click_2");
 }

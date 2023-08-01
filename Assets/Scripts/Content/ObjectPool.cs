@@ -16,9 +16,3 @@ public class EffectPoolData : PoolData
 {
 	public EffectType effectType;
 }
-
-[System.Serializable]
-public class MonsterPoolData : PoolData
-{
-	public MonsterType monsterType;
-}

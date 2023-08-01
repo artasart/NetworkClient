@@ -123,43 +123,27 @@ public class MainConnection : Connection
 
 					gameObjects.Add(gameObject.Id.ToString(), player);
 				}
-
-				else
-				{
-					Monster rouge = new Rouge(MonsterType.MonsterA, "Monster", 100, 100, 10, 30, 1000, 10, 1, EffectType.Effect_Thunder, EffectType.Effect_Explosion);
-
-					var dummy = UnityEngine.Object.FindObjectOfType<MonsterPool>().Spawn(rouge, position, rotation);
-
-					UnityEngine.Object.FindObjectOfType<EffectPool>().Spawn(rouge.spawn, position, Quaternion.identity);
-
-					dummy.name = gameObject.Id.ToString();
-
-					if (!gameObjects.ContainsKey(dummy.name))
-					{
-						gameObjects.Add(dummy.name, dummy);
-					}
-				}
 			}
 		}
 	}
 
 	public void S_REMOVE_GAME_OBJECT(S_REMOVE_GAME_OBJECT _packet)
 	{
-		foreach (int gameObjectId in _packet.GameObjects)
-		{
-			if (!gameObjects.ContainsKey(gameObjectId.ToString())) continue;
+		//foreach (int gameObjectId in _packet.GameObjects)
+		//{
+		//	if (!gameObjects.ContainsKey(gameObjectId.ToString())) continue;
 
-			if (gameObjects[gameObjectId.ToString()].GetComponent<MonsterActor>() != null)
-			{
-				gameObjects[gameObjectId.ToString()].GetComponent<MonsterActor>().Die();
-			}
+		//	if (gameObjects[gameObjectId.ToString()].GetComponent<MonsterActor>() != null)
+		//	{
+		//		gameObjects[gameObjectId.ToString()].GetComponent<MonsterActor>().Die();
+		//	}
 
-			else
-			{
-				UnityEngine.Object.Destroy(gameObjects[gameObjectId.ToString()]);
-			}
+		//	else
+		//	{
+		//		UnityEngine.Object.Destroy(gameObjects[gameObjectId.ToString()]);
+		//	}
 
-			gameObjects.Remove(gameObjectId.ToString());
-		}
+		//	gameObjects.Remove(gameObjectId.ToString());
+		//}
 	}
 }

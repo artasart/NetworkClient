@@ -64,13 +64,13 @@ public class GameUIManager : SingletonManager<GameUIManager>
 		}
 	}
 
-	private void Update()
-	{
-		if (Input.GetKeyDown(KeyCode.Escape))
-		{
-			Back();
-		}
-	}
+	//private void Update()
+	//{
+	//	if (Input.GetKeyDown(KeyCode.Escape))
+	//	{
+	//		Back();
+	//	}
+	//}
 
 	public void Back()
 	{
@@ -83,11 +83,6 @@ public class GameUIManager : SingletonManager<GameUIManager>
 
 		else if (openPanels.Count > 0)
 		{
-			if (Equals(openPanels.Peek(), nameof(Panel_HUD)))
-			{
-				return;
-			}
-
 			PopPanel();
 		}
 	}

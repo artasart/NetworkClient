@@ -27,8 +27,6 @@ public class Panel_Network : Panel_Base
 	{
 		var virtualCamrea = GameObject.Find("1").GetComponent<CinemachineVirtualCamera>();
 
-		CinemachineSwitcher.SwitchCamera(virtualCamrea);
-
 		var connectionId = inputField_ConnectionId.text;
         if(string.IsNullOrEmpty(connectionId))
         {
@@ -40,7 +38,7 @@ public class Panel_Network : Panel_Base
 
 	private void OnClick_DestroyMain()
 	{
-        CinemachineSwitcher.SwitchMainCamera(CinemachineBlendDefinition.Style.EaseInOut);
+        //CinemachineSwitcher.SwitchMainCamera(CinemachineBlendDefinition.Style.EaseInOut);
 
         GameClientManager.Instance.DestroyMain();
 	}
