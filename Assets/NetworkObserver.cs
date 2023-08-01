@@ -12,9 +12,7 @@ public class NetworkObserver : NetworkComponent
 	[SerializeField] List<NetworkComponent> networkComponents = new List<NetworkComponent>();
 
 	protected void Awake()
-	{
-		connection = ConnectionManager.GetConnection(connectionId);
-		
+	{		
 		if (!isMine)
 		{
 			Destroy(this.GetComponent<PlayerController>());
@@ -33,8 +31,14 @@ public class NetworkObserver : NetworkComponent
 		{
 			item.objectId = objectId;
 			item.isMine = isMine;
-			item.isPlayer = isPlayer;
-			item.connection = connection;
-		}
+        }
 	}
+
+	public void SetConnection(Connection connection)
+	{
+        foreach (var item in networkComponents)
+        {
+			//item.Connection = connection;
+        }
+    }
 }

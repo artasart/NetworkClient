@@ -5,7 +5,7 @@ using Cinemachine;
 
 public class Panel_Network : Panel_Base
 {
-	TMP_InputField inputField_ConnectionId;
+	TMP_InputField inputField_ClientId;
 
 	Button btn_CreateMain;
 	Button btn_DestroyMain;
@@ -14,26 +14,26 @@ public class Panel_Network : Panel_Base
 	{
 		base.Awake();
 
-        inputField_ConnectionId = this.transform.Search(nameof(inputField_ConnectionId)).GetComponent<TMP_InputField>();
+        inputField_ClientId = this.transform.Search(nameof(inputField_ClientId)).GetComponent<TMP_InputField>();
 
 
         btn_CreateMain = GetUI_Button(nameof(btn_CreateMain), OnClick_CreateMain);
         btn_DestroyMain = GetUI_Button(nameof(btn_DestroyMain), OnClick_DestroyMain);
 
-		inputField_ConnectionId.placeholder.GetComponent<TMP_Text>().text = GenerateRandomString(5);
+		inputField_ClientId.placeholder.GetComponent<TMP_Text>().text = GenerateRandomString(5);
     }
 
 	private void OnClick_CreateMain()
 	{
 		var virtualCamrea = GameObject.Find("1").GetComponent<CinemachineVirtualCamera>();
 
-		var connectionId = inputField_ConnectionId.text;
-        if(string.IsNullOrEmpty(connectionId))
+		var clientId = inputField_ClientId.text;
+        if(string.IsNullOrEmpty(clientId))
         {
-            connectionId = inputField_ConnectionId.placeholder.GetComponent<TMP_Text>().text;
+            clientId = inputField_ClientId.placeholder.GetComponent<TMP_Text>().text;
         }
 
-		GameClientManager.Instance.CreateMain(connectionId);
+		GameClientManager.Instance.CreateMain(clientId);
 	}
 
 	private void OnClick_DestroyMain()

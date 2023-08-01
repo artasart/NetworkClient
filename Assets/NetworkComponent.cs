@@ -7,12 +7,10 @@ namespace FrameWork.Network
 {
 	public class NetworkComponent : MonoBehaviour
 	{
-        public string connectionId = string.Empty;
-        public Connection connection = null;
-
-        public int objectId = 0;
-        public bool isPlayer = false;
+		public Connection connection;
+        public int objectId = -1;
         public bool isMine = false;
+		public bool isPlayer = false;
 
 		protected virtual void OnDestroy()
 		{

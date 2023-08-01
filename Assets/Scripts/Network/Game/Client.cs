@@ -4,12 +4,14 @@ using Protocol;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MainConnection : Connection
+public class Client : Connection
 {
-	private Dictionary<string, GameObject> gameObjects = new();
-	private int myObjectId = -1;
+	public string ClientId { get; set; }
 
-    public MainConnection()
+	private Dictionary<string, GameObject> gameObjects = new();
+	private int myGameObjectId = -1;
+
+    public Client()
 	{
 		AddHandler(S_ENTER);
 		AddHandler(INSTANTIATE_GAME_OBJECT);
@@ -57,17 +59,17 @@ public class MainConnection : Connection
 		}
 	}
 
-	public void INSTANTIATE_GAME_OBJECT(S_INSTANTIATE_GAME_OBJECT _packet)
+	public void INSTANTIATE_GAME_OBJECT(S_INSTANTIATE_GAME_OBJECT pkt)
 	{
-		myObjectId = _packet.GameObjectId;
+		myGameObjectId = pkt.GameObjectId;
 	}
 
-	public void S_ADD_CLIENT(S_ADD_CLIENT _packet)
+	public void S_ADD_CLIENT(S_ADD_CLIENT pkt)
 	{
-		foreach (var clients in _packet.ClientInfos)
+		foreach (var clients in pkt.ClientInfos)
 		{
 			Debug.Log(clients.ClientId);
-		}			
+		}
 	}
 
 	public void S_ADD_GAME_OBJECT(S_ADD_GAME_OBJECT _packet)
@@ -77,7 +79,7 @@ public class MainConnection : Connection
 			UnityEngine.Vector3 position = new(gameObject.Position.X, gameObject.Position.Y, gameObject.Position.Z);
 			UnityEngine.Quaternion rotation = Quaternion.Euler(gameObject.Rotation.X, gameObject.Rotation.Y, gameObject.Rotation.Z);
 
-			if (gameObject.Id == myObjectId)
+			if (gameObject.Id == myGameObjectId)
 			{
 				var prefab = Resources.Load<GameObject>("Prefab/" + gameObject.PrefabName);
 				prefab.GetComponent<NetworkObserver>().objectId = gameObject.Id;

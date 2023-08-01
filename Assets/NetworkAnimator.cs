@@ -28,7 +28,7 @@ namespace FrameWork.Network
             }
             else
             {
-                GameClientManager.Instance.mainConnection.AddHandler(S_SET_ANIMATION);
+                GameClientManager.Instance.Client.AddHandler(S_SET_ANIMATION);
             }
         }
 
@@ -40,7 +40,7 @@ namespace FrameWork.Network
 
             if (!isMine)
             {
-                GameClientManager.Instance.mainConnection.RemoveHandler(S_SET_ANIMATION);
+                GameClientManager.Instance.Client.RemoveHandler(S_SET_ANIMATION);
             }
         }
 
@@ -88,7 +88,7 @@ namespace FrameWork.Network
             };
             packet.Params.Add(Define.SIT, sit);
 
-            GameClientManager.Instance.mainConnection.Send(PacketManager.MakeSendBuffer(packet));
+            GameClientManager.Instance.Client.Send(PacketManager.MakeSendBuffer(packet));
         }
 
         private void S_SET_ANIMATION( S_SET_ANIMATION _packet )

@@ -26,16 +26,10 @@ public class GameClientManager : MonoBehaviour
 
 	#endregion
 
-	#region Members
-
-	private readonly Dictionary<string, Connection> dummyConnections = new();
-
-	public Connection mainConnection = null;
+	public Client Client { get; private set; }
 
 	private Transform go_Main;
 	private Transform go_Dummy;
-
-	#endregion
 
 	private void Awake()
 	{
@@ -83,9 +77,9 @@ public class GameClientManager : MonoBehaviour
 
     }
 
-	public async void CreateMain(string _connectionId)
+	public async void CreateMain(string connectionId)
 	{
-		if (mainConnection != null) return;
+		if (Client != null) return;
 
 		IPEndPoint endPoint = await GetAddress();
 		if(endPoint == null)
@@ -93,32 +87,26 @@ public class GameClientManager : MonoBehaviour
             Debug.Log("GetAddress Fail!");
             return;
         }
-		MainConnection connection = (MainConnection)ConnectionManager.GetConnection<MainConnection>();
+		Client connection = (Client)ConnectionManager.GetConnection<Client>();
 
-		mainConnection = connection;
+		Client = connection;
 
 		bool success = await ConnectionManager.Connect(endPoint, connection);
 		if (success)
 		{
+			Client.ClientId = connectionId;
+
 			C_ENTER enter = new C_ENTER();
-			enter.ClientId = "Main" + _connectionId;
+			enter.ClientId = "Main" + connectionId;
 			connection.Send(PacketManager.MakeSendBuffer(enter));
 		}
 	}
 
 	public void DestroyMain()
 	{
-		if (mainConnection == null) return;
+		if (Client == null) return;
 
-		mainConnection.Send(PacketManager.MakeSendBuffer(new C_LEAVE()));
-		mainConnection = null;
-	}
-
-	public void RemoveClient(S_REMOVE_CLIENT _packet)
-	{
-		foreach (string clientId in _packet.ClientIds)
-		{
-			dummyConnections.Remove(clientId);
-		}
+		Client.Send(PacketManager.MakeSendBuffer(new C_LEAVE()));
+		Client = null;
 	}
 }
