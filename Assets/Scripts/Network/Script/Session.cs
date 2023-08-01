@@ -84,7 +84,7 @@ namespace Framework.Network
         {
             lock (@lock)
             {
-                if(isDisconnectRegistered)
+                if(!isConnected || isDisconnectRegistered)
                 {
                     return;
                 }

@@ -152,7 +152,7 @@ namespace Framework.Network
 
             if(session != null)
             {
-                session.Disconnect();
+                session.RegisterDisconnect();
             }
         }
 
