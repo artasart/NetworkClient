@@ -1,11 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
-using Cysharp.Threading.Tasks.CompilerServices;
 using Google.Protobuf;
-using Protocol;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 
 namespace Framework.Network
@@ -28,7 +24,7 @@ namespace Framework.Network
             {
                 session = value;
                 session.connectedHandler += OnConnected;
-                session.disconnectedHandler += OnDisConnected;
+                session.disconnectedHandler += OnDisconnected;
                 session.receivedHandler += OnRecv;
             }
         }
@@ -40,7 +36,7 @@ namespace Framework.Network
 
         private readonly PacketQueue packetQueue;
 
-        private Queue<long> pings;
+        private readonly Queue<long> pings;
         private long pingAverage;
 
         private long serverTime;
@@ -59,7 +55,7 @@ namespace Framework.Network
             AddHandler(Handle_S_DISCONNECTED);
             AddHandler(Handle_S_PING);
             AddHandler(Handle_S_SERVERTIME);
-            AddHandler(GetServerTime);
+            AddHandler(Handle_S_ENTER);
 
             packetQueue = new();
             pings = new();
@@ -77,7 +73,7 @@ namespace Framework.Network
             connectedHandler?.Invoke();
         }
 
-        private void OnDisConnected()
+        private void OnDisconnected()
         {
             disconnectedHandler?.Invoke();
         }
@@ -97,12 +93,12 @@ namespace Framework.Network
             Session.Send(pkt);
         }
 
-        private void GetServerTime(Protocol.S_ENTER pkt)
+        private void Handle_S_ENTER( Protocol.S_ENTER pkt )
         {
-            if(pkt.Result == "SUCCESS")
+            if (pkt.Result == "SUCCESS")
             {
-                Protocol.C_SERVERTIME c_SERVERTIME = new();
-                Send(PacketManager.MakeSendBuffer(c_SERVERTIME));
+                Protocol.C_SERVERTIME servertime = new();
+                Send(PacketManager.MakeSendBuffer(servertime));
             }
         }
 
@@ -122,11 +118,11 @@ namespace Framework.Network
 
             if (pings.Count > 5)
             {
-                pings.Dequeue();
+                _ = pings.Dequeue();
             }
 
             long sum = 0;
-            foreach (var item in pings)
+            foreach (long item in pings)
             {
                 sum += item;
             }
@@ -137,7 +133,7 @@ namespace Framework.Network
         private void Handle_S_SERVERTIME( Protocol.S_SERVERTIME pkt )
         {
             delTime = 0;
-            serverTime = pkt.Tick + pingAverage/2;
+            serverTime = pkt.Tick + (pingAverage / 2);
             calcuatedServerTime = serverTime;
         }
 
@@ -150,10 +146,7 @@ namespace Framework.Network
 
             state = ConnectionState.CLOSED;
 
-            if(session != null)
-            {
-                session.RegisterDisconnect();
-            }
+            session?.RegisterDisconnect();
         }
 
         public async UniTaskVoid AsyncPacketUpdate()
@@ -165,7 +158,7 @@ namespace Framework.Network
                 for (int i = 0; i < packets.Count; i++)
                 {
                     PacketMessage packet = packets[i];
-                    Handlers.TryGetValue(packet.Id, out Action<IMessage> handler);
+                    _ = Handlers.TryGetValue(packet.Id, out Action<IMessage> handler);
                     handler?.Invoke(packet.Message);
                 }
 
@@ -176,7 +169,7 @@ namespace Framework.Network
         public async UniTaskVoid Ping()
         {
             Protocol.C_PING ping = new();
-            
+
             while (state == ConnectionState.NORMAL)
             {
                 ping.Tick = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
@@ -189,7 +182,7 @@ namespace Framework.Network
         public async UniTaskVoid UpdateServerTime()
         {
             while (state == ConnectionState.NORMAL)
-            {                
+            {
                 delTime += Time.deltaTime;
                 calcuatedServerTime = serverTime + (long)Math.Round(delTime * 1000, 1);
                 await UniTask.Yield();

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -27,7 +26,7 @@ namespace Framework.Network
             return connection;
         }
 
-        public static Connection GetConnection(string connectionId)
+        public static Connection GetConnection( string connectionId )
         {
             return connections[connectionId];
         }
@@ -46,7 +45,7 @@ namespace Framework.Network
 
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine($"Connection failed: {ex.Message}");
                 return false;

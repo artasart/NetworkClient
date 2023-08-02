@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using UnityEngine;
 
 namespace Framework.Network
@@ -61,8 +60,7 @@ namespace Framework.Network
 
         ~Session()
         {
-            if (socket != null)
-                socket.Close();
+            socket?.Close();
         }
 
         public void Start( Socket socket )
@@ -84,7 +82,7 @@ namespace Framework.Network
         {
             lock (@lock)
             {
-                if(!isConnected || isDisconnectRegistered)
+                if (!isConnected || isDisconnectRegistered)
                 {
                     return;
                 }
@@ -102,7 +100,7 @@ namespace Framework.Network
         {
             lock (@lock)
             {
-                if(!isConnected)
+                if (!isConnected)
                 {
                     return;
                 }
@@ -152,7 +150,7 @@ namespace Framework.Network
                 }
             }
 
-            if(registerSend)
+            if (registerSend)
             {
                 RegisterSend();
             }
