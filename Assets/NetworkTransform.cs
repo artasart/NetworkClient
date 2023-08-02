@@ -21,6 +21,9 @@ namespace FrameWork.Network
 
         protected void Start()
         {
+            velocity = new();
+            angularVelocity = new();
+
             stopwatch = new();
 
             if (isMine)
@@ -32,6 +35,7 @@ namespace FrameWork.Network
             else
             {
                 Client.AddHandler(S_SET_TRANSFORM);
+                updateTransform = Timing.RunCoroutine(RemoteUpdateTransform());
             }
         }
 
@@ -56,17 +60,15 @@ namespace FrameWork.Network
         {
             Vector3 prevPos = transform.position;
             Vector3 currentPos;
+            float prevDeltaTime = Time.deltaTime;
 
             while (true)
             {
                 currentPos = transform.position;
+                velocity = (currentPos - prevPos) / (prevDeltaTime * 1000);
 
-                if (currentPos != prevPos)
-                {
-                    velocity = (currentPos - prevPos) / (Time.deltaTime * 1000);
-
-                    prevPos = currentPos;
-                }
+                prevPos = currentPos;
+                prevDeltaTime = Time.deltaTime;
 
                 yield return Timing.WaitForOneFrame;
             }
@@ -76,24 +78,23 @@ namespace FrameWork.Network
         {
             Quaternion prevRot = transform.rotation;
             Quaternion currentRot;
+            float prevDeltaTime = Time.deltaTime;
 
             while (true)
             {
                 currentRot = transform.rotation;
 
-                if (currentRot != prevRot)
+                Quaternion deltaRotation = currentRot * Quaternion.Inverse(prevRot);
+                deltaRotation.ToAngleAxis(out float angle, out Vector3 axis);
+                if (angle > 180)
                 {
-                    Quaternion deltaRotation = currentRot * Quaternion.Inverse(prevRot);
-                    deltaRotation.ToAngleAxis(out float angle, out Vector3 axis);
-                    if (angle > 180)
-                    {
-                        angle -= 360;
-                    }
-
-                    angularVelocity = axis.normalized * angle * Mathf.Deg2Rad / (Time.deltaTime * 1000);
-
-                    prevRot = currentRot;
+                    angle -= 360;
                 }
+
+                angularVelocity = angle * Mathf.Deg2Rad * axis.normalized / (prevDeltaTime * 1000);
+
+                prevRot = currentRot;
+                prevDeltaTime = Time.deltaTime;
 
                 yield return Timing.WaitForOneFrame;
             }
@@ -108,6 +109,7 @@ namespace FrameWork.Network
             {
                 if (prevVelocity != velocity || prevAngularVelocity != angularVelocity)
                 {
+                    print("update transform");
                     C_SET_TRANSFORM();
                     prevVelocity = velocity;
                     prevAngularVelocity = angularVelocity;
@@ -142,6 +144,18 @@ namespace FrameWork.Network
             Client.Send(PacketManager.MakeSendBuffer(packet));
         }
 
+        private IEnumerator<float> RemoteUpdateTransform()
+        {
+            while(true)
+            {
+                print("remote update transfrom");
+
+                transform.position += velocity * Time.deltaTime * 1000;
+                transform.rotation *= Quaternion.AngleAxis(angularVelocity.magnitude * Time.deltaTime * 1000 * Mathf.Rad2Deg, angularVelocity.normalized);
+                yield return Timing.WaitForOneFrame;
+            }
+        }
+
         private void S_SET_TRANSFORM( S_SET_TRANSFORM packet )
         {
             if (packet.GameObjectId != objectId)
@@ -149,26 +163,43 @@ namespace FrameWork.Network
                 return;
             }
 
-            float timeGap = Client.calcuatedServerTime - packet.Timestamp + (interval * 1000);
+            print("set transform");
+
+            velocity = NetworkUtils.ProtocolVector3ToUnityVector3(packet.Velocity);
+            angularVelocity = NetworkUtils.ProtocolVector3ToUnityVector3(packet.AngularVelocity);
+
+            //float timeGap = Client.calcuatedServerTime - packet.Timestamp + (interval * 1000);
+            float timeGap = Client.calcuatedServerTime - packet.Timestamp;
 
             Vector3 predictedPosition = NetworkUtils.ProtocolVector3ToUnityVector3(packet.Position) +
                 (NetworkUtils.ProtocolVector3ToUnityVector3(packet.Velocity) * timeGap);
 
-            Quaternion predictedRotation = 
+            Quaternion predictedRotation =
                 Quaternion.Euler(NetworkUtils.ProtocolVector3ToUnityVector3(packet.Rotation)) *
                 Quaternion.AngleAxis(angularVelocity.magnitude * timeGap * Mathf.Rad2Deg, angularVelocity.normalized);
 
-            if (updateTransform.IsRunning)
+            if(Vector3.Distance(predictedPosition, transform.position) > 0.5f)
             {
-                _ = Timing.KillCoroutines(updateTransform);
+                print("teleport");
+                transform.position = predictedPosition;
+                transform.rotation = predictedRotation;
             }
+            //else
+            //{
 
-            updateTransform = Timing.RunCoroutine(
-                UpdateTransform(
-                    predictedPosition,
-                    predictedRotation
-                    )
-                );
+            //}
+
+            //if (updateTransform.IsRunning)
+            //{
+            //    _ = Timing.KillCoroutines(updateTransform);
+            //}
+
+            //updateTransform = Timing.RunCoroutine(
+            //    UpdateTransform(
+            //        predictedPosition,
+            //        predictedRotation
+            //        )
+            //    );
         }
 
         private IEnumerator<float> UpdateTransform( Vector3 newPosition, Quaternion newRotation )
