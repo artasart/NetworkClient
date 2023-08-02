@@ -29,12 +29,10 @@ public class GameClientManager : MonoBehaviour
 	public Client Client { get; private set; }
 
 	private Transform go_Main;
-	private Transform go_Dummy;
 
 	private void Awake()
 	{
 		go_Main = this.transform.Search(nameof(go_Main));
-		go_Dummy = this.transform.Search(nameof(go_Dummy));
 	}
 
 	private void Start()

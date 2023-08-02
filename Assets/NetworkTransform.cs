@@ -28,7 +28,7 @@ namespace FrameWork.Network
             }
             else
             {
-                connection.AddHandler(S_SET_TRANSFORM);
+                Client.AddHandler(S_SET_TRANSFORM);
             }
         }
 
@@ -44,7 +44,7 @@ namespace FrameWork.Network
             }
             else
             {
-                connection.RemoveHandler(S_SET_TRANSFORM);
+                Client.RemoveHandler(S_SET_TRANSFORM);
             }
         }
 
@@ -96,7 +96,7 @@ namespace FrameWork.Network
             C_SET_TRANSFORM packet = new()
             {
                 GameObjectId = objectId,
-                Timestamp = connection.calcuatedServerTime,
+                Timestamp = Client.calcuatedServerTime,
                 Position = NetworkUtils.UnityVector3ToProtocolVector3(transform.position),
                 Rotation = NetworkUtils.UnityVector3ToProtocolVector3(transform.eulerAngles),
                 Velocity = new Protocol.Vector3
@@ -107,7 +107,7 @@ namespace FrameWork.Network
                 }
             };
 
-            connection.Send(PacketManager.MakeSendBuffer(packet));
+            Client.Send(PacketManager.MakeSendBuffer(packet));
         }
 
         private void S_SET_TRANSFORM( S_SET_TRANSFORM packet )
@@ -117,7 +117,7 @@ namespace FrameWork.Network
                 return;
             }
 
-            float timeGap = connection.calcuatedServerTime - packet.Timestamp + (interval * 1000);
+            float timeGap = Client.calcuatedServerTime - packet.Timestamp + (interval * 1000);
 
             Vector3 predictedPosition = NetworkUtils.ProtocolVector3ToUnityVector3(packet.Position) +
                 (NetworkUtils.ProtocolVector3ToUnityVector3(packet.Velocity) * timeGap);

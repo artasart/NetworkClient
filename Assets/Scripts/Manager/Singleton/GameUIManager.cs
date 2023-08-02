@@ -34,10 +34,8 @@ public class GameUIManager : SingletonManager<GameUIManager>
 		group_MasterCanvas = GameObject.Find("go_Canvas");
 
 		group_Panel = GameObject.Find(nameof(group_Panel));
-		group_Popup = GameObject.Find(nameof(group_Popup));
 
 		CacheUI(group_Panel, panels);
-		CacheUI(group_Popup, popups);
 
 		isInitialized = true;
 	}

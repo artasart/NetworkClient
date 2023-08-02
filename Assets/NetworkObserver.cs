@@ -19,11 +19,6 @@ public class NetworkObserver : NetworkComponent
 			Destroy(this.GetComponentInChildren<CameraShake>().gameObject);
 		}
 
-		if (isPlayer)
-		{
-			this.transform.GetComponentInChildren<TMP_Text>().text = "MarkerMan_" + objectId;
-		}
-
 		networkComponents.Add(this.GetComponent<NetworkTransform>());
 		networkComponents.Add(this.GetComponent<NetworkAnimator>());
 
@@ -34,11 +29,18 @@ public class NetworkObserver : NetworkComponent
         }
 	}
 
-	public void SetConnection(Connection connection)
+	public void SetConnection(Client client)
 	{
+		this.Client = client;
+
+        if (isPlayer)
+        {
+            this.transform.GetComponentInChildren<TMP_Text>().text = this.Client.ClientId;
+        }
+
         foreach (var item in networkComponents)
         {
-			//item.Connection = connection;
+			item.Client = this.Client;
         }
     }
 }

@@ -56,7 +56,7 @@ public sealed class MasterCanvas : MonoBehaviour
         _canvas.sortingOrder = 0;
 
         _canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        _canvasScaler.referenceResolution = new Vector2(1920f, 1080f);
+        _canvasScaler.referenceResolution = new Vector2(1280f, 720f);
         _canvasScaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
         
         SetMatch();

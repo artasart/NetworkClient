@@ -7,7 +7,7 @@ namespace FrameWork.Network
 {
 	public class NetworkComponent : MonoBehaviour
 	{
-		public Connection connection;
+		public Client Client { get; set; }
         public int objectId = -1;
         public bool isMine = false;
 		public bool isPlayer = false;
