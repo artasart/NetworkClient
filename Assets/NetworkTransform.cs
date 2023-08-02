@@ -2,7 +2,6 @@
 using MEC;
 using Protocol;
 using System.Collections.Generic;
-using System.Diagnostics;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
@@ -11,7 +10,7 @@ namespace FrameWork.Network
     public class NetworkTransform : NetworkComponent
     {
         private readonly float interval = 0.05f;
-        private readonly int totalStep = 4;
+        private readonly int totalStep = 10;
         private Vector3 velocity;
         private Vector3 angularVelocity;
         private CoroutineHandle updateTransform;
@@ -22,8 +21,6 @@ namespace FrameWork.Network
         {
             velocity = new();
             angularVelocity = new();
-
-            stopwatch = new();
 
             if (isMine)
             {
@@ -189,7 +186,7 @@ namespace FrameWork.Network
 
                 _ = Timing.KillCoroutines(updateTransform);
 
-                updateTransform = Timing.RunCoroutine(ReviseTransform(predictedPosition,predictedRotation));
+                updateTransform = Timing.RunCoroutine(ReviseTransform(predictedPosition, predictedRotation));
             }
         }
 
