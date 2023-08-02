@@ -109,7 +109,6 @@ namespace FrameWork.Network
             {
                 if (prevVelocity != velocity || prevAngularVelocity != angularVelocity)
                 {
-                    print("update transform");
                     C_SET_TRANSFORM();
                     prevVelocity = velocity;
                     prevAngularVelocity = angularVelocity;
@@ -148,8 +147,6 @@ namespace FrameWork.Network
         {
             while(true)
             {
-                print("remote update transfrom");
-
                 transform.position += velocity * Time.deltaTime * 1000;
                 transform.rotation *= Quaternion.AngleAxis(angularVelocity.magnitude * Time.deltaTime * 1000 * Mathf.Rad2Deg, angularVelocity.normalized);
                 yield return Timing.WaitForOneFrame;
@@ -162,8 +159,6 @@ namespace FrameWork.Network
             {
                 return;
             }
-
-            print("set transform");
 
             velocity = NetworkUtils.ProtocolVector3ToUnityVector3(packet.Velocity);
             angularVelocity = NetworkUtils.ProtocolVector3ToUnityVector3(packet.AngularVelocity);
@@ -180,10 +175,14 @@ namespace FrameWork.Network
 
             if(Vector3.Distance(predictedPosition, transform.position) > 0.5f)
             {
-                print("teleport");
                 transform.position = predictedPosition;
+            }
+
+            if(2.0f * Mathf.Acos(Mathf.Clamp((transform.rotation * Quaternion.Inverse(predictedRotation)).w, -1.0f, 1.0f)) * Mathf.Rad2Deg > 3.0f)
+            {
                 transform.rotation = predictedRotation;
             }
+
             //else
             //{
 
