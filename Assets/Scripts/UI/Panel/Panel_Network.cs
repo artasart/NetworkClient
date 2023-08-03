@@ -10,6 +10,8 @@ public class Panel_Network : Panel_Base
 	Button btn_CreateMain;
 	Button btn_DestroyMain;
 
+    public bool isConnect = false;
+
 	protected override void Awake()
 	{
 		base.Awake();
@@ -25,23 +27,24 @@ public class Panel_Network : Panel_Base
 
 	private void OnClick_CreateMain()
 	{
-		var virtualCamrea = GameObject.Find("1").GetComponent<CinemachineVirtualCamera>();
+        if (isConnect) return;
 
 		var clientId = inputField_ClientId.text;
+
         if(string.IsNullOrEmpty(clientId))
         {
             clientId = inputField_ClientId.placeholder.GetComponent<TMP_Text>().text;
         }
 
 		GameClientManager.Instance.CreateMain(clientId);
-	}
+
+        isConnect = true;
+    }
 
 	private void OnClick_DestroyMain()
 	{
-        //CinemachineSwitcher.SwitchMainCamera(CinemachineBlendDefinition.Style.EaseInOut);
-
         GameClientManager.Instance.DestroyMain();
-	}
+    }
 
     public string GenerateRandomString( int length )
     {

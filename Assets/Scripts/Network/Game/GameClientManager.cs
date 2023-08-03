@@ -97,6 +97,9 @@ public class GameClientManager : MonoBehaviour
 			C_ENTER enter = new C_ENTER();
 			enter.ClientId = "Main" + connectionId;
 			connection.Send(PacketManager.MakeSendBuffer(enter));
+
+			GameManager.UI.FetchPanel<Panel_Network>().isConnect = false;
+			GameManager.UI.PopPanel();
 		}
 	}
 

@@ -31,16 +31,26 @@ public class PlayerController : MonoBehaviour
     public float moveMultiplier = 1;
     public bool isPathFinding = false;
 
+    CinemachineTPSController cinemachineTPSController;
+
     private void Awake()
     {
         animator = GetComponentInChildren<Animator>();
         controller = GetComponent<CharacterController>();
+        cinemachineTPSController = FindObjectOfType<CinemachineTPSController>();
 
         cameraTransform = transform.Search("LookTarget");
     }
 
     private void Update()
     {
+        if (cinemachineTPSController.isPanel)
+        {
+            moveInput = Vector3.zero;
+
+            return;
+        }
+
         if (!isPathFinding)
         {
             moveInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized * moveMultiplier;
@@ -306,18 +316,27 @@ public class PlayerController : MonoBehaviour
         transform.LookAt(null);
     }
 
+	public void KillMovement() => Timing.KillCoroutines(nameof(Co_SetMovement));
 
-    public float gravityMultiplier = 10f;
-    private void OnCollisionEnter( Collision other )
-    {
-        if (other.gameObject.CompareTag("Obstacle"))
-        {
-            CameraShake.Instance.Shake();
+	public void SetMovement(float _value = 0f)
+	{
+		Timing.KillCoroutines(nameof(Co_SetMovement));
 
-            Vector3 gravityForce = new Vector3(UnityEngine.Random.Range(-4, 4), UnityEngine.Random.Range(0f, 2f), UnityEngine.Random.Range(-4, 4)) * gravityMultiplier;
+		Timing.RunCoroutine(Co_SetMovement(_value), nameof(Co_SetMovement));
+	}
 
-            other.gameObject.GetComponent<Rigidbody>().AddForce(gravityForce, ForceMode.VelocityChange);
-        }
+	IEnumerator<float> Co_SetMovement(float _target = 0f)
+	{
+        var elapsedTime = 0f;
+
+        while(!Equals(animator.GetFloat(Define.MOVEMENT), _target))
+		{
+            animator.SetFloat(Define.MOVEMENT, Mathf.Lerp(animator.GetFloat(Define.MOVEMENT), _target, elapsedTime += Time.deltaTime));
+
+            yield return Timing.WaitForOneFrame;
+		}
+
+        animator.SetFloat(Define.MOVEMENT, _target);
     }
 
     #endregion

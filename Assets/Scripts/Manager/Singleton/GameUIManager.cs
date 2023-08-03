@@ -109,7 +109,7 @@ public class GameUIManager : SingletonManager<GameUIManager>
 
 	#region Core Methods
 
-	public T GetPanel<T>() where T : Component
+	public T FetchPanel<T>() where T : Component
 	{
 		if (!panels.ContainsKey(typeof(T).ToString())) return null;
 
@@ -363,5 +363,15 @@ public class GameUIManager : SingletonManager<GameUIManager>
 		yield return Timing.WaitForOneFrame;
 	}
 
+
+	public bool IsPanelOpen<T>() where T : Component
+	{
+		if(openPanels.Contains(typeof(T).ToString()))
+		{
+			return true;
+		}
+
+		return false;
+	}
 	#endregion
 }

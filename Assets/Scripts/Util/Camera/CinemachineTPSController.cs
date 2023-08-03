@@ -6,8 +6,10 @@ using UnityEngine;
 public class CinemachineTPSController : MonoBehaviour
 {
     public bool lockCursor = true;
+    public bool isPanel = false;
+
     [Range(0f, 10f)] public float mouseSensitivity = 5f;
-    [Range(0f, 100f)] public float zoomSpeed = 25f;
+    [Range(0f, 100f)] public float zoomSpeed = 40f;
     [Range(0f, 1f)] public float zoomSmoothness = 0.1f;
 
     public Vector2 pitchMinMax = new Vector2(-20, 85);
@@ -30,6 +32,7 @@ public class CinemachineTPSController : MonoBehaviour
 
     CoroutineHandle handle_CameraDistance;
 
+
     private void Awake()
     {
         lookTarget = this.transform.parent.Search("LookTarget");
@@ -49,8 +52,38 @@ public class CinemachineTPSController : MonoBehaviour
         }
     }
 
-    void LateUpdate()
+	private void Update()
+	{
+        if (Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (GameManager.UI.IsPanelOpen<Panel_Network>())
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+                isPanel = false;
+
+                GameManager.UI.PopPanel();
+
+                FindObjectOfType<PlayerController>().KillMovement();
+            }
+
+            else
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+                isPanel = true;
+
+                GameManager.UI.StackPanel<Panel_Network>();
+
+                FindObjectOfType<PlayerController>().SetMovement(0f);
+            }
+        }
+    }
+
+	void LateUpdate()
     {
+        if (isPanel) return;
+
         yaw += Input.GetAxis("Mouse X") * mouseSensitivity;
         pitch -= Input.GetAxis("Mouse Y") * mouseSensitivity;
         pitch = Mathf.Clamp(pitch, pitchMinMax.x, pitchMinMax.y);
