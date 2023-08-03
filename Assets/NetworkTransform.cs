@@ -178,7 +178,7 @@ namespace FrameWork.Network
             velocity = NetworkUtils.ProtocolVector3ToUnityVector3(packet.Velocity);
             Vector3 predictedPosition;
 
-            Quaternion packetRotation = Quaternion.Euler(NetworkUtils.ProtocolVector3ToUnityVector3(packet.Rotation));
+            Quaternion packetRotation = NetworkUtils.ProtocolVector3ToUnityQuaternion(packet.Rotation);
             angularVelocity = NetworkUtils.ProtocolVector3ToUnityVector3(packet.AngularVelocity);
             Quaternion predictedRotation;
 
