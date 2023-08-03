@@ -28,7 +28,7 @@ namespace FrameWork.Network
             }
             else
             {
-                GameClientManager.Instance.Client.AddHandler(S_SET_ANIMATION);
+                Client.AddHandler(S_SET_ANIMATION);
             }
         }
 
@@ -40,7 +40,7 @@ namespace FrameWork.Network
 
             if (!isMine)
             {
-                GameClientManager.Instance.Client.RemoveHandler(S_SET_ANIMATION);
+                Client.RemoveHandler(S_SET_ANIMATION);
             }
         }
 
@@ -52,8 +52,8 @@ namespace FrameWork.Network
             {
                 string current = GetParameters();
 
-                if (!Equals(current, prev) || animator.GetFloat(Define.MOVEMENT) >= Define.THRESHOLD_MOVEMENT)
-                //if (!Equals(current, prev))
+                //if (!Equals(current, prev) || animator.GetFloat(Define.MOVEMENT) >= Define.THRESHOLD_MOVEMENT)
+                if (!Equals(current, prev))
                 {
                     C_SET_ANIMATION();
                     prev = current.ToString();
