@@ -23,8 +23,12 @@ namespace FrameWork.Network
         private CoroutineHandle remoteUpdatePosition;
         private CoroutineHandle remoteUpdateRotation;
 
+        private CharacterController controller;
+
         protected void Start()
         {
+            controller = GetComponent<CharacterController>();
+
             velocity = new();
             angularVelocity = new();
 
@@ -151,7 +155,8 @@ namespace FrameWork.Network
         {
             while (true)
             {
-                transform.position += velocity * Time.deltaTime * 1000;
+                controller.Move(velocity * Time.deltaTime * 1000);
+                //transform.position += velocity * Time.deltaTime * 1000;
                 yield return Timing.WaitForOneFrame;
             }
         }
@@ -197,7 +202,7 @@ namespace FrameWork.Network
 
             if (distance > hardsnapThreshold)
             {
-                transform.position = predictedPosition;
+                controller.Move(predictedPosition - transform.position);
             }
             else
             {
@@ -220,7 +225,7 @@ namespace FrameWork.Network
             do
             {
                 delTime += Time.deltaTime * 1000;
-                transform.position = Vector3.Lerp(prevPosition, position, Math.Min(delTime / totalTime, 1f));
+                controller.Move(Vector3.Lerp(prevPosition, position, Math.Min(delTime / totalTime, 1f)) - transform.position);
                 yield return Timing.WaitForOneFrame;
             } while (delTime <= totalTime);
 
