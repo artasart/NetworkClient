@@ -70,13 +70,17 @@ public class Client : Connection
             UnityEngine.Quaternion rotation = Quaternion.Euler(gameObject.Rotation.X, gameObject.Rotation.Y, gameObject.Rotation.Z);
 
             GameObject prefab = Resources.Load<GameObject>("Prefab/" + gameObject.PrefabName);
-            prefab.GetComponent<NetworkObserver>().objectId = gameObject.Id;
+            prefab.GetComponent<NetworkObserver>().id = gameObject.Id;
             prefab.GetComponent<NetworkObserver>().isMine = gameObject.Id == myGameObjectId;
             prefab.GetComponent<NetworkObserver>().isPlayer = true;
 
             GameObject player = UnityEngine.Object.Instantiate(prefab, position, rotation);
 
-            player.GetComponent<NetworkObserver>().SetConnection(this);
+            player.GetComponent<NetworkObserver>().SetNetworkObject(
+                this
+                , gameObject.Id
+                , gameObject.Id == myGameObjectId
+                , true);
 
             player.name = gameObject.Id.ToString();
 

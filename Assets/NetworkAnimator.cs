@@ -67,7 +67,7 @@ namespace FrameWork.Network
         {
             C_SET_ANIMATION packet = new()
             {
-                GameObjectId = objectId
+                GameObjectId = id
             };
 
             AnimationParameter movement = new()
@@ -93,7 +93,7 @@ namespace FrameWork.Network
 
         private void S_SET_ANIMATION( S_SET_ANIMATION _packet )
         {
-            if (_packet.GameObjectId != objectId)
+            if (_packet.GameObjectId != id)
             {
                 return;
             }

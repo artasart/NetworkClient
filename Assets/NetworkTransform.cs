@@ -126,7 +126,7 @@ namespace FrameWork.Network
         {
             C_SET_TRANSFORM packet = new()
             {
-                GameObjectId = objectId,
+                GameObjectId = id,
                 Timestamp = Client.calcuatedServerTime,
                 Position = NetworkUtils.UnityVector3ToProtocolVector3(transform.position),
                 Rotation = NetworkUtils.UnityVector3ToProtocolVector3(transform.eulerAngles),
@@ -167,7 +167,7 @@ namespace FrameWork.Network
 
         private void S_SET_TRANSFORM( S_SET_TRANSFORM packet )
         {
-            if (packet.GameObjectId != objectId)
+            if (packet.GameObjectId != id)
             {
                 return;
             }

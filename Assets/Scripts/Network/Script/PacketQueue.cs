@@ -12,11 +12,11 @@ namespace Framework.Network
     public class PacketQueue
     {
         private readonly Queue<PacketMessage> _packetQueue = new();
-        private readonly object _lock = new();
+        private readonly object @lock = new();
 
         public void Push( ushort id, IMessage packet )
         {
-            lock (_lock)
+            lock (@lock)
             {
                 _packetQueue.Enqueue(new PacketMessage() { Id = id, Message = packet });
             }
@@ -24,7 +24,7 @@ namespace Framework.Network
 
         public PacketMessage Pop()
         {
-            lock (_lock)
+            lock (@lock)
             {
                 return _packetQueue.Count == 0 ? null : _packetQueue.Dequeue();
             }
@@ -34,7 +34,7 @@ namespace Framework.Network
         {
             List<PacketMessage> list = new();
 
-            lock (_lock)
+            lock (@lock)
             {
                 while (_packetQueue.Count > 0)
                 {
@@ -47,7 +47,7 @@ namespace Framework.Network
 
         public bool Empty()
         {
-            lock (_lock)
+            lock (@lock)
             {
                 return _packetQueue.Count == 0;
             }

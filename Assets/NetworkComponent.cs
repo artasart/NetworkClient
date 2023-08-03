@@ -5,7 +5,7 @@ namespace FrameWork.Network
     public class NetworkComponent : MonoBehaviour
     {
         public Client Client { get; set; }
-        public int objectId = -1;
+        public int id = -1;
         public bool isMine = false;
         public bool isPlayer = false;
 

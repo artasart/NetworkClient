@@ -9,12 +9,22 @@ public class NetworkObserver : NetworkComponent
 {
     [SerializeField] private List<NetworkComponent> networkComponents = new();
 
-    protected void Awake()
+    public void SetNetworkObject( Client client, int id, bool isMine, bool isPlayer )
     {
+        Client = client;
+        this.id = id;
+        this.isMine = isMine;
+        this.isPlayer = isPlayer;
+
         if (!isMine)
         {
             Destroy(GetComponent<PlayerController>());
             Destroy(GetComponentInChildren<CameraShake>().gameObject);
+        }
+
+        if (isPlayer)
+        {
+            transform.GetComponentInChildren<TMP_Text>().text = Client.ClientId;
         }
 
         networkComponents.Add(GetComponent<NetworkTransform>());
@@ -22,23 +32,10 @@ public class NetworkObserver : NetworkComponent
 
         foreach (NetworkComponent item in networkComponents)
         {
-            item.objectId = objectId;
-            item.isMine = isMine;
-        }
-    }
-
-    public void SetConnection( Client client )
-    {
-        Client = client;
-
-        if (isPlayer)
-        {
-            transform.GetComponentInChildren<TMP_Text>().text = Client.ClientId;
-        }
-
-        foreach (NetworkComponent item in networkComponents)
-        {
             item.Client = Client;
+            item.id = id;
+            item.isMine = isMine;
+            item.isPlayer = isPlayer;
         }
     }
 }
