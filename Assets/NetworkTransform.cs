@@ -1,6 +1,7 @@
 ﻿using Framework.Network;
 using MEC;
 using Protocol;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
@@ -10,12 +11,16 @@ namespace FrameWork.Network
     public class NetworkTransform : NetworkComponent
     {
         private readonly float interval = 0.05f;
-        private readonly int totalStep = 10;
+
         private Vector3 velocity;
         private Vector3 angularVelocity;
+
         private CoroutineHandle updateTransform;
         private CoroutineHandle updateVelocity;
         private CoroutineHandle updateAngularVelocity;
+
+        private CoroutineHandle remoteUpdatePosition;
+        private CoroutineHandle remoteUpdateRotation;
 
         protected void Start()
         {
@@ -31,7 +36,8 @@ namespace FrameWork.Network
             else
             {
                 Client.AddHandler(S_SET_TRANSFORM);
-                updateTransform = Timing.RunCoroutine(RemoteUpdateTransform());
+                remoteUpdatePosition = Timing.RunCoroutine(RemoteUpdatePosition());
+                remoteUpdateRotation = Timing.RunCoroutine(RemoteUpdateRotation());
             }
         }
 
@@ -39,16 +45,17 @@ namespace FrameWork.Network
         {
             base.OnDestroy();
 
-            _ = Timing.KillCoroutines(updateTransform);
-
             if (isMine)
             {
+                _ = Timing.KillCoroutines(updateTransform);
                 _ = Timing.KillCoroutines(updateVelocity);
                 _ = Timing.KillCoroutines(updateAngularVelocity);
             }
             else
             {
                 Client.RemoveHandler(S_SET_TRANSFORM);
+                _ = Timing.KillCoroutines(remoteUpdatePosition);
+                _ = Timing.KillCoroutines(remoteUpdateRotation);
             }
         }
 
@@ -139,11 +146,19 @@ namespace FrameWork.Network
             Client.Send(PacketManager.MakeSendBuffer(packet));
         }
 
-        private IEnumerator<float> RemoteUpdateTransform()
+        private IEnumerator<float> RemoteUpdatePosition()
         {
             while (true)
             {
                 transform.position += velocity * Time.deltaTime * 1000;
+                yield return Timing.WaitForOneFrame;
+            }
+        }
+
+        private IEnumerator<float> RemoteUpdateRotation()
+        {
+            while (true)
+            {
                 transform.rotation *= Quaternion.AngleAxis(angularVelocity.magnitude * Time.deltaTime * 1000 * Mathf.Rad2Deg, angularVelocity.normalized);
                 yield return Timing.WaitForOneFrame;
             }
@@ -172,38 +187,48 @@ namespace FrameWork.Network
                 Quaternion.Euler(NetworkUtils.ProtocolVector3ToUnityVector3(packet.Rotation)) *
                 Quaternion.AngleAxis(angularVelocity.magnitude * timeGap * Mathf.Rad2Deg, angularVelocity.normalized);
 
-            if (Vector3.Distance(predictedPosition, transform.position) > 0.5f
-                || 2.0f * Mathf.Acos(Mathf.Clamp((transform.rotation * Quaternion.Inverse(predictedRotation)).w, -1.0f, 1.0f)) * Mathf.Rad2Deg > 3.0f)
+            if (2.0f * Mathf.Acos(Mathf.Clamp((transform.rotation * Quaternion.Inverse(predictedRotation)).w, -1.0f, 1.0f)) * Mathf.Rad2Deg > 3.0f)
             {
+                print("rotation teleport");
+                transform.rotation = predictedRotation;
+            }
+
+            float distance = Vector3.Distance(predictedPosition, transform.position);
+
+            if (distance > 0.3f)
+            {
+                print("position teleport for big gap");
+                transform.position = predictedPosition;
+            }
+            else
+            {
+                print("position revise");
+
                 timeGap = Client.calcuatedServerTime - packet.Timestamp + (interval * 1000);
 
                 predictedPosition = NetworkUtils.ProtocolVector3ToUnityVector3(packet.Position) +
                     (NetworkUtils.ProtocolVector3ToUnityVector3(packet.Velocity) * timeGap);
 
-                predictedRotation =
-                Quaternion.Euler(NetworkUtils.ProtocolVector3ToUnityVector3(packet.Rotation)) *
-                Quaternion.AngleAxis(angularVelocity.magnitude * timeGap * Mathf.Rad2Deg, angularVelocity.normalized);
+                _ = Timing.KillCoroutines(remoteUpdatePosition);
 
-                _ = Timing.KillCoroutines(updateTransform);
-
-                updateTransform = Timing.RunCoroutine(ReviseTransform(predictedPosition, predictedRotation));
+                remoteUpdatePosition = Timing.RunCoroutine(RevisePosition(predictedPosition, interval * 1000));
             }
         }
 
-        private IEnumerator<float> ReviseTransform( Vector3 position, Quaternion rotation )
+        private IEnumerator<float> RevisePosition( Vector3 position, float totalTime )
         {
             Vector3 prevPosition = transform.position;
-            Quaternion prevRotation = transform.rotation;
 
-            for (int currentStep = 1; currentStep <= totalStep; currentStep++)
+            float delTime = 0.0f;
+
+            do
             {
-                transform.position = Vector3.Lerp(prevPosition, position, (float)currentStep / totalStep);
-                transform.rotation = Quaternion.Lerp(prevRotation, rotation, (float)currentStep / totalStep);
-
+                delTime += Time.deltaTime * 1000;
+                transform.position = Vector3.Lerp(prevPosition, position, Math.Min(delTime / totalTime, 1f));
                 yield return Timing.WaitForOneFrame;
-            }
+            } while (delTime <= totalTime);
 
-            updateTransform = Timing.RunCoroutine(RemoteUpdateTransform());
+            remoteUpdatePosition = Timing.RunCoroutine(RemoteUpdatePosition());
         }
     }
 }
