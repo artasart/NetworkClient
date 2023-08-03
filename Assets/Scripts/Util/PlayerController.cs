@@ -1,330 +1,324 @@
-using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
 using MEC;
+using System.Collections.Generic;
+using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-	[Range(0, 50)] public float walkSpeed = 4;
-	[Range(0, 1)] public float runSpeed = 8;
-	[Range(0, 1)] public float gravity = -12;
-	[Range(0, 1)] public float jumpHeight = 1;
+    [Range(0, 50)] public float walkSpeed = 4;
+    [Range(0, 1)] public float runSpeed = 8;
+    [Range(0, 1)] public float gravity = -12;
+    [Range(0, 1)] public float jumpHeight = 1;
 
-	[Range(0, 1)] public float airControlPercent;
+    [Range(0, 1)] public float airControlPercent;
 
-	public float turnSmoothTime = 0.2f;
-	float turnSmoothVelocity;
+    public float turnSmoothTime = 0.2f;
+    private float turnSmoothVelocity;
+    private readonly float speedSmoothTime = 0.1f;
+    private float speedSmoothVelocity;
+    private float currentSpeed;
+    private readonly float standJumpDelay = .85f;
+    private bool isJumping = false;
+    private float velocityY;
+    private float eulerY = 0;
+    private bool isRotationFixed = false;
+    private CharacterController controller;
 
-	float speedSmoothTime = 0.1f;
-	float speedSmoothVelocity;
-	float currentSpeed;
+    public Animator animator { get; set; }
 
-	float standJumpDelay = .85f;
-	bool isJumping = false;
-	float velocityY;
-	float eulerY = 0;
+    private Transform cameraTransform;
 
-	bool isRotationFixed = false;
+    [Header("Test")]
+    public float moveMultiplier = 1;
+    public bool isPathFinding = false;
 
-	CharacterController controller;
+    private void Awake()
+    {
+        animator = GetComponentInChildren<Animator>();
+        controller = GetComponent<CharacterController>();
 
-	public Animator animator { get; set; }
-	Transform cameraTransform;
+        cameraTransform = transform.Search("LookTarget");
+    }
 
-	[Header("Test")]
-	public float moveMultiplier = 1;
-	public bool isPathFinding = false;
+    private void Update()
+    {
+        if (!isPathFinding)
+        {
+            moveInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized * moveMultiplier;
+        }
 
-	private void Awake()
-	{
-		animator = GetComponentInChildren<Animator>();
-		controller = GetComponent<CharacterController>();
+        bool isRunning = Input.GetKey(KeyCode.LeftShift);
 
-		cameraTransform = this.transform.Search("LookTarget");
-	}
+        //print("Current Frame from PlayerController : " + Time.frameCount.ToString());
+        Move(moveInput, isRunning);
 
-	private void Update()
-	{
-		if(!isPathFinding)
-		{
-			moveInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized * moveMultiplier;
-		}
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Jump();
+        }
 
-		bool isRunning = Input.GetKey(KeyCode.LeftShift);
+        if (Input.GetMouseButtonDown(0))
+        {
+            isRotationFixed = true;
 
-		Move(moveInput, isRunning);
+            eulerY = cameraTransform.eulerAngles.y;
+        }
 
-		if (Input.GetKeyDown(KeyCode.Space))
-		{
-			Jump();
-		}
+        if (Input.GetMouseButtonUp(0))
+        {
+            isRotationFixed = false;
+        }
 
-		if (Input.GetMouseButtonDown(0))
-		{
-			isRotationFixed = true;
+        float movement = isRunning ? currentSpeed / runSpeed : currentSpeed / walkSpeed * 0.5f;
 
-			eulerY = cameraTransform.eulerAngles.y;
-		}
+        if (movement < Define.THRESHOLD_MOVEMENT)
+        {
+            movement = 0f;
+        }
 
-		if (Input.GetMouseButtonUp(0))
-		{
-			isRotationFixed = false;
-		}
+        animator.SetFloat(Define.MOVEMENT, movement, speedSmoothTime, Time.deltaTime);
+    }
 
-		float movement = (isRunning ? currentSpeed / runSpeed : currentSpeed / walkSpeed * 0.5f);
+    private void Move( Vector2 inputDir, bool running )
+    {
+        if (inputDir != Vector2.zero)
+        {
+            if (!isPathFinding)
+            {
+                float rotationY = isRotationFixed ? eulerY : cameraTransform.eulerAngles.y;
 
-		if (movement < Define.THRESHOLD_MOVEMENT)
-		{
-			movement = 0f;
-		}
+                float targetRotation = (Mathf.Atan2(inputDir.x, inputDir.y) * Mathf.Rad2Deg) + rotationY;
 
-		animator.SetFloat(Define.MOVEMENT, movement, speedSmoothTime, Time.deltaTime);
-	}
+                transform.eulerAngles = Vector3.up * Mathf.SmoothDampAngle(transform.eulerAngles.y, targetRotation, ref turnSmoothVelocity, GetModifiedSmoothTime(turnSmoothTime));
+            }
+        }
 
-	private void Move(Vector2 inputDir, bool running)
-	{
-		if (inputDir != Vector2.zero)
-		{
-			if (!isPathFinding)
-			{
-				float rotationY = isRotationFixed ? eulerY : cameraTransform.eulerAngles.y;
+        float targetSpeed = (running ? runSpeed : walkSpeed) * inputDir.magnitude;
 
-				float targetRotation = Mathf.Atan2(inputDir.x, inputDir.y) * Mathf.Rad2Deg + rotationY;
+        currentSpeed = Mathf.SmoothDamp(currentSpeed, targetSpeed, ref speedSmoothVelocity, GetModifiedSmoothTime(speedSmoothTime));
+        //print("currentSpeed : " + currentSpeed);
 
-				transform.eulerAngles = Vector3.up * Mathf.SmoothDampAngle(transform.eulerAngles.y, targetRotation, ref turnSmoothVelocity, GetModifiedSmoothTime(turnSmoothTime));
-			}
-		}
+        velocityY += Time.deltaTime * gravity;
+        //print("Current Frame from PlayerController : " + Time.frameCount.ToString() + " " + Time.deltaTime);
 
-		float targetSpeed = ((running) ? runSpeed : walkSpeed) * inputDir.magnitude;
+        Vector3 velocity = (transform.forward * currentSpeed) + (Vector3.up * velocityY);
 
-		currentSpeed = Mathf.SmoothDamp(currentSpeed, targetSpeed, ref speedSmoothVelocity, GetModifiedSmoothTime(speedSmoothTime));
+        _ = controller.Move(velocity * Time.deltaTime);
 
-		velocityY += Time.deltaTime * gravity;
+        currentSpeed = new Vector2(controller.velocity.x, controller.velocity.z).magnitude;
 
-		Vector3 velocity = transform.forward * currentSpeed + Vector3.up * velocityY;
+        if (controller.isGrounded)
+        {
+            velocityY = 0;
+        }
+    }
 
-		controller.Move(velocity * Time.deltaTime);
+    private void Jump()
+    {
+        if (isJumping)
+        {
+            return;
+        }
 
-		currentSpeed = new Vector2(controller.velocity.x, controller.velocity.z).magnitude;
+        _ = Timing.KillCoroutines(nameof(Co_Jump));
 
-		if (controller.isGrounded) velocityY = 0;
-	}
+        _ = Timing.RunCoroutine(Co_Jump(), nameof(Co_Jump));
 
-	private void Jump()
-	{
-		if (isJumping) return;
+        isJumping = true;
+    }
 
-		Timing.KillCoroutines(nameof(Co_Jump));
+    private IEnumerator<float> Co_Jump()
+    {
+        float jumpVelocity = Mathf.Sqrt(-2 * gravity * jumpHeight);
+        float movement = animator.GetFloat(Define.MOVEMENT);
 
-		Timing.RunCoroutine(Co_Jump(), nameof(Co_Jump));
+        animator.SetInteger(Define.JUMP, Define.JUMPRUN);
 
-		isJumping = true;
-	}
+        velocityY = jumpVelocity;
 
-	private IEnumerator<float> Co_Jump()
-	{
-		float jumpVelocity = Mathf.Sqrt(-2 * gravity * jumpHeight);
-		float movement = animator.GetFloat(Define.MOVEMENT);
+        yield return Timing.WaitUntilTrue(() => velocityY == 0);
 
-		animator.SetInteger(Define.JUMP, Define.JUMPRUN);
+        animator.SetInteger(Define.JUMP, 0);
 
-		velocityY = jumpVelocity;
+        isJumping = false;
+    }
 
-		yield return Timing.WaitUntilTrue(() => velocityY == 0);
+    private float GetModifiedSmoothTime( float _smoothTime )
+    {
+        if (controller.isGrounded)
+        {
+            return _smoothTime;
+        }
 
-		animator.SetInteger(Define.JUMP, 0);
+        return airControlPercent == 0 ? float.MaxValue : _smoothTime / airControlPercent;
+    }
 
-		isJumping = false;
-	}
+    #region Movement
 
-	private float GetModifiedSmoothTime(float _smoothTime)
-	{
-		if (controller.isGrounded)
-		{
-			return _smoothTime;
-		}
+    public float rotationSpeed = 720f;
+    public float stopDistance = 5;
+    public Vector2 moveInput;
+    private CoroutineHandle handle_move;
+    private CoroutineHandle handle_rotate;
 
-		if (airControlPercent == 0)
-		{
-			return float.MaxValue;
-		}
+    public void FollowTarget( Transform _target )
+    {
+        _ = Timing.KillCoroutines(handle_move);
+        _ = Timing.KillCoroutines(handle_rotate);
 
-		return _smoothTime / airControlPercent;
-	}
+        handle_move = Timing.RunCoroutine(Co_FollowTarget(_target));
+    }
 
+    private IEnumerator<float> Co_FollowTarget( Transform _target )
+    {
+        stopDistance = 2f;
 
+        TurnToTarget(_target, true);
 
+        while (Vector3.Distance(transform.position, _target.transform.position) >= stopDistance)
+        {
+            yield return Timing.WaitForOneFrame;
 
+            Vector2 moveDir = new Vector2(_target.position.x - transform.position.x, _target.position.y - transform.position.y).normalized * walkSpeed;
 
+            moveInput = moveDir;
+        }
 
+        transform.position = _target.transform.position;
 
+        moveInput = Vector2.zero;
 
+        yield return Timing.WaitUntilTrue(() => Vector3.Distance(transform.position, _target.transform.position) >= stopDistance);
 
+        yield return Timing.WaitForSeconds(.5f);
 
+        FollowTarget(_target);
+    }
 
 
-	#region Movement
+    public void MoveToTarget( Transform _target )
+    {
+        isPathFinding = true;
 
-	public float rotationSpeed = 720f;
-	public float stopDistance = 5;
-	public Vector2 moveInput;
+        _ = Timing.KillCoroutines(handle_move);
+        _ = Timing.KillCoroutines(handle_rotate);
 
-	CoroutineHandle handle_move;
-	CoroutineHandle handle_rotate;
+        handle_move = Timing.RunCoroutine(Co_MoveToTarget(_target.position));
+    }
 
-	public void FollowTarget(Transform _target)
-	{
-		Timing.KillCoroutines(handle_move);
-		Timing.KillCoroutines(handle_rotate);
+    public void MoveToTarget( Vector3 _target )
+    {
+        isPathFinding = true;
 
-		handle_move = Timing.RunCoroutine(Co_FollowTarget(_target));
-	}
+        _ = Timing.KillCoroutines(handle_move);
+        _ = Timing.KillCoroutines(handle_rotate);
 
-	private IEnumerator<float> Co_FollowTarget(Transform _target)
-	{
-		stopDistance = 2f;
+        handle_move = Timing.RunCoroutine(Co_MoveToTarget(_target));
+    }
 
-		TurnToTarget(_target, true);
+    private IEnumerator<float> Co_MoveToTarget( Vector3 _target )
+    {
+        //TurnToTarget(_target);
 
-		while (Vector3.Distance(this.transform.position, _target.transform.position) >= stopDistance)
-		{
-			yield return Timing.WaitForOneFrame;
+        Vector2 moveDir = new Vector2(_target.x - transform.position.x, _target.y - transform.position.y).normalized * walkSpeed;
 
-			var moveDir = new Vector2(_target.position.x - this.transform.position.x, _target.position.y - this.transform.position.y).normalized * walkSpeed;
+        moveInput = moveDir;
 
-			moveInput = moveDir;
-		}
+        yield return Timing.WaitUntilTrue(() => Vector3.Distance(transform.position, _target) <= stopDistance);
 
-		this.transform.position = _target.transform.position;
+        moveInput = Vector2.zero;
 
-		moveInput = Vector2.zero;
+        isPathFinding = false;
+    }
 
-		yield return Timing.WaitUntilTrue(() => Vector3.Distance(this.transform.position, _target.transform.position) >= stopDistance);
 
-		yield return Timing.WaitForSeconds(.5f);
 
-		FollowTarget(_target);
-	}
+    public void TurnToTarget( Transform _target, bool _isLookAt = false )
+    {
+        _ = Timing.KillCoroutines(handle_rotate);
 
+        handle_rotate = Timing.RunCoroutine(Co_TurnToTarget(_target, _isLookAt));
+    }
 
-	public void MoveToTarget(Transform _target)
-	{
-		isPathFinding = true;
+    private IEnumerator<float> Co_TurnToTarget( Transform _target, bool _isLookAt = false )
+    {
+        if (!lookTarget)
+        {
+            while (Quaternion.Angle(transform.rotation, _target.transform.rotation) > 0.01f)
+            {
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, _target.transform.rotation, rotationSpeed * Time.deltaTime);
 
-		Timing.KillCoroutines(handle_move);
-		Timing.KillCoroutines(handle_rotate);
+                yield return Timing.WaitForOneFrame;
+            }
+        }
 
-		handle_move = Timing.RunCoroutine(Co_MoveToTarget(_target.position));
-	}
+        if (!_isLookAt)
+        {
+            yield break;
+        }
 
-	public void MoveToTarget(Vector3 _target)
-	{
-		isPathFinding = true;
+        while (true)
+        {
+            if (!lookTarget)
+            {
+                lookTarget = true;
+            }
 
-		Timing.KillCoroutines(handle_move);
-		Timing.KillCoroutines(handle_rotate);
+            Debug.Log("Looking Forever");
 
-		handle_move = Timing.RunCoroutine(Co_MoveToTarget(_target));
-	}
+            transform.LookAt(_target);
 
-	private IEnumerator<float> Co_MoveToTarget(Vector3 _target)
-	{
-		//TurnToTarget(_target);
+            yield return Timing.WaitForOneFrame;
+        }
+    }
 
-		var moveDir = new Vector2(_target.x - this.transform.position.x, _target.y - this.transform.position.y).normalized * walkSpeed;
+    private bool lookTarget = false;
 
-		moveInput = moveDir;
 
-		yield return Timing.WaitUntilTrue(() => Vector3.Distance(this.transform.position, _target) <= stopDistance);
+    public void TurnToTarget( Vector3 _target )
+    {
+        _ = Timing.KillCoroutines(handle_rotate);
 
-		moveInput = Vector2.zero;
+        handle_rotate = Timing.RunCoroutine(Co_TurnToTarget(_target));
+    }
 
-		isPathFinding = false;
-	}
+    private IEnumerator<float> Co_TurnToTarget( Vector3 _target )
+    {
+        Vector3 targetDir = _target - transform.position;
+        Quaternion rotation = Quaternion.LookRotation(targetDir);
 
+        while (Quaternion.Angle(transform.rotation, rotation) > 1f)
+        {
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, rotation, rotationSpeed * Time.deltaTime);
 
+            yield return Timing.WaitForOneFrame;
+        }
+    }
 
-	public void TurnToTarget(Transform _target, bool _isLookAt = false)
-	{
-		Timing.KillCoroutines(handle_rotate);
+    public void Stop()
+    {
+        _ = Timing.KillCoroutines(handle_move);
+        _ = Timing.KillCoroutines(handle_rotate);
 
-		handle_rotate = Timing.RunCoroutine(Co_TurnToTarget(_target, _isLookAt));
-	}
+        moveInput = Vector2.zero;
 
-	private IEnumerator<float> Co_TurnToTarget(Transform _target, bool _isLookAt = false)
-	{
-		if (!lookTarget)
-		{
-			while (Quaternion.Angle(this.transform.rotation, _target.transform.rotation) > 0.01f)
-			{
-				this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, _target.transform.rotation, rotationSpeed * Time.deltaTime);
+        isPathFinding = false;
 
-				yield return Timing.WaitForOneFrame;
-			}
-		}
+        transform.LookAt(null);
+    }
 
-		if (!_isLookAt) yield break;
 
-		while (true)
-		{
-			if (!lookTarget) lookTarget = true;
+    public float gravityMultiplier = 10f;
+    private void OnCollisionEnter( Collision other )
+    {
+        if (other.gameObject.CompareTag("Obstacle"))
+        {
+            CameraShake.Instance.Shake();
 
-			Debug.Log("Looking Forever");
+            Vector3 gravityForce = new Vector3(UnityEngine.Random.Range(-4, 4), UnityEngine.Random.Range(0f, 2f), UnityEngine.Random.Range(-4, 4)) * gravityMultiplier;
 
-			this.transform.LookAt(_target);
+            other.gameObject.GetComponent<Rigidbody>().AddForce(gravityForce, ForceMode.VelocityChange);
+        }
+    }
 
-			yield return Timing.WaitForOneFrame;
-		}
-	}
-
-	bool lookTarget = false;
-
-
-	public void TurnToTarget(Vector3 _target)
-	{
-		Timing.KillCoroutines(handle_rotate);
-
-		handle_rotate = Timing.RunCoroutine(Co_TurnToTarget(_target));
-	}
-
-	private IEnumerator<float> Co_TurnToTarget(Vector3 _target)
-	{
-		var targetDir = _target - this.transform.position;
-		var rotation = Quaternion.LookRotation(targetDir);
-
-		while (Quaternion.Angle(this.transform.rotation, rotation) > 1f)
-		{
-			this.transform.rotation = Quaternion.RotateTowards(this.transform.rotation, rotation, rotationSpeed * Time.deltaTime);
-
-			yield return Timing.WaitForOneFrame;
-		}
-	}
-
-	public void Stop()
-	{
-		Timing.KillCoroutines(handle_move);
-		Timing.KillCoroutines(handle_rotate);
-
-		moveInput = Vector2.zero;
-
-		isPathFinding = false;
-
-		this.transform.LookAt(null);
-	}
-
-
-	public float gravityMultiplier = 10f;
-	private void OnCollisionEnter(Collision other)
-	{
-		if(other.gameObject.CompareTag("Obstacle"))
-		{
-			CameraShake.Instance.Shake();
-
-			var gravityForce = new Vector3(UnityEngine.Random.Range(-4, 4), UnityEngine.Random.Range(0f, 2f), UnityEngine.Random.Range(-4, 4)) * gravityMultiplier;
-
-			other.gameObject.GetComponent<Rigidbody>().AddForce(gravityForce, ForceMode.VelocityChange);
-		}
-	}
-
-	#endregion
+    #endregion
 }
