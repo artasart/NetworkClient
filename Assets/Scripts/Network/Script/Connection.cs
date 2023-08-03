@@ -23,9 +23,9 @@ namespace Framework.Network
             set
             {
                 session = value;
-                session.connectedHandler += OnConnected;
-                session.disconnectedHandler += OnDisconnected;
-                session.receivedHandler += OnRecv;
+                session.connectedHandler += _OnConnected;
+                session.disconnectedHandler += _OnDisconnected;
+                session.receivedHandler += _OnRecv;
             }
         }
 
@@ -68,17 +68,17 @@ namespace Framework.Network
             UpdateServerTime().Forget();
         }
 
-        private void OnConnected()
+        private void _OnConnected()
         {
             connectedHandler?.Invoke();
         }
 
-        private void OnDisconnected()
+        private void _OnDisconnected()
         {
             disconnectedHandler?.Invoke();
         }
 
-        private void OnRecv( ArraySegment<byte> buffer )
+        private void _OnRecv( ArraySegment<byte> buffer )
         {
             PacketManager.OnRecv(buffer, packetQueue);
         }

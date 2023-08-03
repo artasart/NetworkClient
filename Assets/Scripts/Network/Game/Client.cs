@@ -16,6 +16,7 @@ public class Client : Connection
         AddHandler(OnInstantiateGameObject);
         AddHandler(OnAddGameObject);
         AddHandler(OnRemoveGameObject);
+        AddHandler(OnDisconnected);
     }
 
     public void OnEnter( S_ENTER pkt )
@@ -103,5 +104,15 @@ public class Client : Connection
 
             _ = gameObjects.Remove(gameObjectId.ToString());
         }
+    }
+
+    public void OnDisconnected( S_DISCONNECT pkt )
+    {
+        foreach (var gameObject in gameObjects)
+        {
+            UnityEngine.Object.Destroy(gameObject.Value);
+        }
+        
+        gameObjects.Clear();
     }
 }
