@@ -11,6 +11,7 @@ namespace FrameWork.Network
     public class NetworkTransform : NetworkComponent
     {
         private readonly float interval = 0.05f;
+        private readonly float hardsnapThreshold = 3f;
 
         private Vector3 velocity;
         private Vector3 angularVelocity;
@@ -171,43 +172,38 @@ namespace FrameWork.Network
                 return;
             }
 
-            velocity = NetworkUtils.ProtocolVector3ToUnityVector3(packet.Velocity);
-            angularVelocity = NetworkUtils.ProtocolVector3ToUnityVector3(packet.AngularVelocity);
-
             float timeGap;
+
+            Vector3 packetPosition = NetworkUtils.ProtocolVector3ToUnityVector3(packet.Position);
+            velocity = NetworkUtils.ProtocolVector3ToUnityVector3(packet.Velocity);
             Vector3 predictedPosition;
+
+            Quaternion packetRotation = Quaternion.Euler(NetworkUtils.ProtocolVector3ToUnityVector3(packet.Rotation));
+            angularVelocity = NetworkUtils.ProtocolVector3ToUnityVector3(packet.AngularVelocity);
             Quaternion predictedRotation;
 
             timeGap = Client.calcuatedServerTime - packet.Timestamp;
 
-            predictedPosition = NetworkUtils.ProtocolVector3ToUnityVector3(packet.Position) +
-                (NetworkUtils.ProtocolVector3ToUnityVector3(packet.Velocity) * timeGap);
+            predictedPosition = packetPosition + (velocity * timeGap);
 
-            predictedRotation =
-                Quaternion.Euler(NetworkUtils.ProtocolVector3ToUnityVector3(packet.Rotation)) *
-                Quaternion.AngleAxis(angularVelocity.magnitude * timeGap * Mathf.Rad2Deg, angularVelocity.normalized);
+            predictedRotation = packetRotation * Quaternion.AngleAxis(angularVelocity.magnitude * timeGap * Mathf.Rad2Deg, angularVelocity.normalized);
 
             if (2.0f * Mathf.Acos(Mathf.Clamp((transform.rotation * Quaternion.Inverse(predictedRotation)).w, -1.0f, 1.0f)) * Mathf.Rad2Deg > 3.0f)
             {
-                print("rotation teleport");
                 transform.rotation = predictedRotation;
             }
 
             float distance = Vector3.Distance(predictedPosition, transform.position);
 
-            if (distance > 0.3f)
+            if (distance > hardsnapThreshold)
             {
-                print("position teleport for big gap");
                 transform.position = predictedPosition;
             }
             else
             {
-                print("position revise");
-
                 timeGap = Client.calcuatedServerTime - packet.Timestamp + (interval * 1000);
 
-                predictedPosition = NetworkUtils.ProtocolVector3ToUnityVector3(packet.Position) +
-                    (NetworkUtils.ProtocolVector3ToUnityVector3(packet.Velocity) * timeGap);
+                predictedPosition = packetPosition + (velocity * timeGap);
 
                 _ = Timing.KillCoroutines(remoteUpdatePosition);
 
