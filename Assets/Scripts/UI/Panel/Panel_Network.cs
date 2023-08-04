@@ -19,13 +19,13 @@ public class Panel_Network : Panel_Base
         inputField_ClientId = this.transform.Search(nameof(inputField_ClientId)).GetComponent<TMP_InputField>();
 
 
-        btn_CreateMain = GetUI_Button(nameof(btn_CreateMain), OnClick_CreateMain);
-        btn_DestroyMain = GetUI_Button(nameof(btn_DestroyMain), OnClick_DestroyMain);
+        btn_CreateMain = GetUI_Button(nameof(btn_CreateMain), OnClick_Connect);
+        btn_DestroyMain = GetUI_Button(nameof(btn_DestroyMain), OnClick_Disconnect);
 
 		inputField_ClientId.placeholder.GetComponent<TMP_Text>().text = GenerateRandomString(5);
     }
 
-	private void OnClick_CreateMain()
+	private void OnClick_Connect()
 	{
         if (isConnect) return;
 
@@ -36,14 +36,14 @@ public class Panel_Network : Panel_Base
             clientId = inputField_ClientId.placeholder.GetComponent<TMP_Text>().text;
         }
 
-		GameClientManager.Instance.CreateMain(clientId);
+		GameClientManager.Instance.Connect(clientId);
 
         isConnect = true;
     }
 
-	private void OnClick_DestroyMain()
+	private void OnClick_Disconnect()
 	{
-        GameClientManager.Instance.DestroyMain();
+        GameClientManager.Instance.Disconnect();
     }
 
     public string GenerateRandomString( int length )
