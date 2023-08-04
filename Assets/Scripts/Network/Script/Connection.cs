@@ -146,6 +146,8 @@ namespace Framework.Network
 
             state = ConnectionState.CLOSED;
 
+            ConnectionManager.RemoveConnection(this);
+
             session?.RegisterDisconnect();
         }
 
