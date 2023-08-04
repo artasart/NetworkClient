@@ -92,8 +92,8 @@ public class GameClientManager : MonoBehaviour
             };
             Client.Send(PacketManager.MakeSendBuffer(enter));
 
-            GameManager.UI.FetchPanel<Panel_Network>().isConnect = false;
             GameManager.UI.PopPanel();
+            GameManager.UI.StackPanel<Panel_Hint>();
         }
     }
 

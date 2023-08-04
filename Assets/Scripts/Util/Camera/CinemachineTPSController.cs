@@ -54,7 +54,8 @@ public class CinemachineTPSController : MonoBehaviour
 
 	private void Update()
 	{
-        if (Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.Escape))
+        //if (Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetKeyDown(KeyCode.Tab))
         {
             if (GameManager.UI.IsPanelOpen<Panel_Network>())
             {
@@ -63,6 +64,7 @@ public class CinemachineTPSController : MonoBehaviour
                 isPanel = false;
 
                 GameManager.UI.PopPanel();
+                GameManager.UI.StackPanel<Panel_Hint>();
 
                 FindObjectOfType<PlayerController>().KillMovement();
             }
@@ -73,6 +75,7 @@ public class CinemachineTPSController : MonoBehaviour
                 Cursor.visible = true;
                 isPanel = true;
 
+                GameManager.UI.PopPanel();
                 GameManager.UI.StackPanel<Panel_Network>();
 
                 FindObjectOfType<PlayerController>().SetMovement(0f);

@@ -10,8 +10,6 @@ public class Panel_Network : Panel_Base
 	Button btn_CreateMain;
 	Button btn_DestroyMain;
 
-    public bool isConnect = false;
-
 	protected override void Awake()
 	{
 		base.Awake();
@@ -27,8 +25,6 @@ public class Panel_Network : Panel_Base
 
 	private void OnClick_Connect()
 	{
-        if (isConnect) return;
-
 		var clientId = inputField_ClientId.text;
 
         if(string.IsNullOrEmpty(clientId))
@@ -37,8 +33,6 @@ public class Panel_Network : Panel_Base
         }
 
 		GameClientManager.Instance.Connect(clientId);
-
-        isConnect = true;
     }
 
 	private void OnClick_Disconnect()
