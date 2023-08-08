@@ -1978,6 +1978,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lockCursor: 1
+  isPanel: 0
   mouseSensitivity: 5
   zoomSpeed: 1
   zoomSmoothness: 0.1
@@ -2072,13 +2073,11 @@ MonoBehaviour:
   jumpHeight: 1
   airControlPercent: 1
   turnSmoothTime: 0.2
-  speedSmoothTime: 0.1
-  standJumpDelay: 0.85
+  moveMultiplier: 1
   isPathFinding: 0
   rotationSpeed: 720
   stopDistance: 2
   moveInput: {x: 0, y: 0}
-  gravityMultiplier: 10
 --- !u!114 &4613233504512435085
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2088,14 +2087,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 5542088576257694954}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b3e7e6b0d83a3d347980130dad2dd511, type: 3}
+  m_Script: {fileID: 11500000, guid: c92f38ceefc83ff41bf45b41514974bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  clientId: 
-  objectId: 0
-  lerpSpeed: 10
+  id: -1
   isMine: 0
   isPlayer: 0
+  networkComponents: []
 --- !u!114 &295737866290879258
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2105,12 +2103,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 5542088576257694954}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 27e325da40202e449a137524ed8e0741, type: 3}
+  m_Script: {fileID: 11500000, guid: 1ce3068df8d762445b8a67e7690b56a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  clientId: 
-  objectId: 0
-  lerpSpeed: 10
+  id: -1
   isMine: 0
   isPlayer: 0
 --- !u!114 &2063911816766389750
@@ -2122,12 +2118,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 5542088576257694954}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 93eb4a066bbf43c40bb04b51e44be9d5, type: 3}
+  m_Script: {fileID: 11500000, guid: 0022d03b0f028824898e72a320478156, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  clientId: 
-  objectId: 0
-  lerpSpeed: 10
+  id: -1
   isMine: 0
   isPlayer: 0
 --- !u!1 &5670869384234494948
