@@ -2,8 +2,10 @@ using Cysharp.Threading.Tasks;
 using Framework.Network;
 using Newtonsoft.Json.Linq;
 using Protocol;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
+using UnityEditor.MemoryProfiler;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -29,6 +31,9 @@ public class GameClientManager : MonoBehaviour
     #endregion
 
     public Client Client { get; private set; }
+
+    public Dictionary<string, DummyClient> Dummies { get; private set; } = new();
+    public int DummyId = 0;
 
     private void Start()
     {
@@ -106,5 +111,41 @@ public class GameClientManager : MonoBehaviour
 
         Client.Send(PacketManager.MakeSendBuffer(new C_LEAVE()));
         Client = null;
+    }
+
+    public async void AddDummy(int dummyNumber, string connectionId)
+    {
+        IPEndPoint endPoint = await GetAddress();
+        if (endPoint == null)
+        {
+            Debug.Log("GetAddress Fail!");
+            return;
+        }
+
+        for(int i = 0; i<dummyNumber; i++)
+        {
+            var dummy = (DummyClient)ConnectionManager.GetConnection<DummyClient>();
+
+            bool success = await ConnectionManager.Connect(endPoint, dummy);
+            if (success)
+            {
+                string dummyId = DummyId++.ToString();
+
+                Dummies.Add(dummyId, dummy);
+                
+                dummy.ClientId = connectionId + "Dummy" + dummyId;
+
+                C_ENTER enter = new()
+                {
+                    ClientId = dummy.ClientId
+                };
+                dummy.Send(PacketManager.MakeSendBuffer(enter));
+            }
+        }
+    }
+
+    public void RemoveDummy()
+    {
+
     }
 }

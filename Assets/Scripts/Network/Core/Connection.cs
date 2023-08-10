@@ -2,6 +2,7 @@
 using Google.Protobuf;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace Framework.Network
@@ -16,7 +17,7 @@ namespace Framework.Network
     {
         public string ConnectionId { get; set; }
 
-        private ServerSession session;
+        protected ServerSession session;
         public ServerSession Session
         {
             get => session;
@@ -43,6 +44,8 @@ namespace Framework.Network
         public long calcuatedServerTime;
         private float delTime;
 
+        protected CancellationTokenSource cts;
+
         ~Connection()
         {
             UnityEngine.Debug.Log("Connection Destructor");
@@ -63,9 +66,11 @@ namespace Framework.Network
 
             serverTime = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
 
-            AsyncPacketUpdate().Forget();
-            Ping().Forget();
-            UpdateServerTime().Forget();
+            cts = new();
+
+            AsyncPacketUpdate(cts).Forget();
+            Ping(cts).Forget();
+            UpdateServerTime(cts).Forget();
         }
 
         private void _OnConnected()
@@ -78,7 +83,7 @@ namespace Framework.Network
             disconnectedHandler?.Invoke();
         }
 
-        private void _OnRecv( ArraySegment<byte> buffer )
+        protected void _OnRecv( ArraySegment<byte> buffer )
         {
             PacketManager.OnRecv(buffer, packetQueue);
         }
@@ -151,7 +156,7 @@ namespace Framework.Network
             session?.RegisterDisconnect();
         }
 
-        public async UniTaskVoid AsyncPacketUpdate()
+        public async UniTaskVoid AsyncPacketUpdate( CancellationTokenSource cts)
         {
             while (state == ConnectionState.NORMAL || !packetQueue.Empty())
             {
@@ -165,10 +170,15 @@ namespace Framework.Network
                 }
 
                 await UniTask.Yield();
+
+                if(cts.IsCancellationRequested)
+                {
+                    break;
+                }
             }
         }
 
-        public async UniTaskVoid Ping()
+        public async UniTaskVoid Ping( CancellationTokenSource cts )
         {
             Protocol.C_PING ping = new();
 
@@ -178,16 +188,26 @@ namespace Framework.Network
                 Send(PacketManager.MakeSendBuffer(ping));
 
                 await UniTask.Delay(TimeSpan.FromSeconds(0.2));
+
+                if (cts.IsCancellationRequested)
+                {
+                    break;
+                }
             }
         }
 
-        public async UniTaskVoid UpdateServerTime()
+        public async UniTaskVoid UpdateServerTime( CancellationTokenSource cts )
         {
             while (state == ConnectionState.NORMAL)
             {
                 delTime += Time.deltaTime;
                 calcuatedServerTime = serverTime + (long)Math.Round(delTime * 1000, 1);
                 await UniTask.Yield();
+
+                if (cts.IsCancellationRequested)
+                {
+                    break;
+                }
             }
         }
     }
