@@ -118,7 +118,7 @@ namespace Framework.Network
 
                 Send(PacketManager.MakeSendBuffer(packet));
 
-                await UniTask.Yield();
+                await UniTask.Delay(50);
             }
         }
     }
