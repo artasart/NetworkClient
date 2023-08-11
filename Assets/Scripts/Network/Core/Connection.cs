@@ -158,7 +158,7 @@ namespace Framework.Network
 
         public async UniTaskVoid AsyncPacketUpdate( CancellationTokenSource cts)
         {
-            while (state == ConnectionState.NORMAL || !packetQueue.Empty())
+            while ((!cts.IsCancellationRequested && state == ConnectionState.NORMAL) || !packetQueue.Empty())
             {
                 System.Collections.Generic.List<PacketMessage> packets = packetQueue.PopAll();
 
@@ -170,11 +170,6 @@ namespace Framework.Network
                 }
 
                 await UniTask.Yield();
-
-                if(cts.IsCancellationRequested)
-                {
-                    break;
-                }
             }
         }
 
@@ -182,32 +177,22 @@ namespace Framework.Network
         {
             Protocol.C_PING ping = new();
 
-            while (state == ConnectionState.NORMAL)
+            while (!cts.IsCancellationRequested && state == ConnectionState.NORMAL)
             {
                 ping.Tick = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
                 Send(PacketManager.MakeSendBuffer(ping));
 
                 await UniTask.Delay(TimeSpan.FromSeconds(0.2));
-
-                if (cts.IsCancellationRequested)
-                {
-                    break;
-                }
             }
         }
 
         public async UniTaskVoid UpdateServerTime( CancellationTokenSource cts )
         {
-            while (state == ConnectionState.NORMAL)
+            while (!cts.IsCancellationRequested && state == ConnectionState.NORMAL)
             {
                 delTime += Time.deltaTime;
                 calcuatedServerTime = serverTime + (long)Math.Round(delTime * 1000, 1);
                 await UniTask.Yield();
-
-                if (cts.IsCancellationRequested)
-                {
-                    break;
-                }
             }
         }
     }

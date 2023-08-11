@@ -1,8 +1,8 @@
-using Framework.Network;
+using Cysharp.Threading.Tasks;
 using Protocol;
-using System.Collections.Generic;
-using Unity.VisualScripting.FullSerializer;
+using System.Numerics;
 using UnityEngine;
+using Vector3 = UnityEngine.Vector3;
 
 namespace Framework.Network
 {
@@ -16,7 +16,6 @@ namespace Framework.Network
         {
             AddHandler(OnEnter);
             AddHandler(OnInstantiateGameObject);
-            AddHandler(OnAddGameObject);
         }
 
         public void OnEnter( S_ENTER pkt )
@@ -54,16 +53,11 @@ namespace Framework.Network
 
         public void OnInstantiateGameObject( S_INSTANTIATE_GAME_OBJECT pkt )
         {
-            Debug.Log("Dummy Instantiate Success!");
-
             myGameObjectId = pkt.GameObjectId;
 
-            //StopListening();
-        }
+            StopListening();
 
-        public void OnAddGameObject( S_ADD_GAME_OBJECT _packet )
-        {
-            Debug.Log("on add gameobject from dummyconnection");
+            UpdateTransform().Forget();
         }
 
         public void StopListening()
@@ -73,6 +67,59 @@ namespace Framework.Network
             cts.Cancel();
 
             session.receivedHandler -= _OnRecv;
+        }
+
+        private async UniTaskVoid UpdateTransform()
+        {
+            while(GameClientManager.Instance.Client == null && state == ConnectionState.NORMAL)
+            {
+                await UniTask.Delay(1000);
+            }
+
+            Protocol.Vector3 Position = new()
+            {
+                X = 0f,
+                Y = 0f,
+                Z = 0f
+            };
+            Protocol.Vector3 Rotation = new()
+            {
+                X = 0f,
+                Y = 0f,
+                Z = 0f
+            };
+
+            C_SET_TRANSFORM packet = new()
+            {
+                GameObjectId = myGameObjectId,
+                Velocity = new Protocol.Vector3
+                {
+                    X = 0,
+                    Y = 0,
+                    Z = 0
+                },
+                AngularVelocity = new Protocol.Vector3
+                {
+                    X = 0,
+                    Y = 0,
+                    Z = 0
+                }
+            };
+
+            packet.Position = Position;
+            packet.Rotation = Rotation;
+
+            while (state == ConnectionState.NORMAL)
+            {
+                Position.X += Random.Range(-0.01f, 0.01f);
+                Position.Z += Random.Range(-0.01f, 0.01f);
+
+                packet.Timestamp = GameClientManager.Instance.Client.calcuatedServerTime;
+
+                Send(PacketManager.MakeSendBuffer(packet));
+
+                await UniTask.Yield();
+            }
         }
     }
 }

@@ -146,6 +146,12 @@ public class GameClientManager : MonoBehaviour
 
     public void RemoveDummy()
     {
+        foreach(var dummy in Dummies)
+        {
+            dummy.Value.Send(PacketManager.MakeSendBuffer(new C_LEAVE()));
+            dummy.Value.Close();
+        }
 
+        Dummies.Clear();
     }
 }
