@@ -9,7 +9,7 @@ public class NetworkObserver : NetworkComponent
 {
     [SerializeField] private List<NetworkComponent> networkComponents = new();
 
-    public void SetNetworkObject( Client client, int id, bool isMine, bool isPlayer )
+    public void SetNetworkObject( Client client, int id, bool isMine, bool isPlayer, string ownerId )
     {
         Client = client;
         this.id = id;
@@ -24,7 +24,7 @@ public class NetworkObserver : NetworkComponent
 
         if (isPlayer)
         {
-            transform.GetComponentInChildren<TMP_Text>().text = Client.ClientId;
+            transform.GetComponentInChildren<TMP_Text>().text = ownerId;
         }
 
         networkComponents.Add(GetComponent<NetworkTransform>());

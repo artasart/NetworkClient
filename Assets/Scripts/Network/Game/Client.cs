@@ -81,7 +81,8 @@ public class Client : Connection
                 this
                 , gameObject.Id
                 , gameObject.Id == myGameObjectId
-                , true);
+                , true
+                , gameObject.OwnerId);
 
             player.name = gameObject.Id.ToString();
 

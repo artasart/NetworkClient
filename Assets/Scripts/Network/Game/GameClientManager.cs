@@ -93,7 +93,7 @@ public class GameClientManager : MonoBehaviour
 
             C_ENTER enter = new()
             {
-                ClientId = "Main" + connectionId
+                ClientId = connectionId
             };
             Client.Send(PacketManager.MakeSendBuffer(enter));
 
@@ -133,7 +133,7 @@ public class GameClientManager : MonoBehaviour
 
                 Dummies.Add(dummyId, dummy);
                 
-                dummy.ClientId = connectionId + "Dummy" + dummyId;
+                dummy.ClientId = connectionId + "_Dummy_" + dummyId;
 
                 C_ENTER enter = new()
                 {

@@ -189,14 +189,14 @@ namespace FrameWork.Network
 
             timeGap = Client.calcuatedServerTime - packet.Timestamp;
 
-            predictedPosition = packetPosition + (velocity * timeGap);
-
             predictedRotation = packetRotation * Quaternion.AngleAxis(angularVelocity.magnitude * timeGap * Mathf.Rad2Deg, angularVelocity.normalized);
 
             if (2.0f * Mathf.Acos(Mathf.Clamp((transform.rotation * Quaternion.Inverse(predictedRotation)).w, -1.0f, 1.0f)) * Mathf.Rad2Deg > 3.0f)
             {
                 transform.rotation = predictedRotation;
             }
+
+            predictedPosition = packetPosition + (velocity * timeGap);
 
             float distance = Vector3.Distance(predictedPosition, transform.position);
 
