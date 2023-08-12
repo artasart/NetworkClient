@@ -11,9 +11,12 @@ namespace Framework.Network
         public string ClientId { get; set; }
 
         private int myGameObjectId = -1;
+        private Vector3 currentPosition;
 
         public DummyClient()
         {
+            currentPosition = new(Random.Range(-50, 50), 0, Random.Range(-50, 50));
+
             AddHandler(OnEnter);
             AddHandler(OnInstantiateGameObject);
         }
@@ -29,12 +32,7 @@ namespace Framework.Network
             {
                 C_INSTANTIATE_GAME_OBJECT packet = new();
 
-                Protocol.Vector3 position = new()
-                {
-                    X = 0f,
-                    Y = 0f,
-                    Z = 0f
-                };
+                Protocol.Vector3 position = NetworkUtils.UnityVector3ToProtocolVector3(currentPosition);
                 packet.Position = position;
 
                 Protocol.Vector3 rotation = new()
@@ -76,12 +74,8 @@ namespace Framework.Network
                 await UniTask.Delay(1000);
             }
 
-            Protocol.Vector3 Position = new()
-            {
-                X = 0f,
-                Y = 0f,
-                Z = 0f
-            };
+            Protocol.Vector3 Position = NetworkUtils.UnityVector3ToProtocolVector3(currentPosition);
+
             Protocol.Vector3 Rotation = new()
             {
                 X = 0f,
@@ -111,8 +105,8 @@ namespace Framework.Network
 
             while (state == ConnectionState.NORMAL)
             {
-                Position.X += Random.Range(-0.01f, 0.01f);
-                Position.Z += Random.Range(-0.01f, 0.01f);
+                Position.X += Random.Range(-0.05f, 0.05f);
+                Position.Z += Random.Range(-0.05f, 0.05f);
 
                 packet.Timestamp = GameClientManager.Instance.Client.calcuatedServerTime;
 
