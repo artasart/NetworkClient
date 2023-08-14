@@ -134,18 +134,8 @@ namespace FrameWork.Network
                 Timestamp = Client.calcuatedServerTime,
                 Position = NetworkUtils.UnityVector3ToProtocolVector3(transform.position),
                 Rotation = NetworkUtils.UnityVector3ToProtocolVector3(transform.eulerAngles),
-                Velocity = new Protocol.Vector3
-                {
-                    X = velocity.x,
-                    Y = velocity.y,
-                    Z = velocity.z
-                },
-                AngularVelocity = new Protocol.Vector3
-                {
-                    X = angularVelocity.x,
-                    Y = angularVelocity.y,
-                    Z = angularVelocity.z
-                }
+                Velocity = NetworkUtils.UnityVector3ToProtocolVector3(velocity),
+                AngularVelocity = NetworkUtils.UnityVector3ToProtocolVector3(angularVelocity)
             };
 
             Client.Send(PacketManager.MakeSendBuffer(packet));

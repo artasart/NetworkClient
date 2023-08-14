@@ -5,7 +5,6 @@ using Protocol;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using UnityEditor.MemoryProfiler;
 using UnityEngine;
 using UnityEngine.Networking;
 
