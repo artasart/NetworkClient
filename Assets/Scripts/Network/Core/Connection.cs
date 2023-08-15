@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using Google.Protobuf;
+using MEC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -38,11 +39,14 @@ namespace Framework.Network
         private readonly PacketQueue packetQueue;
 
         private readonly Queue<long> pings;
-        private long pingAverage;
+        public long pingAverage;
 
         private long serverTime;
         public long calcuatedServerTime;
+        public long prevCalcuatedServerTime;
         private float delTime;
+
+        private bool isServertimeReceiveFrame;
 
         protected CancellationTokenSource cts;
 
@@ -65,6 +69,11 @@ namespace Framework.Network
             pingAverage = 0;
 
             serverTime = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
+            calcuatedServerTime = serverTime;
+            prevCalcuatedServerTime = serverTime;
+            delTime = 0f;
+
+            isServertimeReceiveFrame = false;
 
             cts = new();
 
@@ -117,11 +126,13 @@ namespace Framework.Network
         private void Handle_S_PING( Protocol.S_PING pkt )
         {
             long tick = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
-            long ping = tick - pkt.Tick;
+            long ping = tick - pkt.Tick - (long)Math.Round(Time.deltaTime * 500, 1);
+
+            //Debug.Log("Ping : " + ping.ToString());
 
             pings.Enqueue(ping);
 
-            if (pings.Count > 5)
+            if (pings.Count > 10)
             {
                 _ = pings.Dequeue();
             }
@@ -133,13 +144,21 @@ namespace Framework.Network
             }
 
             pingAverage = sum / pings.Count;
+
+            Panel_NetworkInfo.Instance.SetPing((int)pingAverage);
         }
 
         private void Handle_S_SERVERTIME( Protocol.S_SERVERTIME pkt )
         {
+            //Debug.Log("Handle S_Servertime : " + delTime);
+
+            isServertimeReceiveFrame = true;
+
             delTime = 0;
             serverTime = pkt.Tick + (pingAverage / 2);
             calcuatedServerTime = serverTime;
+
+            //Debug.Log("Handle S_Servertime : " + (pingAverage/2).ToString());
         }
 
         public void Close()
@@ -190,8 +209,13 @@ namespace Framework.Network
         {
             while (!cts.IsCancellationRequested && state == ConnectionState.NORMAL)
             {
-                delTime += Time.deltaTime;
+                prevCalcuatedServerTime = calcuatedServerTime;
                 calcuatedServerTime = serverTime + (long)Math.Round(delTime * 1000, 1);
+                delTime += Time.deltaTime;
+
+                //Panel_NetworkInfo.Instance.SetServertime((int)(calcuatedServerTime % 100000));
+                Panel_NetworkInfo.Instance.SetServertime(Time.frameCount);
+
                 await UniTask.Yield();
             }
         }

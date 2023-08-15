@@ -13,7 +13,7 @@ public class PlayerController : MonoBehaviour
 
     public float turnSmoothTime = 0.2f;
     private float turnSmoothVelocity;
-    private readonly float speedSmoothTime = 0.1f;
+    private readonly float speedSmoothTime = 0.15f;
     private float speedSmoothVelocity;
     private float currentSpeed;
     private readonly float standJumpDelay = .85f;

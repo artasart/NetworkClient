@@ -69,6 +69,15 @@ namespace Framework.Network
             ushort id = BitConverter.ToUInt16(buffer.Array, buffer.Offset + count);
             count += 2;
 
+            if(id == (ushort)MsgId.PKT_S_PING)
+            {
+                long tick = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
+                Protocol.S_PING pkt = new();
+                pkt.MergeFrom(buffer.Array, buffer.Offset + 4, buffer.Count - 4);
+                long ping = tick - pkt.Tick;
+                UnityEngine.Debug.Log($"ping : {ping}");
+            }
+
             if (onRecv.TryGetValue(id, out Action<ArraySegment<byte>, ushort, PacketQueue> action))
             {
                 action.Invoke(buffer, id, packetQueue);

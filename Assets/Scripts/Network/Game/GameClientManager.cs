@@ -34,6 +34,10 @@ public class GameClientManager : MonoBehaviour
     public Dictionary<string, DummyClient> Dummies { get; private set; } = new();
     public int DummyId = 0;
 
+    private bool isLocal = true;
+    private string localAddress = "192.168.0.104";
+    private int localPort = 7777;
+
     private void Start()
     {
         GameManager.UI.StackPanel<Panel_Network>();
@@ -41,6 +45,11 @@ public class GameClientManager : MonoBehaviour
 
     public async Task<IPEndPoint> GetAddress()
     {
+        if(isLocal)
+        {
+            return new(IPAddress.Parse(localAddress), localPort);
+        }
+
         using UnityWebRequest webRequest = UnityWebRequest.Get("http://20.200.230.139:32000/");
         _ = await webRequest.SendWebRequest();
         if (webRequest.result == UnityWebRequest.Result.Success)
