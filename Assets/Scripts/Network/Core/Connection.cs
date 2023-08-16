@@ -36,6 +36,7 @@ namespace Framework.Network
         protected Action connectedHandler;
         protected Action disconnectedHandler;
 
+        public PacketQueue PacketQueue => packetQueue;
         private readonly PacketQueue packetQueue;
 
         private readonly Queue<long> pings;
@@ -43,10 +44,9 @@ namespace Framework.Network
 
         private long serverTime;
         public long calcuatedServerTime;
-        public long prevCalcuatedServerTime;
         private float delTime;
 
-        private bool isServertimeReceiveFrame;
+        System.Diagnostics.Stopwatch stopwatch;
 
         protected CancellationTokenSource cts;
 
@@ -60,8 +60,6 @@ namespace Framework.Network
             state = ConnectionState.NORMAL;
 
             AddHandler(Handle_S_DISCONNECTED);
-            AddHandler(Handle_S_PING);
-            AddHandler(Handle_S_SERVERTIME);
             AddHandler(Handle_S_ENTER);
 
             packetQueue = new();
@@ -70,16 +68,16 @@ namespace Framework.Network
 
             serverTime = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
             calcuatedServerTime = serverTime;
-            prevCalcuatedServerTime = serverTime;
             delTime = 0f;
 
-            isServertimeReceiveFrame = false;
+            stopwatch = new();
 
             cts = new();
 
-            AsyncPacketUpdate(cts).Forget();
             Ping(cts).Forget();
             UpdateServerTime(cts).Forget();
+            //순서 중요, UpdateServerTime 이후에 PacketUpdate 실행
+            AsyncPacketUpdate(cts).Forget();
         }
 
         private void _OnConnected()
@@ -94,7 +92,7 @@ namespace Framework.Network
 
         protected void _OnRecv( ArraySegment<byte> buffer )
         {
-            PacketManager.OnRecv(buffer, packetQueue);
+            PacketManager.OnRecv(buffer, this);
         }
 
         public void Send( ArraySegment<byte> pkt )
@@ -123,14 +121,9 @@ namespace Framework.Network
             Close();
         }
 
-        private void Handle_S_PING( Protocol.S_PING pkt )
+        public void Handle_S_PING( Protocol.S_PING pkt )
         {
-            long tick = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
-            long ping = tick - pkt.Tick - (long)Math.Round(Time.deltaTime * 500, 1);
-
-            //Debug.Log("Ping : " + ping.ToString());
-
-            pings.Enqueue(ping);
+            pings.Enqueue((long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds - pkt.Tick);
 
             if (pings.Count > 10)
             {
@@ -144,21 +137,13 @@ namespace Framework.Network
             }
 
             pingAverage = sum / pings.Count;
-
-            Panel_NetworkInfo.Instance.SetPing((int)pingAverage);
         }
 
-        private void Handle_S_SERVERTIME( Protocol.S_SERVERTIME pkt )
+        public void Handle_S_SERVERTIME( Protocol.S_SERVERTIME pkt )
         {
-            //Debug.Log("Handle S_Servertime : " + delTime);
-
-            isServertimeReceiveFrame = true;
-
-            delTime = 0;
             serverTime = pkt.Tick + (pingAverage / 2);
-            calcuatedServerTime = serverTime;
 
-            //Debug.Log("Handle S_Servertime : " + (pingAverage/2).ToString());
+            stopwatch.Start();
         }
 
         public void Close()
@@ -173,6 +158,19 @@ namespace Framework.Network
             ConnectionManager.RemoveConnection(this);
 
             session?.RegisterDisconnect();
+        }
+
+        public async UniTaskVoid Ping( CancellationTokenSource cts )
+        {
+            Protocol.C_PING ping = new();
+
+            while (!cts.IsCancellationRequested && state == ConnectionState.NORMAL)
+            {
+                ping.Tick = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
+                Send(PacketManager.MakeSendBuffer(ping));
+
+                await UniTask.Delay(TimeSpan.FromSeconds(0.2));
+            }
         }
 
         public async UniTaskVoid AsyncPacketUpdate( CancellationTokenSource cts)
@@ -192,29 +190,25 @@ namespace Framework.Network
             }
         }
 
-        public async UniTaskVoid Ping( CancellationTokenSource cts )
-        {
-            Protocol.C_PING ping = new();
-
-            while (!cts.IsCancellationRequested && state == ConnectionState.NORMAL)
-            {
-                ping.Tick = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
-                Send(PacketManager.MakeSendBuffer(ping));
-
-                await UniTask.Delay(TimeSpan.FromSeconds(0.2));
-            }
-        }
-
         public async UniTaskVoid UpdateServerTime( CancellationTokenSource cts )
         {
             while (!cts.IsCancellationRequested && state == ConnectionState.NORMAL)
             {
-                prevCalcuatedServerTime = calcuatedServerTime;
-                calcuatedServerTime = serverTime + (long)Math.Round(delTime * 1000, 1);
-                delTime += Time.deltaTime;
+                if(stopwatch.IsRunning)
+                {
+                    stopwatch.Stop();
 
-                //Panel_NetworkInfo.Instance.SetServertime((int)(calcuatedServerTime % 100000));
-                Panel_NetworkInfo.Instance.SetServertime(Time.frameCount);
+                    serverTime += stopwatch.ElapsedMilliseconds;
+                    calcuatedServerTime = serverTime;
+                    delTime = 0;
+
+                    stopwatch.Reset();
+                }
+                else
+                {
+                    delTime += Time.deltaTime;
+                    calcuatedServerTime = serverTime + (long)Math.Round(delTime * 1000, 1);
+                }
 
                 await UniTask.Yield();
             }

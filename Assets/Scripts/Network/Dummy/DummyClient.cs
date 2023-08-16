@@ -108,7 +108,7 @@ namespace Framework.Network
                 Position.X += Random.Range(-0.05f, 0.05f);
                 Position.Z += Random.Range(-0.05f, 0.05f);
 
-                packet.Timestamp = GameClientManager.Instance.Client.prevCalcuatedServerTime;
+                packet.Timestamp = GameClientManager.Instance.Client.calcuatedServerTime;
 
                 Send(PacketManager.MakeSendBuffer(packet));
 
