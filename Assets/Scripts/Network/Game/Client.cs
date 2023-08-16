@@ -17,6 +17,7 @@ public class Client : Connection
         AddHandler(OnAddGameObject);
         AddHandler(OnRemoveGameObject);
         AddHandler(OnDisconnected);
+        AddHandler(DisplayPing);
     }
 
     public void OnEnter( S_ENTER pkt )
@@ -115,5 +116,10 @@ public class Client : Connection
         }
         
         gameObjects.Clear();
+    }
+
+    public void DisplayPing( Protocol.S_PING pkt )
+    { 
+        Panel_NetworkInfo.Instance.SetPing((int)pingAverage);
     }
 }
