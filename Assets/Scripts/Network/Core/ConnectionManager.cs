@@ -48,6 +48,8 @@ namespace Framework.Network
                 Socket socket = new(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 await socket.ConnectAsync(endPoint);
 
+                socket.NoDelay = true;
+
                 ServerSession session = new();
                 connection.Session = session;
                 connection.Session.Start(socket);
