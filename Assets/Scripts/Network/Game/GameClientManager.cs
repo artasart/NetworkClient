@@ -34,7 +34,7 @@ public class GameClientManager : MonoBehaviour
     public Dictionary<string, DummyClient> Dummies { get; private set; } = new();
     public int DummyId = 0;
 
-    private bool isLocal = true;
+    private bool isLocal = false;
     private string localAddress = "192.168.0.104";
     private int localPort = 7777;
 
