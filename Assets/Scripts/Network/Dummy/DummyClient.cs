@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using Protocol;
-using System.Numerics;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
@@ -69,7 +68,7 @@ namespace Framework.Network
 
         private async UniTaskVoid UpdateTransform()
         {
-            while(GameClientManager.Instance.Client == null && state == ConnectionState.NORMAL)
+            while (GameClientManager.Instance.Client == null && state == ConnectionState.NORMAL)
             {
                 await UniTask.Delay(1000);
             }
@@ -97,11 +96,10 @@ namespace Framework.Network
                     X = 0,
                     Y = 0,
                     Z = 0
-                }
+                },
+                Position = Position,
+                Rotation = Rotation
             };
-
-            packet.Position = Position;
-            packet.Rotation = Rotation;
 
             while (state == ConnectionState.NORMAL)
             {

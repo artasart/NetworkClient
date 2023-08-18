@@ -1,11 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
-using UnityEngine;
 
 public class Panel_NetworkInfo : Panel_Base
 {
-    TMP_Text label_Ping;
+    private TMP_Text label_Ping;
 
     public static Panel_NetworkInfo Instance
     {
@@ -26,10 +23,10 @@ public class Panel_NetworkInfo : Panel_Base
     {
         base.Awake();
 
-        label_Ping = this.transform.Search(nameof(label_Ping)).GetComponent<TMP_Text>();
+        label_Ping = transform.Search(nameof(label_Ping)).GetComponent<TMP_Text>();
     }
 
-    public void SetPing(int ping)
+    public void SetPing( int ping )
     {
         label_Ping.text = $"Ping: {ping}ms";
     }

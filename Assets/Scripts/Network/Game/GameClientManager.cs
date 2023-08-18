@@ -34,9 +34,9 @@ public class GameClientManager : MonoBehaviour
     public Dictionary<string, DummyClient> Dummies { get; private set; } = new();
     public int DummyId = 0;
 
-    private bool isLocal = false;
-    private string localAddress = "192.168.0.104";
-    private int localPort = 7777;
+    private readonly bool isLocal = false;
+    private readonly string localAddress = "192.168.0.104";
+    private readonly int localPort = 7777;
 
     private void Start()
     {
@@ -45,7 +45,7 @@ public class GameClientManager : MonoBehaviour
 
     public async Task<IPEndPoint> GetAddress()
     {
-        if(isLocal)
+        if (isLocal)
         {
             return new(IPAddress.Parse(localAddress), localPort);
         }
@@ -121,7 +121,7 @@ public class GameClientManager : MonoBehaviour
         Client = null;
     }
 
-    public async void AddDummy(int dummyNumber, string connectionId)
+    public async void AddDummy( int dummyNumber, string connectionId )
     {
         IPEndPoint endPoint = await GetAddress();
         if (endPoint == null)
@@ -130,9 +130,9 @@ public class GameClientManager : MonoBehaviour
             return;
         }
 
-        for(int i = 0; i<dummyNumber; i++)
+        for (int i = 0; i < dummyNumber; i++)
         {
-            var dummy = (DummyClient)ConnectionManager.GetConnection<DummyClient>();
+            DummyClient dummy = (DummyClient)ConnectionManager.GetConnection<DummyClient>();
 
             bool success = await ConnectionManager.Connect(endPoint, dummy);
             if (success)
@@ -140,7 +140,7 @@ public class GameClientManager : MonoBehaviour
                 string dummyId = DummyId++.ToString();
 
                 Dummies.Add(dummyId, dummy);
-                
+
                 dummy.ClientId = connectionId + "_Dummy_" + dummyId;
 
                 C_ENTER enter = new()
@@ -154,7 +154,7 @@ public class GameClientManager : MonoBehaviour
 
     public void RemoveDummy()
     {
-        foreach(var dummy in Dummies)
+        foreach (KeyValuePair<string, DummyClient> dummy in Dummies)
         {
             dummy.Value.Send(PacketManager.MakeSendBuffer(new C_LEAVE()));
             dummy.Value.Close();

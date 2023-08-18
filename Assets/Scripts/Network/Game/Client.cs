@@ -110,16 +110,16 @@ public class Client : Connection
 
     public void OnDisconnected( S_DISCONNECT pkt )
     {
-        foreach (var gameObject in gameObjects)
+        foreach (KeyValuePair<string, GameObject> gameObject in gameObjects)
         {
             UnityEngine.Object.Destroy(gameObject.Value);
         }
-        
+
         gameObjects.Clear();
     }
 
     public void DisplayPing( Protocol.S_PING pkt )
-    { 
+    {
         Panel_NetworkInfo.Instance.SetPing((int)pingAverage);
     }
 }

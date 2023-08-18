@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using Google.Protobuf;
-using MEC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -36,8 +35,7 @@ namespace Framework.Network
         protected Action connectedHandler;
         protected Action disconnectedHandler;
 
-        public PacketQueue PacketQueue => packetQueue;
-        private readonly PacketQueue packetQueue;
+        public PacketQueue PacketQueue { get; }
 
         private readonly Queue<long> pings;
         public long pingAverage;
@@ -45,8 +43,7 @@ namespace Framework.Network
         private long serverTime;
         public long calcuatedServerTime;
         private float delTime;
-
-        System.Diagnostics.Stopwatch stopwatch;
+        readonly System.Diagnostics.Stopwatch stopwatch;
 
         protected CancellationTokenSource cts;
 
@@ -62,7 +59,7 @@ namespace Framework.Network
             AddHandler(Handle_S_DISCONNECTED);
             AddHandler(Handle_S_ENTER);
 
-            packetQueue = new();
+            PacketQueue = new();
             pings = new();
             pingAverage = 0;
 
@@ -173,11 +170,11 @@ namespace Framework.Network
             }
         }
 
-        public async UniTaskVoid AsyncPacketUpdate( CancellationTokenSource cts)
+        public async UniTaskVoid AsyncPacketUpdate( CancellationTokenSource cts )
         {
-            while ((!cts.IsCancellationRequested && state == ConnectionState.NORMAL) || !packetQueue.Empty())
+            while ((!cts.IsCancellationRequested && state == ConnectionState.NORMAL) || !PacketQueue.Empty())
             {
-                System.Collections.Generic.List<PacketMessage> packets = packetQueue.PopAll();
+                System.Collections.Generic.List<PacketMessage> packets = PacketQueue.PopAll();
 
                 for (int i = 0; i < packets.Count; i++)
                 {
@@ -194,7 +191,7 @@ namespace Framework.Network
         {
             while (!cts.IsCancellationRequested && state == ConnectionState.NORMAL)
             {
-                if(stopwatch.IsRunning)
+                if (stopwatch.IsRunning)
                 {
                     stopwatch.Stop();
 

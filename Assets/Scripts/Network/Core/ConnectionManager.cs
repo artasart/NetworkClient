@@ -33,12 +33,12 @@ namespace Framework.Network
 
         public static void RemoveConnection( Connection connection )
         {
-            connections.Remove(connection.ConnectionId);
+            _ = connections.Remove(connection.ConnectionId);
         }
 
         public static void RemoveConnection( string connectionId )
         {
-            connections.Remove(connectionId);
+            _ = connections.Remove(connectionId);
         }
 
         public static async Task<bool> Connect( IPEndPoint endPoint, Connection connection )

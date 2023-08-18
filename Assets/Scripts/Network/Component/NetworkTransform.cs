@@ -146,7 +146,6 @@ namespace FrameWork.Network
             while (true)
             {
                 controller.Move(velocity * Time.deltaTime * 1000);
-                //transform.position += velocity * Time.deltaTime * 1000;
                 yield return Timing.WaitForOneFrame;
             }
         }
