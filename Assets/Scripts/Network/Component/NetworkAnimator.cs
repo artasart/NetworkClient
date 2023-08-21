@@ -48,18 +48,25 @@ namespace FrameWork.Network
         {
             string prev = string.Empty;
 
+            float delTime = 0f;
+
             while (true)
             {
-                string current = GetParameters();
-
-                //if (!Equals(current, prev) || animator.GetFloat(Define.MOVEMENT) >= Define.THRESHOLD_MOVEMENT)
-                if (!Equals(current, prev))
+                delTime += Time.deltaTime;
+                if(delTime > interval)
                 {
-                    C_SET_ANIMATION();
-                    prev = current.ToString();
-                }
+                    delTime -= interval;
 
-                yield return Timing.WaitForSeconds(interval);
+                    string current = GetParameters();
+
+                    if (!Equals(current, prev))
+                    {
+                        C_SET_ANIMATION();
+                        prev = current.ToString();
+                    }
+
+                    yield return Timing.WaitForOneFrame;
+                }
             }
         }
 

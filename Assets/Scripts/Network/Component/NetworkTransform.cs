@@ -3,6 +3,7 @@ using MEC;
 using Protocol;
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
@@ -113,16 +114,24 @@ namespace FrameWork.Network
             Vector3 prevVelocity = velocity;
             Vector3 prevAngularVelocity = angularVelocity;
 
+            float delTime = 0;
+
             while (true)
             {
-                if (prevVelocity != velocity || prevAngularVelocity != angularVelocity)
+                delTime += Time.deltaTime;
+                if(delTime > interval)
                 {
-                    C_SET_TRANSFORM();
-                    prevVelocity = velocity;
-                    prevAngularVelocity = angularVelocity;
+                    delTime -= interval;
+
+                    if (prevVelocity != velocity || prevAngularVelocity != angularVelocity)
+                    {
+                        C_SET_TRANSFORM();
+                        prevVelocity = velocity;
+                        prevAngularVelocity = angularVelocity;
+                    }
                 }
 
-                yield return Timing.WaitForSeconds(interval);
+                yield return Timing.WaitForOneFrame;
             }
         }
 
