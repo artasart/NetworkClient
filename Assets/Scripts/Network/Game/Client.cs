@@ -37,6 +37,8 @@ public class Client : Connection
         {
             C_INSTANTIATE_GAME_OBJECT packet = new();
 
+            packet.Type = Define.GAMEOBJECT_TYPE_PLAYER;
+
             Protocol.Vector3 position = new()
             {
                 X = 0f,
@@ -72,24 +74,24 @@ public class Client : Connection
             UnityEngine.Quaternion rotation = Quaternion.Euler(gameObject.Rotation.X, gameObject.Rotation.Y, gameObject.Rotation.Z);
 
             GameObject prefab = Resources.Load<GameObject>("Prefab/" + gameObject.PrefabName);
-            prefab.GetComponent<NetworkObserver>().id = gameObject.Id;
-            prefab.GetComponent<NetworkObserver>().isMine = gameObject.Id == myGameObjectId;
+            prefab.GetComponent<NetworkObserver>().id = gameObject.GameObjectId;
+            prefab.GetComponent<NetworkObserver>().isMine = gameObject.GameObjectId == myGameObjectId;
             prefab.GetComponent<NetworkObserver>().isPlayer = true;
 
             GameObject player = UnityEngine.Object.Instantiate(prefab, position, rotation);
 
             player.GetComponent<NetworkObserver>().SetNetworkObject(
                 this
-                , gameObject.Id
-                , gameObject.Id == myGameObjectId
-                , true
+                , gameObject.GameObjectId
+                , gameObject.GameObjectId == myGameObjectId
+                , gameObject.Type == Define.GAMEOBJECT_TYPE_PLAYER
                 , gameObject.OwnerId);
 
-            player.name = gameObject.Id.ToString();
+            player.name = gameObject.GameObjectId.ToString();
 
             UnityEngine.Object.FindObjectOfType<EffectPool>().Spawn(EffectType.Effect_Thunder, position, Quaternion.identity);
 
-            gameObjects.Add(gameObject.Id.ToString(), player);
+            gameObjects.Add(gameObject.GameObjectId.ToString(), player);
         }
     }
 

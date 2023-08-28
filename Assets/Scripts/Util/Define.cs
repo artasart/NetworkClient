@@ -41,4 +41,7 @@ public static class Define
 	public const string KEY_FIRST = "First";
 	public const string KEY_BGM = "BGMVolume";
 	public const string KEY_SOUNDEFFECT = "EffectVolume";
+
+	public const int GAMEOBJECT_TYPE_PLAYER = 1;
+	public const int GAMEOBJECT_TYPE_ETC = 99;
 }

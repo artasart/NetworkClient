@@ -1,3 +1,5 @@
+using Framework.Network;
+using Protocol;
 using TMPro;
 using UnityEngine.UI;
 
@@ -9,6 +11,8 @@ public class Panel_Network : Panel_Base
     private TMP_InputField inputField_DummyNumber;
     private Button btn_AddDummy;
     private Button btn_RemoveDummy;
+    private Button btn_AddBall;
+    private Button btn_RemoveBall;
 
     protected override void Awake()
     {
@@ -25,6 +29,9 @@ public class Panel_Network : Panel_Base
         btn_RemoveDummy = GetUI_Button(nameof(btn_RemoveDummy), OnClick_RemoveDummy);
 
         inputField_ClientId.placeholder.GetComponent<TMP_Text>().text = GenerateRandomString(5);
+
+        btn_AddBall = GetUI_Button(nameof(btn_AddBall), OnClick_AddBall);
+        btn_RemoveBall = GetUI_Button(nameof(btn_RemoveBall), OnClick_RemoveBall);
     }
 
     private void OnClick_Connect()
@@ -63,6 +70,42 @@ public class Panel_Network : Panel_Base
     private void OnClick_RemoveDummy()
     {
         GameClientManager.Instance.RemoveDummy();
+    }
+
+    private void OnClick_AddBall()
+    {
+        print("OnClick_AddBall");
+
+        {
+            C_INSTANTIATE_GAME_OBJECT packet = new();
+
+            packet.Type = Define.GAMEOBJECT_TYPE_ETC;
+
+            Protocol.Vector3 position = new()
+            {
+                X = 0f,
+                Y = 2f,
+                Z = 3f
+            };
+            packet.Position = position;
+
+            Protocol.Vector3 rotation = new()
+            {
+                X = 0f,
+                Y = 0f,
+                Z = 0f
+            };
+            packet.Rotation = rotation;
+
+            packet.PrefabName = "Ball";
+
+            GameClientManager.Instance.Client.Send(PacketManager.MakeSendBuffer(packet));
+        }
+    }
+
+    private void OnClick_RemoveBall()
+    {
+        print("OnClick_RemoveBall");
     }
 
     public string GenerateRandomString( int length )
