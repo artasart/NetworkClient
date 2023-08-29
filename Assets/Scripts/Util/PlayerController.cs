@@ -1,3 +1,4 @@
+using FrameWork.Network;
 using MEC;
 using System.Collections.Generic;
 using UnityEngine;
@@ -160,6 +161,37 @@ public class PlayerController : MonoBehaviour
         }
 
         return airControlPercent == 0 ? float.MaxValue : _smoothTime / airControlPercent;
+    }
+
+    private void OnControllerColliderHit( ControllerColliderHit hit )
+    {
+        if (hit.gameObject.CompareTag("Ball"))
+        {
+            if(hit.gameObject.GetComponent<NetworkObserver>() != null && !hit.gameObject.GetComponent<NetworkObserver>().isMine)
+            {
+                hit.gameObject.GetComponent<NetworkObserver>().isMine = true;
+                hit.gameObject.GetComponent<NetworkTransform_Rigidbody>().isMine = true;
+
+                Protocol.C_SET_GAME_OBJECT_OWNER packet = new Protocol.C_SET_GAME_OBJECT_OWNER();
+                packet.GameObjectId = hit.gameObject.GetComponent<NetworkObserver>().id;
+
+                GameClientManager.Instance.Client.Send(Framework.Network.PacketManager.MakeSendBuffer(packet));
+            }
+
+            Rigidbody ballRigidbody = hit.gameObject.GetComponent<Rigidbody>();
+
+            if (ballRigidbody)
+            {
+                // 공을 밀어내는 힘의 크기를 설정합니다.
+                float pushPower = currentSpeed * 2;
+
+                // 힘의 방향은 충돌한 표면의 반대 방향입니다.
+                Vector3 pushDirection = new Vector3(hit.moveDirection.x, 0, hit.moveDirection.z);
+
+                // 실제로 공에 힘을 가합니다.
+                ballRigidbody.velocity = pushDirection * pushPower + Vector3.up * 3;
+            }
+        }
     }
 
     #region Movement
