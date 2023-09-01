@@ -1,9 +1,7 @@
 ﻿using Framework.Network;
 using MEC;
 using Protocol;
-using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
@@ -28,9 +26,9 @@ namespace FrameWork.Network
             Client.AddHandler(OnOwnerChanged);
         }
 
-        private void OnOwnerChanged(Protocol.S_SET_GAME_OBJECT_OWNER pkt)
+        private void OnOwnerChanged( Protocol.S_SET_GAME_OBJECT_OWNER pkt )
         {
-            if(pkt.GameObjectId != id)
+            if (pkt.GameObjectId != id)
             {
                 return;
             }
@@ -62,10 +60,12 @@ namespace FrameWork.Network
             while (true)
             {
                 if (isMine == false)
+                {
                     yield return Timing.WaitForOneFrame;
+                }
 
                 delTime += Time.deltaTime;
-                if(delTime > interval)
+                if (delTime > interval)
                 {
                     delTime -= interval;
 
@@ -98,7 +98,7 @@ namespace FrameWork.Network
 
         private void S_SET_TRANSFORM( S_SET_TRANSFORM packet )
         {
-            if(isMine)
+            if (isMine)
             {
                 return;
             }

@@ -19,7 +19,8 @@ public class NetworkObserver : NetworkComponent
 
         if (isPlayer)
         {
-            networkComponents.Add(GetComponent<NetworkTransform>());
+            networkComponents.Add(GetComponent<NetworkTransform_DeadReckoning>());
+            //networkComponents.Add(GetComponent<NetworkTransform>());
             networkComponents.Add(GetComponent<NetworkAnimator>());
 
             transform.GetComponentInChildren<TMP_Text>().text = ownerId;
@@ -44,9 +45,9 @@ public class NetworkObserver : NetworkComponent
         }
     }
 
-    private void OnOwnerChanged(Protocol.S_SET_GAME_OBJECT_OWNER pkt)
+    private void OnOwnerChanged( Protocol.S_SET_GAME_OBJECT_OWNER pkt )
     {
-        if(pkt.GameObjectId != id)
+        if (pkt.GameObjectId != id)
         {
             return;
         }
