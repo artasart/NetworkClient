@@ -8,7 +8,7 @@ public class Client : Connection
     public string ClientId { get; set; }
 
     private readonly Dictionary<string, GameObject> gameObjects = new();
-    private int myGameObjectId = -1;
+    private HashSet<int> myGameObjectId = new();
 
     public Client()
     {
@@ -18,6 +18,12 @@ public class Client : Connection
         AddHandler(OnRemoveGameObject);
         AddHandler(OnDisconnected);
         AddHandler(DisplayPing);
+        AddHandler(OnOwnerChanged);
+    }
+
+    ~Client()
+    {
+        Debug.Log("Client Destructor");
     }
 
     public void OnEnter( S_ENTER pkt )
@@ -63,7 +69,7 @@ public class Client : Connection
 
     public void OnInstantiateGameObject( S_INSTANTIATE_GAME_OBJECT pkt )
     {
-        myGameObjectId = pkt.GameObjectId;
+        myGameObjectId.Add(pkt.GameObjectId);
     }
 
     public void OnAddGameObject( S_ADD_GAME_OBJECT _packet )
@@ -74,16 +80,13 @@ public class Client : Connection
             UnityEngine.Quaternion rotation = Quaternion.Euler(gameObject.Rotation.X, gameObject.Rotation.Y, gameObject.Rotation.Z);
 
             GameObject prefab = Resources.Load<GameObject>("Prefab/" + gameObject.PrefabName);
-            prefab.GetComponent<NetworkObserver>().id = gameObject.GameObjectId;
-            prefab.GetComponent<NetworkObserver>().isMine = gameObject.GameObjectId == myGameObjectId;
-            prefab.GetComponent<NetworkObserver>().isPlayer = true;
 
             GameObject player = UnityEngine.Object.Instantiate(prefab, position, rotation);
 
             player.GetComponent<NetworkObserver>().SetNetworkObject(
                 this
                 , gameObject.GameObjectId
-                , gameObject.GameObjectId == myGameObjectId
+                , myGameObjectId.Contains(gameObject.GameObjectId)
                 , gameObject.Type == Define.GAMEOBJECT_TYPE_PLAYER
                 , gameObject.OwnerId);
 
@@ -107,6 +110,18 @@ public class Client : Connection
             UnityEngine.Object.Destroy(gameObjects[gameObjectId.ToString()]);
 
             _ = gameObjects.Remove(gameObjectId.ToString());
+        }
+    }
+
+    public void OnOwnerChanged(S_SET_GAME_OBJECT_OWNER pkt)
+    {
+        if(pkt.OwnerId == ClientId && !myGameObjectId.Contains(pkt.GameObjectId))
+        {
+            myGameObjectId.Add(pkt.GameObjectId);
+        }
+        else if(pkt.OwnerId != ClientId && myGameObjectId.Contains(pkt.GameObjectId))
+        {
+            myGameObjectId.Remove(pkt.GameObjectId);
         }
     }
 
