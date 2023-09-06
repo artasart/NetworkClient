@@ -31,6 +31,8 @@ namespace Framework.Network
             {
                 C_INSTANTIATE_GAME_OBJECT packet = new();
 
+                packet.Type = Define.GAMEOBJECT_TYPE_PLAYER;
+
                 Protocol.Vector3 position = NetworkUtils.UnityVector3ToProtocolVector3(currentPosition);
                 packet.Position = position;
 
