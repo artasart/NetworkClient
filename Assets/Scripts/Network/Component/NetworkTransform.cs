@@ -25,7 +25,7 @@ namespace FrameWork.Network
             }
             else
             {
-                Client.AddHandler(S_SET_TRANSFORM);
+                Client.packetHandler.AddHandler(S_SET_TRANSFORM);
             }
         }
 
@@ -37,7 +37,7 @@ namespace FrameWork.Network
 
             if (!isMine)
             {
-                Client.RemoveHandler(S_SET_TRANSFORM);
+                Client.packetHandler.RemoveHandler(S_SET_TRANSFORM);
             }
         }
 

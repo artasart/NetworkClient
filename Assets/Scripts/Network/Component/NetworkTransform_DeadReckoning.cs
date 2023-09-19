@@ -40,7 +40,7 @@ namespace FrameWork.Network
             }
             else
             {
-                Client.AddHandler(S_SET_TRANSFORM);
+                Client.packetHandler.AddHandler(S_SET_TRANSFORM);
                 remoteUpdatePosition = Timing.RunCoroutine(RemoteUpdatePosition());
                 remoteUpdateRotation = Timing.RunCoroutine(RemoteUpdateRotation());
             }
@@ -58,7 +58,7 @@ namespace FrameWork.Network
             }
             else
             {
-                Client.RemoveHandler(S_SET_TRANSFORM);
+                Client.packetHandler.RemoveHandler(S_SET_TRANSFORM);
                 _ = Timing.KillCoroutines(remoteUpdatePosition);
                 _ = Timing.KillCoroutines(remoteUpdateRotation);
             }

@@ -12,13 +12,13 @@ public class Client : Connection
 
     public Client()
     {
-        AddHandler(OnEnter);
-        AddHandler(OnInstantiateGameObject);
-        AddHandler(OnAddGameObject);
-        AddHandler(OnRemoveGameObject);
-        AddHandler(OnDisconnected);
-        AddHandler(DisplayPing);
-        AddHandler(OnOwnerChanged);
+        packetHandler.AddHandler(OnEnter);
+        packetHandler.AddHandler(OnInstantiateGameObject);
+        packetHandler.AddHandler(OnAddGameObject);
+        packetHandler.AddHandler(OnRemoveGameObject);
+        packetHandler.AddHandler(OnDisconnected);
+        packetHandler.AddHandler(DisplayPing);
+        packetHandler.AddHandler(OnOwnerChanged);
     }
 
     ~Client()

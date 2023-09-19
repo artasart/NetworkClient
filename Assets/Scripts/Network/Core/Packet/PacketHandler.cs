@@ -43,6 +43,7 @@ namespace Framework.Network
             Handlers.Add(112, _Handle_S_SET_TRANSFORM);
             Handlers.Add(114, _Handle_S_SET_ANIMATION);
         }
+
         public void AddHandler( Action<Protocol.S_ENTER> handler )
         {
             S_ENTER_Handler += handler;

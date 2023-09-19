@@ -28,7 +28,7 @@ namespace FrameWork.Network
             }
             else
             {
-                Client.AddHandler(S_SET_ANIMATION);
+                Client.packetHandler.AddHandler(S_SET_ANIMATION);
             }
         }
 
@@ -40,7 +40,7 @@ namespace FrameWork.Network
 
             if (!isMine)
             {
-                Client.RemoveHandler(S_SET_ANIMATION);
+                Client.packetHandler.RemoveHandler(S_SET_ANIMATION);
             }
         }
 

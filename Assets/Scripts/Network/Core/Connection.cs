@@ -13,11 +13,12 @@ namespace Framework.Network
         CLOSED
     }
 
-    public class Connection : PacketHandler
+    public class Connection
     {
         public string ConnectionId { get; set; }
 
         protected ServerSession session;
+        
         public ServerSession Session
         {
             get => session;
@@ -29,13 +30,13 @@ namespace Framework.Network
                 session.receivedHandler += _OnRecv;
             }
         }
+        public PacketQueue PacketQueue { get; }
+        public PacketHandler packetHandler { get; }
 
         protected ConnectionState state;
 
         protected Action connectedHandler;
         protected Action disconnectedHandler;
-
-        public PacketQueue PacketQueue { get; }
 
         private readonly Queue<long> pings;
         public long pingAverage;
@@ -56,8 +57,9 @@ namespace Framework.Network
         {
             state = ConnectionState.NORMAL;
 
-            AddHandler(Handle_S_DISCONNECTED);
-            AddHandler(Handle_S_ENTER);
+            packetHandler = new PacketHandler();
+            packetHandler.AddHandler(Handle_S_ENTER);
+            packetHandler.AddHandler(Handle_S_DISCONNECTED);
 
             PacketQueue = new();
             pings = new();
@@ -179,7 +181,9 @@ namespace Framework.Network
                 for (int i = 0; i < packets.Count; i++)
                 {
                     PacketMessage packet = packets[i];
-                    _ = Handlers.TryGetValue(packet.Id, out Action<IMessage> handler);
+                    
+                    packetHandler.Handlers.TryGetValue(packet.Id, out Action<IMessage> handler);
+                    
                     handler?.Invoke(packet.Message);
                 }
 

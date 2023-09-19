@@ -16,8 +16,8 @@ namespace Framework.Network
         {
             currentPosition = new(Random.Range(-50, 50), 0, Random.Range(-50, 50));
 
-            AddHandler(OnEnter);
-            AddHandler(OnInstantiateGameObject);
+            packetHandler.AddHandler(OnEnter);
+            packetHandler.AddHandler(OnInstantiateGameObject);
         }
 
         public void OnEnter( S_ENTER pkt )

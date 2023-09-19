@@ -21,9 +21,9 @@ namespace FrameWork.Network
             rigidbody = GetComponent<Rigidbody>();
 
             updateTransform = Timing.RunCoroutine(UpdateTransform());
-            Client.AddHandler(S_SET_TRANSFORM);
+            Client.packetHandler.AddHandler(S_SET_TRANSFORM);
 
-            Client.AddHandler(OnOwnerChanged);
+            Client.packetHandler.AddHandler(OnOwnerChanged);
         }
 
         private void OnOwnerChanged( Protocol.S_SET_GAME_OBJECT_OWNER pkt )
@@ -46,7 +46,7 @@ namespace FrameWork.Network
             }
             else
             {
-                Client.RemoveHandler(S_SET_TRANSFORM);
+                Client.packetHandler.RemoveHandler(S_SET_TRANSFORM);
             }
         }
 

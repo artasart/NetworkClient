@@ -11,7 +11,7 @@ public class NetworkObserver : NetworkComponent
     {
         Client = client;
 
-        Client.AddHandler(OnOwnerChanged);
+        Client.packetHandler.AddHandler(OnOwnerChanged);
 
         this.id = id;
         this.isMine = isMine;
