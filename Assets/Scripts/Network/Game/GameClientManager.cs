@@ -35,8 +35,14 @@ public class GameClientManager : MonoBehaviour
     public int DummyId = 0;
 
     private readonly bool isLocal = false;
+
     private readonly string localAddress = "192.168.0.104";
     private readonly int localPort = 7777;
+
+    private readonly string remoteAddress = "20.200.230.139";
+    private readonly int remotePort = 32000;
+
+    private readonly string query = "/Room/BASE";
 
     private void Start()
     {
@@ -50,7 +56,7 @@ public class GameClientManager : MonoBehaviour
             return new(IPAddress.Parse(localAddress), localPort);
         }
 
-        using UnityWebRequest webRequest = UnityWebRequest.Get("http://20.200.230.139:32000/");
+        using UnityWebRequest webRequest = UnityWebRequest.Get("http://" + remoteAddress + ":" + remotePort + query);
         _ = await webRequest.SendWebRequest();
         if (webRequest.result == UnityWebRequest.Result.Success)
         {
